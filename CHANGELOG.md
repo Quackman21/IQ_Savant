@@ -1,5 +1,46 @@
 # IQ Savant – version history
 
+## v12.1 – 2026-11-05
+- Fix: pybaseball returns blanks as <NA>, which crashed the league reference build (and could
+  crash Calendar / Player Profile). All Statcast now goes through core/statcast_clean.py first.
+- League reference build no longer prints pybaseball's FutureWarning spam.
+- League reference build pulls a week at a time with retries (Savant sometimes returns an error
+  page instead of data), and skips seasons already saved so a re-run picks up where it stopped.
+
+## v12 – 2026-11-05
+- Player search filters as you type (first or last name): "Name · MLB | 2026 | POS | Team".
+  "Search all levels" box underneath for minor leaguers.
+- Hitting stat catalog (core/hit_metrics.py): every hitting stat's definition, formula, format and
+  colour direction in one place. Definitions match the reference site's (Weak GB%, GB%, FB%,
+  Weak FB%, Pull/Middle/Oppo, AirPull%, FB-Pull%, Pull-Air%, HHEV = top 1/8 EV, TRK = tracked BIP).
+- xwOBA model slot (models/xwoba.py): ACTIVE = "savant" today; add your model and switch one line.
+- Hitting tabs: Overview (Counts / Rates / Contact / BIP), Rates, Contact, Exit, Rolling, Spray.
+  AAR removed (moving to Game Log later). Zone Grouping (In/Out of Zone or Heart/Shadow/Chase/Waste)
+  and Split (Count Group / Platoon / Pitch Group, any combination).
+- Hover a column name for its definition. Click a number for MLB AVG, player, Delta and STDEVS.
+- Cells coloured by STDEVS (green/red for skills, yellow/purple for style stats).
+- League reference builder: python -m pipeline.build_league_reference 2015 2026
+  -> data/league/hitting_<season>.csv.gz (league average + spread across 100+ PA hitters).
+
+## v11 – 2026-11-05
+- Player Profile rebuilt: search any MLB/MiLB player, white header card with headshot, name,
+  level | team, POS, H/W, STATUS, B/T, AGE (years.months), DOB, MLB DEBUT, BORN, team logo,
+  and an ENTRY line ("2019 by BAL, Round 1, 1st Overall, Oregon State, Signing Bonus $8.1M" or
+  "Signed by CLE out of Dominican Republic").
+- Main tabs: Summary | Stats | Game Log | Sandbox.
+- Summary sub-tabs depend on where the player has played (last 3 seasons, 10+ games):
+  Hitting, Core 4, Catching, Infield, Outfield, Baserunning, Pitching.
+- Hitting: Game/Season/Dates, Seasons, League, Stat Category, Level/Platoon split, Show Avgs;
+  Overview, Rates, Contact, Exit, Rolling, Spray (with spray chart), AAR (placeholder).
+- Core 4: Periods, Aggregate/By Season, Stats/Percentiles; Core 4, Bat Speed, Bat-To-Ball,
+  Swing Decisions, Ball Flight.
+- Catching: Overview, Framing, Blocking (placeholder), Throwing.
+- Infield: Overview, Outs Above Average, Run Value. Outfield: Overview, OAA, Jump,
+  Catch Probability, Directional.
+- Baserunning: Advancing (placeholder), Base Stealing, Tools.
+- Pitching: Overview, Arsenal, Results, Percentiles.
+- Stats: year-by-year MLB/MiLB. Game Log by season. Sandbox: open space for later.
+
 ## v10 – 2026-11-03
 - Fixed team cities: "Tampa Bay" not "St. Petersburg", "Texas" not "Arlington", etc.
 - Calendar game cards: Box Score | Lineup | Play by Play links, each opening the game in a new tab.

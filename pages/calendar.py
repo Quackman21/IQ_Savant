@@ -7,6 +7,7 @@ from pybaseball import statcast
 
 from core import mlb_api
 from core.daily_summary import player_ids, summarize
+from core.statcast_clean import clean
 from core.scoreboard import ET, display_date, pick_day
 from core.standings import EARLIEST
 from ui import data
@@ -17,7 +18,7 @@ show = st.html if hasattr(st, "html") else (lambda h: st.markdown(h, unsafe_allo
 
 
 def _summary(day: str) -> tuple[dict, dict]:
-    df = statcast(start_dt=day, end_dt=day, verbose=False)
+    df = clean(statcast(start_dt=day, end_dt=day, verbose=False))
     s = summarize(df)
     names = mlb_api.get_people(player_ids(s)) if s else {}
     return s, names
