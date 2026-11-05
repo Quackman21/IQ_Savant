@@ -553,10 +553,11 @@ if main == "Summary":
             st.stop()
 
         keep_types = {"Regular": {"R"}, "Postseason": POSTSEASON, "Reg + Post": {"R"} | POSTSEASON}[cat]
-        seasons_raw = {}
+        seasons_raw, seasons_post = {}, {}
         for y in sorted({p_.season for p_ in periods}, reverse=True):
             df_y = statcast(pid, f"{y}-03-01", f"{y}-11-30")
             if not df_y.empty and "game_type" in df_y:
+                seasons_post[y] = df_y[df_y["game_type"].isin(POSTSEASON)]
                 df_y = df_y[df_y["game_type"].isin(keep_types)]
             seasons_raw[y] = df_y
 
@@ -575,6 +576,8 @@ if main == "Summary":
         rows_c4, chunks = [], []
         for per in sorted(periods, key=period_order):
             raw_y = seasons_raw.get(per.season, pd.DataFrame())
+            if per.kind == "post":
+                raw_y = seasons_post.get(per.season, pd.DataFrame())
             if raw_y.empty:
                 continue
             win = resolve_period(per, raw_y["game_date"])
@@ -726,6 +729,9 @@ if main == "Summary":
             if per.kind == "season":
                 splits = stats(pid, "fielding", "season", season=per.season, sportId=1)
                 start_d, end_d, plabel = date(per.season, 3, 1), date(per.season, 11, 30), "Season"
+            elif per.kind == "post":
+                splits = stats(pid, "fielding", "season", season=per.season, sportId=1, gameType="P")
+                start_d, end_d, plabel = date(per.season, 9, 28), date(per.season, 11, 5), "Postseason"
             else:
                 win = resolve_period(per, game_dates(per.season))
                 if not win:
@@ -743,7 +749,8 @@ if main == "Summary":
                 if not m["G"]:
                     continue
                 mid = start_d + (end_d - start_d) / 2
-                lead = {"Year": per.season, "Period": plabel, "Age": age_years(mid), "Type": "Reg",
+                lead = {"Year": per.season, "Period": plabel, "Age": age_years(mid),
+                        "Type": "Post" if per.kind == "post" else "Reg",
                         "ORG": ", ".join(filter(None, (abbr(per.season, t) for t in m["team_ids"]))),
                         "LVL >": "MLB", "Pos >": m["Pos"]}
                 vals = {k: m[k] for k in ("N", "INN", "PO", "A", "E", "DP", "SB", "CS", "CS%", "T_OPPS")}

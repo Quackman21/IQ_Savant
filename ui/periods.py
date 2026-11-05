@@ -25,13 +25,15 @@ MONTHS = [10, 9, 8, 7, 6, 5, 4, 3]          # newest first, like the reference
 class Period:
     code: str            # "2026", "2026-wk", "2026-30", "2026-09"
     season: int
-    kind: str            # season | week | last30 | month
+    kind: str            # season | post | week | last30 | month
     month: int = 0
 
     @property
     def short(self) -> str:
         if self.kind == "season":
             return str(self.season)
+        if self.kind == "post":
+            return f"{self.season} | Postseason"
         if self.kind == "week":
             return f"{self.season} | Latest Week"
         if self.kind == "last30":
@@ -42,7 +44,7 @@ class Period:
 def display_order(p: "Period") -> tuple:
     """Rows: newest season first; inside a season Latest Week, Last 30 Days,
     months newest -> oldest, and the full Season row LAST."""
-    rank = {"week": 0, "last30": 1, "month": 2, "season": 99}[p.kind]
+    rank = {"post": -1, "week": 0, "last30": 1, "month": 2, "season": 99}[p.kind]
     return (-p.season, rank, -p.month)
 
 
@@ -50,7 +52,7 @@ def options(seasons: list[int], by_month: bool = True) -> list[Period]:
     out = [Period(str(y), y, "season") for y in seasons]
     if by_month:
         for y in seasons:
-            out += [Period(f"{y}-wk", y, "week"), Period(f"{y}-30", y, "last30")]
+            out += [Period(f"{y}-post", y, "post"), Period(f"{y}-wk", y, "week"), Period(f"{y}-30", y, "last30")]
             out += [Period(f"{y}-{m:02d}", y, "month", m) for m in MONTHS]
     return out
 
@@ -60,6 +62,8 @@ def resolve(p: Period, game_dates: pd.Series) -> tuple[date, date, str] | None:
     Latest Week / Last 30 Days end on the last game played that season."""
     if p.kind == "season":
         return date(p.season, 3, 1), date(p.season, 11, 30), "Season"
+    if p.kind == "post":                       # filtered by game type, not dates
+        return date(p.season, 9, 1), date(p.season, 11, 30), "Postseason"
     if p.kind == "month":
         last = calendar.monthrange(p.season, p.month)[1]
         return date(p.season, p.month, 1), date(p.season, p.month, last), calendar.month_abbr[p.month]
@@ -75,19 +79,36 @@ def resolve(p: Period, game_dates: pd.Series) -> tuple[date, date, str] | None:
 # ----------------------------------------------------------------------------
 # Streamlit widget
 # ----------------------------------------------------------------------------
-def picker(key: str, seasons: list[int], by_month: bool = True, default_n: int = 3) -> list[Period]:
+def default_codes(seasons: list[int], by_month: bool = True, today: date | None = None) -> set[str]:
+    """In season (Apr-Sep): latest season + this month and last month.
+    Offseason (Oct-Mar): latest season + its Postseason + every month of that season."""
+    if not seasons:
+        return set()
+    today = today or date.today()
+    y = seasons[0]
+    codes = {str(y)}
+    if not by_month:
+        return codes
+    if today.year == y and 4 <= today.month <= 9:
+        return codes | {f"{y}-{m:02d}" for m in (today.month, today.month - 1)}
+    return codes | {f"{y}-post"} | {f"{y}-{m:02d}" for m in MONTHS}
+
+
+def picker(key: str, seasons: list[int], by_month: bool = True, default_n: int = 1) -> list[Period]:
     import streamlit as st
 
     opts = options(seasons, by_month)
     ck = lambda p: f"{key}__{p.code}"
-    defaults = {p.code for p in opts if p.kind == "season" and p.season in seasons[:default_n]}
+    defaults = default_codes(seasons, by_month)
+    if not by_month:                                  # season-only sections: latest season(s)
+        defaults = {str(y) for y in seasons[:default_n]}
 
     # first visit (or new player): tick the defaults
     sig = f"{key}__sig"
-    if st.session_state.get(sig) != tuple(seasons):
+    if st.session_state.get(sig) != (3, tuple(seasons)):
         for p in opts:
             st.session_state[ck(p)] = p.code in defaults
-        st.session_state[sig] = tuple(seasons)
+        st.session_state[sig] = (3, tuple(seasons))
 
     chosen = [p for p in opts if st.session_state.get(ck(p))]
     names = [p.short for p in chosen]

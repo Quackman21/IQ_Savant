@@ -15,7 +15,12 @@ from core import hit_metrics as hm
 
 CSS = """
 <style>
-.ht{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:96px;margin-bottom:-84px}
+.ht{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+/* always-visible horizontal scrollbar (macOS hides it otherwise) */
+.ht::-webkit-scrollbar{height:12px}
+.ht::-webkit-scrollbar-track{background:#f1f3f2;border-radius:6px}
+.ht::-webkit-scrollbar-thumb{background:#9aa4ad;border-radius:6px;border:2px solid #f1f3f2}
+.ht::-webkit-scrollbar-thumb:hover{background:#6a7681}
 .ht table{border-collapse:collapse;width:100%;white-space:nowrap;font-family:system-ui,sans-serif;color:#16202b;
   border:1px solid #d9dee2}
 .ht th{font:700 13px system-ui,sans-serif;color:#16202b;text-align:center;padding:9px 10px;
@@ -27,9 +32,12 @@ CSS = """
 .ht td.cnt{color:#33404c}
 .ht .sep{border-left:1.5px solid #6a7681}
 .ht tr.avg td{color:#6a7681;font-style:italic;background:#fafbfb}
-.ht th[data-tip]:hover::after{content:attr(data-tip);white-space:pre-line;position:absolute;top:100%;left:0;
+.ht th[data-tip]:hover::after{content:attr(data-tip);white-space:pre-line;
+  /* opens over the header row itself, so it fits inside the scrolling table box (no extra space needed) */
+  position:absolute;top:3px;left:0;
   z-index:50;background:#5f5f5f;color:#fff;font:400 13px/1.35 system-ui,sans-serif;text-align:left;
-  padding:8px 11px;border-radius:6px;min-width:240px;max-width:420px;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+  padding:7px 11px;border-radius:6px;min-width:220px;max-width:380px;width:max-content;
+  box-shadow:0 2px 8px rgba(0,0,0,.25);text-transform:none;letter-spacing:0}
 .ht th.r[data-tip]:hover::after{left:auto;right:0}
 .ht td.c{cursor:pointer}
 .ht td.c:focus{outline:2px solid #16202b;outline-offset:-2px}

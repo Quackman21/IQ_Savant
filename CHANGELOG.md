@@ -1,5 +1,18 @@
 # IQ Savant – version history
 
+## v14.3 – 2026-11-05
+- New "Postseason" period in the Periods panel (Core 4 + Defense): postseason games only, shown as its
+  own row above the months.
+- Default Periods: offseason (Oct-Mar) = latest season's Postseason + every month (Oct -> Mar) + the
+  Season row. In season (Apr-Sep) = this month + last month + the Season row.
+
+## v14.2 – 2026-11-05
+- Wide tables: horizontal scrollbar sits right under the table, is always visible and can be grabbed
+  (the space reserved for hover definitions used to cover it). Hover definitions now open over the
+  header row so they never need extra space.
+- Default Periods: the latest season + its two most recent months (in season: this month and last
+  month; offseason: Sep and Aug). Season-only sections default to the latest season.
+
 ## v14.1 – 2026-11-05
 - Catcher framing now comes from our own framing model (models/framing.py) built from public pitch
   data: framing opps, framing runs and arm side / glove side / top / bottom percentiles for ANY
