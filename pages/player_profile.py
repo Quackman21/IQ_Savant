@@ -22,6 +22,9 @@ from ui.core4 import table_html as core4_table
 import math
 
 from core import defense as dfn
+from core import pitch_metrics as pm
+from ui import pitching as pitch_ui
+from ui.pitching import table_html as pitching_table
 from ui.defense import table_html as defense_table
 from ui.hitting import overview_html, tab_html
 from ui.periods import picker as period_picker
@@ -179,6 +182,38 @@ def age_years(day) -> str:
         return f"{(day - bd).days / 365.25:.1f}"
     except (ValueError, NameError):
         return "-"
+
+
+def log_window(group: str, year: int, start, end) -> list[dict]:
+    """Game-by-game splits (MLB game log) between two dates -- works for months / weeks / windows,
+    which MLB's season totals can't do for fielding."""
+    out = []
+    for s_ in stats(pid, group, "gameLog", season=year, sportId=1):
+        try:
+            d = date.fromisoformat(s_.get("date", ""))
+        except ValueError:
+            continue
+        if start <= d <= end:
+            out.append(s_)
+    return out
+
+
+def period_window(per):
+    """(start, end, label) for a period; Latest Week / Last 30 Days end on the player's last game."""
+    if per.kind == "season":
+        return date(per.season, 3, 1), date(per.season, 11, 30), "Season"
+    if per.kind == "post":
+        return date(per.season, 9, 28), date(per.season, 11, 5), "Postseason"
+    log = stats(pid, "hitting", "gameLog", season=per.season, sportId=1)
+    return resolve_period(per, pd.Series([s_.get("date") for s_ in log]))
+
+
+def hitting_splits(per, start, end) -> list[dict]:
+    if per.kind == "season":
+        return stats(pid, "hitting", "season", season=per.season, sportId=1)
+    if per.kind == "post":
+        return stats(pid, "hitting", "season", season=per.season, sportId=1, gameType="P")
+    return log_window("hitting", per.season, start, end)
 
 
 def seg(label, options, default=None, key=None, disabled=False, help=None, collapsed=False,
@@ -410,9 +445,13 @@ try:
     career_pa = sum_stats(stats(pid, "hitting", "yearByYear")).get("plateAppearances", 0)
 except Exception:
     career_pa = 0
+try:
+    career_pitch_g = sum_stats(stats(pid, "pitching", "yearByYear")).get("gamesPlayed", 0)
+except Exception:
+    career_pitch_g = 0
 primary = p.get("primaryPosition", {}).get("abbreviation", "")
 games_at = position_games(field, since=TODAY.year - 2)
-SUB_TABS = summary_tabs(primary, games_at, career_pa)
+SUB_TABS = summary_tabs(primary, games_at, career_pa, career_pitch_g) or ["Hitting"]
 
 # tab bars styled like the reference: main = bold uppercase with underline,
 # sub = grey "A | B | C" links with the active one green and underlined
@@ -633,33 +672,45 @@ if main == "Summary":
 
     # ---------------------------------------------------------------- BASERUNNING
     elif sub == "Baserunning":
-        c = st.columns([1.6, 1.6, 2.2, 1.6])
+        c = st.columns([2.3, 1.3, 2.4, 1.0, 1.7])
         with c[0]:
             st.caption("Periods")
-            periods = sorted({p_.season for p_ in period_picker("br", years, by_month=False)}, reverse=True)
-        with c[2]:
-            seg("Split By", ["Level", "Org", "Team"], key="br_by", disabled=True, help="Coming soon")
+            periods = period_picker("br", years)
         with c[3]:
-            disp = seg("Display", ["Stats", "Percentiles"], default="Stats", key="br_disp") or "Stats"
+            seg("Split By", ["Level", "Org", "Team"], key="br_by", help="Level / Org arrive with MiLB")
+        with c[4]:
+            seg("Display", ["Stats", "Percentiles"], default="Stats", key="br_disp")
+        if not periods:
+            st.caption("Pick at least one period.")
+            st.stop()
 
-        tabs = st.tabs(["Advancing", "Base Stealing", "Tools"])
-        with tabs[0]:
-            show(empty_html("Advancing (extra bases taken) is set up and waiting for a data source."))
-        with tabs[1]:
-            rows = {}
-            for y in periods:
-                s = sum_stats(stats(pid, "hitting", "season", season=y, sportId=1))
-                if s:
-                    sb, cs = s.get("stolenBases", 0), s.get("caughtStealing", 0)
-                    rows[str(y)] = {"SB": sb, "CS": cs, "Att": sb + cs,
-                                    "SB%": f"{100 * sb / (sb + cs):.1f}" if sb + cs else "-",
-                                    "G": s.get("gamesPlayed", 0)}
-            show(table_html(rows, "Season"))
-        with tabs[2]:
-            if disp == "Stats":
-                show(table_html(board_stats("sprint", periods, pid), "Season"))
-            else:
-                show(percentile_html(board_percentiles("sprint", periods, pid)))
+        rows_b = []
+        for per in sorted(periods, key=period_order):
+            win = period_window(per)
+            if not win:
+                continue
+            start_d, end_d, plabel = win
+            hit = sum_stats(hitting_splits(per, start_d, end_d))
+            if not hit.get("gamesPlayed") and not hit.get("plateAppearances"):
+                continue
+            sb, cs = hit.get("stolenBases", 0), hit.get("caughtStealing", 0)
+            vals = {"G": hit.get("gamesPlayed", 0), "PA": hit.get("plateAppearances", 0), "SB": sb, "CS": cs,
+                    "SB_ATT": sb + cs, "SB%": sb / (sb + cs) if sb + cs else math.nan}
+            if per.kind == "season":
+                spr = row_for(board("sprint", per.season), pid)
+                vals.update({"SPRINT": dfn.col(spr, "sprint_speed"), "HP1B": dfn.col(spr, "hp_to_1b"),
+                             "BOLTS": dfn.col(spr, "bolts")})
+            mid = start_d + (end_d - start_d) / 2
+            lead = {"Year": per.season, "Period": plabel, "Age": age_years(mid),
+                    "Type": "Post" if per.kind == "post" else "Reg", "ORG": "", "LVL >": "MLB", "Pos >": ""}
+            rows_b.append({"lead": lead, "vals": vals, "pct": {}, "season_row": per.kind == "season"})
+
+        tabs = st.tabs(list(dfn.BR_TABS))
+        for tab, name in zip(tabs, dfn.BR_TABS):
+            with tab:
+                show(defense_table(dfn.BR_TABS[name], rows_b))
+        st.caption("RVA (run value on the bases), leads and grades stay blank until our models are built. "
+                   "Sprint speed / home-to-first are full seasons only.")
 
     # ---------------------------------------------------------------- DEFENSE
     elif sub == "Defense":
@@ -733,12 +784,11 @@ if main == "Summary":
                 splits = stats(pid, "fielding", "season", season=per.season, sportId=1, gameType="P")
                 start_d, end_d, plabel = date(per.season, 9, 28), date(per.season, 11, 5), "Postseason"
             else:
-                win = resolve_period(per, game_dates(per.season))
+                win = period_window(per)
                 if not win:
                     continue
                 start_d, end_d, plabel = win
-                splits = stats(pid, "fielding", "byDateRange", season=per.season, sportId=1,
-                               startDate=start_d.isoformat(), endDate=min(end_d, TODAY).isoformat())
+                splits = log_window("fielding", per.season, start_d, end_d)
             team_sets = [None]
             if by_team:
                 team_sets = sorted({s_.get("team", {}).get("id") for s_ in splits if s_.get("team", {}).get("id")})
@@ -796,65 +846,116 @@ if main == "Summary":
 
     # ---------------------------------------------------------------- PITCHING
     elif sub == "Pitching":
-        c = st.columns([1.5, 1.1, 1.2, 0.6, 1.2, 0.9])
+        c = st.columns([2.3, 1.3, 2.6, 1.2])
         with c[0]:
-            mode = seg("Mode", ["Game", "Season", "Dates"], default="Season", key="pit_mode", collapsed=True) or "Season"
+            st.caption("Periods")
+            periods = period_picker("pit", p_years)
         with c[1]:
-            season = st.selectbox("Seasons", p_years, key="pit_season")
+            cat = st.selectbox("Stat Category", ["Regular", "Postseason", "Reg + Post"], key="pit_cat")
         with c[2]:
-            cat = st.selectbox("Stat Category", ["Regular", "Postseason"], key="pit_cat")
-        with c[4]:
-            split = seg("Split", ["Platoon"], key="pit_split")
-        with c[5]:
-            st.write("")
-            avgs = st.toggle("Show Avgs", key="pit_avgs")
+            split_pick = st.multiselect("Splits", list(pm.SPLITS), key="pit_splits",
+                                        help="Cluster is waiting on our pitch-cluster model")
+        if not periods:
+            st.caption("Pick at least one period.")
+            st.stop()
+        split_dims = [pm.SPLITS[x] for x in split_pick if pm.SPLITS[x] not in pm.MODEL_SPLITS]
+        if "Cluster" in split_pick:
+            st.caption("Cluster split is blank until our pitch-cluster model is built.")
 
-        gtype = "R" if cat == "Regular" else "P"
-        start, end, label = f"{season}-03-01", f"{season}-11-30", str(season)
-        if mode == "Dates":
-            rng = st.date_input("Dates", [date(season, 4, 1), min(date(season, 9, 30), TODAY)],
-                                format="MM/DD/YYYY", key="pit_dates")
-            if len(rng) == 2:
-                start, end = rng[0].isoformat(), rng[1].isoformat()
-                label = f"{rng[0].month}/{rng[0].day}–{rng[1].month}/{rng[1].day}"
-        elif mode == "Game":
-            log = stats(pid, "pitching", "gameLog", season=season, gameType=gtype, sportId=1)
-            if log:
-                g = st.selectbox("Game", list(reversed(log)), key="pit_game",
-                                 format_func=lambda s: f'{s.get("date", "")} '
-                                 f'{"vs" if s.get("isHome") else "@"} {s.get("opponent", {}).get("name", "")}')
-                start = end = g.get("date", start)
-                label = g.get("date", "")
+        keep_types = {"Regular": {"R"}, "Postseason": POSTSEASON, "Reg + Post": {"R"} | POSTSEASON}[cat]
+        raw_by_year, post_by_year = {}, {}
+        for y in sorted({p_.season for p_ in periods}, reverse=True):
+            d_y = pm.prep(statcast_p(pid, f"{y}-03-01", f"{y}-11-30"))
+            if not d_y.empty:
+                post_by_year[y] = d_y[d_y["game_type"].isin(POSTSEASON)]
+                d_y = d_y[d_y["game_type"].isin(keep_types)]
+            raw_by_year[y] = d_y
 
-        sc = statcast_p(pid, start, end)
-        if not sc.empty and "game_type" in sc:
-            sc = sc[sc["game_type"].eq("R")] if gtype == "R" else sc[sc["game_type"].isin(POSTSEASON)]
+        pitch_opts = ["All"]
+        for d_y in raw_by_year.values():
+            if not d_y.empty:
+                pitch_opts += [x for x in d_y["pitch"].value_counts().index if x not in pitch_opts]
+        with c[3]:
+            pitch_pick = st.selectbox("Pitch", pitch_opts, key="pit_pitch")
+        pitch_f = None if pitch_pick == "All" else pitch_pick
 
-        def rows_for(fn):
-            if split == "Platoon":
-                return {f"{label} {k}" if k != "All" else label: v for k, v in pitching.by_platoon(sc, fn).items()}
-            return {label: fn(sc)}
+        period_data, rows_p = [], []
+        for per in sorted(periods, key=period_order):
+            d_y = post_by_year.get(per.season) if per.kind == "post" else raw_by_year.get(per.season)
+            if d_y is None or d_y.empty:
+                continue
+            win = resolve_period(per, pd.Series(d_y["game_date"].astype(str)))
+            if not win:
+                continue
+            start_d, end_d, plabel = win
+            part = d_y[(d_y["game_date"] >= start_d) & (d_y["game_date"] <= end_d)]
+            if part.empty:
+                continue
+            period_data.append((f"{per.season} {plabel}", part))
+            for labels, vals in pm.table_rows(part, split_dims, pitch_f):
+                rows_p.append({"year": per.season, "period": plabel, "labels": labels, "vals": vals,
+                               "season_row": per.kind == "season"})
 
-        tabs = st.tabs(["Overview", "Arsenal", "Results", "Percentiles"])
-        with tabs[0]:
-            if mode == "Season":
-                splits = stats(pid, "pitching", "season", season=season, gameType=gtype, sportId=1)
+        tabs = st.tabs(["Summary", "Details", "Pillars", "Rates", "Plot", "Usage", "Location", "Trends"])
+        for tab, name in zip(tabs[:4], ("Summary", "Details", "Pillars", "Rates")):
+            with tab:
+                show(pitching_table(pm.TABLE_TABS[name], rows_p, split_dims))
+
+        chart_names = [nm for nm, _ in period_data]
+
+        def chart_data(key):
+            if not period_data:
+                return pd.DataFrame()
+            pick = st.selectbox("Chart period", chart_names, key=key) if len(chart_names) > 1 else chart_names[0]
+            d_c = dict(period_data)[pick]
+            return d_c[d_c["pitch"] == pitch_f] if pitch_f else d_c
+
+        with tabs[4]:
+            d_c = chart_data("pit_plot_period")
+            charts = pitch_ui.plot_charts(d_c) if not d_c.empty else []
+            cols3 = st.columns(3)
+            for col_, ch in zip(cols3, charts):
+                with col_:
+                    st.altair_chart(ch, use_container_width=True)
+        with tabs[5]:
+            d_c = chart_data("pit_usage_period")
+            ch = pitch_ui.usage_chart(d_c, "count" in split_dims) if not d_c.empty else None
+            if ch is not None:
+                st.altair_chart(ch, use_container_width="count" not in split_dims)
+        with tabs[6]:
+            d_c = chart_data("pit_loc_period")
+            rows_dims = [x for x in ("hand", "count", "risp") if x in split_dims]
+            ch = pitch_ui.location_chart(d_c, rows_dims) if not d_c.empty else None
+            if ch is not None:
+                st.altair_chart(ch)
+            st.caption("Catcher's view. Dot colouring by pitch grade comes with our pitch models.")
+        with tabs[7]:
+            tc = st.columns([1.6, 1.3, 1.2, 1.2])
+            with tc[0]:
+                mode = seg("Trend", ["By Appearance", "Last 400 Pit"], default="By Appearance", key="pit_tr_mode",
+                           collapsed=True) or "By Appearance"
+            with tc[1]:
+                prop = st.selectbox("Property", list(pitch_ui.TREND_PROPS), key="pit_tr_prop")
+            with tc[2]:
+                start_y = st.selectbox("Start Season", sorted(p_years), index=max(0, len(p_years) - 3)
+                                       if len(p_years) >= 3 else 0, key="pit_tr_start")
+            with tc[3]:
+                tr_pitch = st.selectbox("Pitch", pitch_opts, key="pit_tr_pitch")
+            frames = []
+            for y in sorted(x for x in p_years if x >= start_y):
+                d_y = pm.prep(statcast_p(pid, f"{y}-03-01", f"{y}-11-30"))
+                if not d_y.empty:
+                    frames.append(d_y[d_y["game_type"].isin(keep_types)])
+            tf = pitch_ui.trend_frame(pd.concat(frames) if frames else pd.DataFrame(), prop, mode,
+                                      None if tr_pitch == "All" else tr_pitch) if frames else pd.DataFrame()
+            ch = pitch_ui.trend_chart(tf, prop, mode) if not tf.empty else None
+            if ch is not None:
+                st.altair_chart(ch, use_container_width=True)
             else:
-                splits = stats(pid, "pitching", "byDateRange", startDate=start, endDate=end, gameType=gtype, sportId=1)
-            line = {label: pitching.stat_line(s.get("stat", {})) for s in splits[-1:]}
-            if avgs:
-                lr = pitching.league_rates(league_p(season))
-                line["MLB Avg"] = {k: lr.get(k, "-") for k in next(iter(line.values()), lr)}
-            show(table_html(line, "", {"MLB Avg"}))
-            show(table_html(rows_for(pitching.overview)))
-        with tabs[1]:
-            show(table_html(pitching.arsenal(sc), "Pitch"))
-            st.caption("IVB / HB in inches (catcher's view). Velo in mph, spin in rpm, extension in feet.")
-        with tabs[2]:
-            show(table_html(pitching.results(sc), "Pitch"))
-        with tabs[3]:
-            show(percentile_html(board_percentiles("p_percentiles", [season], pid, already=True)))
-            st.caption(f"Savant percentile ranks vs. MLB pitchers, {season}.")
+                show(empty_html("No pitches in those seasons."))
+
+        st.caption("Grades, expected rates, shape, command, spin efficiency, seam-shifted movement, zone-adjusted "
+                   "approach angles and clusters stay blank until our pitch models are built.")
 
 # =============================================================================
 # STATS

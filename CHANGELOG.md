@@ -1,5 +1,26 @@
 # IQ Savant – version history
 
+## v15 – 2026-11-05
+- Pitching rebuilt to match Hitting / Core 4 / Defense: same Periods panel (months, postseason, bold
+  Season block), one row per Statcast pitch type in each period, pitch-colored labels.
+- Tabs: Summary, Details, Pillars, Rates, Plot, Usage, Location, Trends.
+- Filled from public Statcast: #, %, velo / max / top-8th velo, release height / side / extension,
+  arm angle (2024+), IVB, HB (arm side +), spin, spin direction, observed movement direction, VAA, HAA,
+  actual swing / ball-on-take / whiff rates, actual run value on balls in play; movement plots, usage
+  (by batter hand, by count), plate-location maps, 5-game / 400-pitch rolling trends.
+- Splits: Games, Batter Hand, Count (First Pitch 0-0 / Hitter's = balls > strikes except 3-2 /
+  Pitcher's = strikes > balls plus 2-2; other counts excluded), RISP, Cluster (blank — model later).
+- Blank for our models: aResults, xResults, Command, ActL/ActR, Location grade, Shape (vL/vR), Miss,
+  expected rates (xSw / xBl / xWf / xIPRV), spin efficiency, seam-shifted movement, ZAVAA / ZAHAA, clusters.
+- Hitting sections only show for players who have hit; Pitching only for players who have pitched.
+
+## v14.4 – 2026-11-05
+- Defense month / week / last-30 rows now fill in: built from the player's game-by-game fielding log
+  (MLB's date-range totals don't support fielding, which is why those rows were missing).
+- Baserunning gets the same Periods picker with months, postseason and the bold Season row, in the
+  same table style: Advancing, Base Stealing (G, PA, SB attempts, SB, CS, SB%), Tools (sprint speed,
+  home to first, bolts — full seasons). RVA, leads and grades blank for our models.
+
 ## v14.3 – 2026-11-05
 - New "Postseason" period in the Periods panel (Core 4 + Defense): postseason games only, shown as its
   own row above the months.

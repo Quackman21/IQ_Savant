@@ -180,12 +180,15 @@ def ip_outs(ip) -> int:
 
 def mlb_counts(splits: list[dict], positions: list[str]) -> dict:
     """Sum MLB fielding splits for the chosen positions."""
+    for s in splits:                                   # game logs keep the position inside "stat"
+        if "position" not in s and isinstance(s.get("stat", {}).get("position"), dict):
+            s["position"] = s["stat"]["position"]
     keep = [s for s in splits if s.get("position", {}).get("abbreviation") in positions]
     tot = {"N": 0, "PO": 0, "A": 0, "E": 0, "DP": 0, "outs": 0, "SB": 0, "CS": 0, "G": 0}
     played = []
     for s in keep:
         st = s.get("stat", {})
-        g = st.get("gamesPlayed", st.get("games", 0)) or 0
+        g = st.get("gamesPlayed", st.get("games", 1 if st else 0)) or 0
         if g:
             played.append(s["position"]["abbreviation"])
         tot["N"] += st.get("chances", 0) or 0
@@ -249,3 +252,34 @@ def framing_zones(row: pd.Series | None, board: pd.DataFrame, throws: str = "R")
         if pd.notna(v) and not b.empty:
             out[key] = 100 * (b < v).mean()
     return out
+
+
+
+# ----------------------------------------------------------------------------
+# Baserunning (same table style; RVA = our run value model, blank for now)
+# ----------------------------------------------------------------------------
+_RVA = [("RVA", "RVA Total", "Run Value Added on the bases (our model — coming)", B),
+        ("RVA_ADV", "RVA Advancing", "Run Value Added advancing on hits / outs (our model — coming)", B),
+        ("RVA_SB", "RVA Base Stealing", "Run Value Added stealing bases (our model — coming)", B)]
+BR_ADVANCING = [*_RVA, "|",
+                ("ADV_OPPS", "Advance Opps", "Opportunities to take an extra base", B),
+                ("ATT%", "Attempt%", "Rate of extra-base attempts", B),
+                ("ATT_EXP", "Attempt% Over Exp.", "Attempt rate above expected", B), "|",
+                ("RVA_TAG", "RVA Tag", "Run value tagging up", B), ("RVA_HIT", "RVA Base Hit", "Run value on base hits", B),
+                ("RVA_GB", "RVA GB Out", "Run value on ground-ball outs", B)]
+BR_STEALING = [*_RVA, "|",
+               ("G", "G", "Games", "int"), ("PA", "PA", "Plate appearances", "int"), "|",
+               ("SB_ATT", "SB Attempts", "Stolen base attempts", "int"),
+               ("SB%", "SB Success%", "Stolen base success rate", "pct"),
+               ("SB", "SB", "Stolen bases", "int"), ("RVA_SB1", "RVA SB", "Run value from stolen bases", B),
+               ("CS", "CS", "Caught stealing", "int"), ("RVA_CS", "RVA CS", "Run value lost to caught stealing", B)]
+BR_TOOLS = [("SPRINT", "Sprint Speed", "Statcast sprint speed, ft/sec (full seasons)", "num1"),
+            ("HP1B", "HP to 1B", "Home to first time, seconds (full seasons)", "num2"),
+            ("BOLTS", "Bolts", "Runs of 30+ ft/sec (full seasons)", "int"), "|",
+            ("LEAD2_1", "Secondary Lead 1st", "Secondary lead off first (Statcast 2023+ — coming)", B),
+            ("LEAD2_2", "Secondary Lead 2nd", "Secondary lead off second (coming)", B),
+            ("LEAD1_1", "Primary Lead 1st", "Primary lead off first (coming)", B),
+            ("LEAD1_2", "Primary Lead 2nd", "Primary lead off second (coming)", B), "|",
+            _g("HTF Grade", "Home-to-first grade"), _g("OOB Grade", "Out-of-the-box grade"),
+            _g("Max Speed Grade", "Max speed grade"), _g("Acceleration Grade", "Acceleration grade")]
+BR_TABS = {"Advancing": BR_ADVANCING, "Base Stealing": BR_STEALING, "Tools": BR_TOOLS}

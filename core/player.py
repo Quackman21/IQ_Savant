@@ -142,14 +142,15 @@ def position_games(fielding_splits: list[dict], since: int) -> dict[str, int]:
     return out
 
 
-def summary_tabs(primary: str, games: dict[str, int], career_pa: int) -> list[str]:
-    """Hitting / Core 4 / Defense / Baserunning / Pitching,
-    depending on where the player actually plays."""
+def summary_tabs(primary: str, games: dict[str, int], career_pa: int, career_pitch_g: int = 0) -> list[str]:
+    """Hitting / Core 4 / Defense / Baserunning and/or Pitching.
+    Hitting sections only if the player has ever hit (any PA, or a non-pitcher);
+    Pitching only if he has ever pitched."""
     def plays(group: set[str], primary_hit: bool) -> bool:
         return primary_hit or sum(games.get(p, 0) for p in group) >= MIN_GAMES
 
-    pitcher = primary == "P" or games.get("P", 0) >= MIN_GAMES or primary == "TWP"
-    hitter = primary != "P" or career_pa >= 50 or primary == "TWP"
+    pitcher = primary in ("P", "TWP") or career_pitch_g > 0 or games.get("P", 0) > 0
+    hitter = primary != "P" or career_pa > 0
     tabs: list[str] = []
     if pitcher and primary in ("P", "TWP"):
         tabs.append("Pitching")

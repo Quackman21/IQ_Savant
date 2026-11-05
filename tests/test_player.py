@@ -55,7 +55,10 @@ def test_summary_tabs_by_position():
     assert defense_tabs("C", g) == ["Catching", "Infield"]
     assert defense_tabs("SS", {"SS": 100, "2B": 30, "LF": 15}) == ["Infield", "Outfield"]
     assert defense_tabs("CF", {"CF": 150}) == ["Outfield"]
-    assert summary_tabs("P", {"P": 60}, 0) == ["Pitching"]
-    assert summary_tabs("TWP", {"P": 20}, 1500)[0] == "Pitching"
+    assert summary_tabs("P", {"P": 60}, 0) == ["Pitching"]                     # never hit
+    assert summary_tabs("P", {"P": 60}, 3)[0] == "Pitching" and "Hitting" in summary_tabs("P", {"P": 60}, 3)
+    assert "Pitching" not in summary_tabs("SS", {"SS": 100}, 500, 0)            # never pitched
+    assert summary_tabs("SS", {"SS": 100}, 500, 1)[-1] == "Pitching"
+    assert summary_tabs("TWP", {"P": 20}, 1500, 20)[0] == "Pitching"
     assert "Hitting" in summary_tabs("TWP", {"P": 20}, 1500)
     assert summary_tabs("DH", {}, 600) == ["Hitting", "Core 4", "Baserunning"]
