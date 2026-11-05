@@ -94,21 +94,22 @@ def default_codes(seasons: list[int], by_month: bool = True, today: date | None 
     return codes | {f"{y}-post"} | {f"{y}-{m:02d}" for m in MONTHS}
 
 
-def picker(key: str, seasons: list[int], by_month: bool = True, default_n: int = 1) -> list[Period]:
+def picker(key: str, seasons: list[int], by_month: bool = True, default_n: int = 1,
+           season_only_default: bool = False) -> list[Period]:
     import streamlit as st
 
     opts = options(seasons, by_month)
     ck = lambda p: f"{key}__{p.code}"
     defaults = default_codes(seasons, by_month)
-    if not by_month:                                  # season-only sections: latest season(s)
+    if not by_month or season_only_default:           # latest season(s) only
         defaults = {str(y) for y in seasons[:default_n]}
 
     # first visit (or new player): tick the defaults
     sig = f"{key}__sig"
-    if st.session_state.get(sig) != (3, tuple(seasons)):
+    if st.session_state.get(sig) != (3, tuple(seasons), tuple(sorted(defaults))):
         for p in opts:
             st.session_state[ck(p)] = p.code in defaults
-        st.session_state[sig] = (3, tuple(seasons))
+        st.session_state[sig] = (3, tuple(seasons), tuple(sorted(defaults)))
 
     chosen = [p for p in opts if st.session_state.get(ck(p))]
     names = [p.short for p in chosen]

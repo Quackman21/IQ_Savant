@@ -1,5 +1,11 @@
 # IQ Savant – version history
 
+## v15.1 – 2026-11-05
+- Pitching opens on the current season's averages only (one row per pitch); months, postseason and
+  earlier seasons are still in the Periods panel.
+- Pitching gets the Evaluation Method toggle (20-80 | Percentile | Plus) like Core 4. Grade columns
+  stay blank until our pitch models exist; their hover text follows the chosen method.
+
 ## v15 – 2026-11-05
 - Pitching rebuilt to match Hitting / Core 4 / Defense: same Periods panel (months, postseason, bold
   Season block), one row per Statcast pitch type in each period, pitch-colored labels.

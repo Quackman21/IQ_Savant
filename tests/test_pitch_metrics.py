@@ -47,3 +47,13 @@ def test_rows_and_splits():
     assert pm.table_rows(d, [], pitch="SL")[0][0]["Pitch"] == "SL" and len(pm.table_rows(d, [], pitch="SL")) == 1
     v = rows[0][1]
     assert 0 <= v["ASW"] <= 1 and 0 <= v["ABL"] <= 1
+
+
+def test_evaluation_method_headers_and_grades():
+    from ui.pitching import table_html
+    rows = [{"year": 2026, "period": "Season", "labels": {"Pitch": "FF"},
+             "vals": {"N": 500, "ACTL_Z": 1.0}, "season_row": True}]
+    plus = table_html(pm.SUMMARY, rows, [], "Plus")
+    assert "Plus (100 = average)" in plus and ">110<" in plus          # a future model's z = 1 -> 110 on Plus
+    assert ">60<" in table_html(pm.SUMMARY, rows, [], "20-80")
+    assert ">84<" in table_html(pm.SUMMARY, rows, [], "Percentile")

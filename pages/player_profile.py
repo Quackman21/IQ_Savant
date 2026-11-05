@@ -846,10 +846,12 @@ if main == "Summary":
 
     # ---------------------------------------------------------------- PITCHING
     elif sub == "Pitching":
-        c = st.columns([2.3, 1.3, 2.6, 1.2])
+        c = st.columns([2.3, 1.3, 2.4, 1.1, 2.1])
         with c[0]:
             st.caption("Periods")
-            periods = period_picker("pit", p_years)
+            periods = period_picker("pit", p_years, season_only_default=True)
+        with c[4]:
+            scale = seg("Evaluation Method", c4.SCALES, default="20-80", key="pit_scale") or "20-80"
         with c[1]:
             cat = st.selectbox("Stat Category", ["Regular", "Postseason", "Reg + Post"], key="pit_cat")
         with c[2]:
@@ -899,7 +901,7 @@ if main == "Summary":
         tabs = st.tabs(["Summary", "Details", "Pillars", "Rates", "Plot", "Usage", "Location", "Trends"])
         for tab, name in zip(tabs[:4], ("Summary", "Details", "Pillars", "Rates")):
             with tab:
-                show(pitching_table(pm.TABLE_TABS[name], rows_p, split_dims))
+                show(pitching_table(pm.TABLE_TABS[name], rows_p, split_dims, scale))
 
         chart_names = [nm for nm, _ in period_data]
 

@@ -27,7 +27,25 @@ def _cell_fmt(v, f: str) -> str:
     return _fmt(v, f)
 
 
-def table_html(spec: list, rows: list[dict], split_dims: list[str]) -> str:
+SCALE_WORD = {"20-80": "20-80 Grade", "Percentile": "Percentile", "Plus": "Plus (100 = average)"}
+
+
+def _desc(desc: str, f: str, scale: str) -> str:
+    if f != "grade":
+        return desc
+    d = desc.replace("20-80 Grade", SCALE_WORD[scale]).replace("20-80 Action Grade", f"{SCALE_WORD[scale]}, Action")
+    d = d.replace("converted to the 20-80 scale", f"converted to the {scale} scale")
+    return d + "\n(blank until our pitch model is built)"
+
+
+def _grade_cell(r: dict, key: str, scale: str) -> str:
+    """Grade columns: a model will put a z-score in vals[KEY + '_Z']; shown on the chosen scale."""
+    from core.core4 import fmt_grade, to_scale
+    z = r["vals"].get(f"{key}_Z")
+    return "" if z is None else fmt_grade(to_scale(z, scale))
+
+
+def table_html(spec: list, rows: list[dict], split_dims: list[str], scale: str = "20-80") -> str:
     """rows = [{"year", "period", "labels": {...,"Pitch"}, "vals": {...}, "season_row": bool}]"""
     if not rows:
         return CSS + '<div class="ht-note">No pitches for this selection.</div>'
@@ -44,7 +62,7 @@ def table_html(spec: list, rows: list[dict], split_dims: list[str]) -> str:
     n = len(cols)
     head = "<tr>" + "".join(f'<th style="text-align:left;cursor:default">{h}</th>' for h in lead)
     head += "".join(f'<th class="{"sep " if i in seps else ""}{"r" if i > n / 2 else ""}" '
-                    f'data-tip="{escape(desc)}">{escape(label)}</th>'
+                    f'data-tip="{escape(_desc(desc, _f, scale))}">{escape(label)}</th>'
                     for i, (_, label, desc, _f) in enumerate(cols)) + "</tr>"
     body = ""
     keyof = lambda r: (r["year"], r["period"], r.get("season_row"))
@@ -64,7 +82,8 @@ def table_html(spec: list, rows: list[dict], split_dims: list[str]) -> str:
                  + "".join(f'<td class="lbl">{escape(str(lab.get(d, "")))}</td>' for d in split_dims)
                  + f'<td class="pt" style="color:{color}">{escape(pt)}</td>')
         for i, (key, _, _, f) in enumerate(cols):
-            body += f'<td class="{"sep" if i in seps else ""}">{escape(_cell_fmt(r["vals"].get(key), f))}</td>'
+            txt = _grade_cell(r, key, scale) if f == "grade" else _cell_fmt(r["vals"].get(key), f)
+            body += f'<td class="{"sep" if i in seps else ""}">{escape(txt)}</td>'
         body += "</tr>"
     return CSS + SEASON_CSS + PITCH_CSS + f'<div class="ht"><table class="pin">{head}{body}</table></div>'
 
