@@ -18,6 +18,7 @@ import numpy as np
 import pandas as pd
 
 from core.statcast_clean import clean
+from models.decisions import good_decision
 from models.xwoba import expected_woba
 
 # ----------------------------------------------------------------------------
@@ -64,6 +65,8 @@ S = Stat
 CATALOG: dict[str, Stat] = {s.key: s for s in [
     # counts
     S("PIT", "PIT", "Pitches seen", "count", "pit", fmt="int", good=0),
+    S("K%", "K%", "Strikeout rate\n[Strikeouts / PA]", "ratio", "k", "pa", good=-1),
+    S("BB%", "BB%", "Walk rate\n[Walks (incl. intentional) / PA]", "ratio", "bb", "pa", good=1),
     S("SWG", "SWG", "Swings", "count", "swing", fmt="int", good=0),
     S("PA", "PA", "Plate appearances", "count", "pa", fmt="int", good=0),
     S("BIP", "BIP", "Balls in play", "count", "bip", fmt="int", good=0),
@@ -86,6 +89,8 @@ CATALOG: dict[str, Stat] = {s.key: s for s in [
       "ratio", "xw", "wden", fmt="rate3", good=1),
     S("xwOBACON", "xwOBACON", "Expected wOBA on contact\n[Expected value per ball in play]",
       "ratio", "xw_bip", "bip_w", fmt="rate3", good=1),
+    S("wOBACON", "wOBACON", "wOBA on contact\n[Actual wOBA value per ball in play]",
+      "ratio", "wv_bip", "bip_w", fmt="rate3", good=1),
     S("wOBA", "wOBA", "Weighted on-base average\n[Actual wOBA value / wOBA denominator]",
       "ratio", "wv", "wden", fmt="rate3", good=1),
     # contact quality
@@ -100,7 +105,7 @@ CATALOG: dict[str, Stat] = {s.key: s for s in [
     S("EV>95", "EV>95", "Rate of tracked BIP over 95 mph\n[ExitVelo > 95]", "ratio", "ev_gt95", "trk", good=1),
     S("EV>100", "EV>100", "Rate of tracked BIP over 100 mph\n[ExitVelo > 100]", "ratio", "ev_gt100", "trk", good=1),
     S("EV>105", "EV>105", "Rate of tracked BIP over 105 mph\n[ExitVelo > 105]", "ratio", "ev_gt105", "trk", good=1),
-    S("BARREL%", "BARREL%", "Rate of tracked BIP that are barrels\n[Statcast barrel: ideal EV + LA combination]",
+    S("BARREL%", "BARREL%", "Rate of BIP where xBA ≥ .500 and xSLG ≥ 1.500\n(Statcast barrel flag if xBA / xSLG missing)",
       "ratio", "barrel", "trk", good=1),
     # batted-ball types (they add to 100%)
     S("WEAK GB%", "WEAK GB%", "Rate of weak ground balls\n[LA ≥ -90° and LA < -30°] or [ExitSpeed ≤ 50 and LA ≥ -30° and LA < 10°]",
@@ -109,6 +114,56 @@ CATALOG: dict[str, Stat] = {s.key: s for s in [
     S("FB%", "FB%", "Rate of fly balls\n[ExitVelo > 70 and LA ≥ 10° and LA < 51°]", "ratio", "fb", "trk", good=0),
     S("WEAK FB%", "WEAK FB%", "Rate of weak fly balls\n[LA ≥ 51° and LA < 90°] or [ExitSpeed ≤ 70 and LA ≥ 10° and LA < 51°]",
       "ratio", "weak_fb", "trk", good=-1),
+    S("LD%", "LD%", "Rate of BIP where 10° ≤ LA ≤ 30°", "ratio", "ld", "trk", good=0),
+    S("LD+FB%", "LD+FB%", "Line Drive + Fly Ball Rate\n[BIP that are line drives or fly balls]", "ratio", "ldfb", "trk", good=0),
+    S("LAHHB", "LAHHB", "Launch Angle Hard Hit Balls\n[Average LA on BIP ≥ 95 mph]", "mean", "la_hh", fmt="num1", good=0),
+    S("ATTACK", "Attack ∠", "Attack Angle\n[Average bat attack angle at contact, Statcast bat tracking]",
+      "mean", "attack_angle", fmt="num1", good=0),
+    S("EV (FLY)", "EV (Fly)", "Average Exit Velocity on fly balls", "mean", "ev_fb", fmt="num1", good=1),
+    S("90th EV (FLY)", "90th EV (Fly)", "90th Percentile Exit Velocity on fly balls", "q90", "ev_fb", fmt="num1", good=1),
+    S("MAX EV (FLY)", "MAX EV (Fly)", "Max Fly Ball Exit Velocity", "max", "ev_fb", fmt="num1", good=1),
+    # bat tracking (Statcast, 2023+)
+    S("# BAT SPEEDS", "# Bat Speeds", "Number of swings with a Statcast bat speed reading", "count", "bs_n", fmt="int", good=0),
+    S("AVG BAT SPEED", "Avg Bat Speed", "Average Statcast bat speed", "mean", "bat_speed", fmt="num1", good=1),
+    S("TOP 8TH BAT SPEED", "Top 8th Bat Speed", "Average of top 8th Statcast bat speeds", "top8", "bat_speed", fmt="num1", good=1),
+    S("SWING LENGTH", "Swing Length", "Average swing length (feet), Statcast bat tracking",
+      "mean", "swing_length", fmt="num1", good=0),
+    # bat-to-ball
+    S("CONT%", "Cont%", "Rate of contact (BIP/foul) given swing", "ratio", "contact", "swing", good=1),
+    S("Z-CONT%", "Z-Cont%", "Rate of contact (BIP/foul) given swing on pitch in zone", "ratio", "z_contact", "z_swing", good=1),
+    S("Z-CONT% (HARD)", "Z-Cont% (Hard)", "Rate of contact (BIP/foul) given swing on hard pitch in zone\n[Hard = fastballs: FF, SI, FC]",
+      "ratio", "zh_contact", "zh_swing", good=1),
+    S("Z-CONT% (SOFT)", "Z-Cont% (Soft)", "Rate of contact (BIP/foul) given swing on soft pitch in zone\n[Soft = breaking + offspeed]",
+      "ratio", "zs_contact", "zs_swing", good=1),
+    S("H-CONT%", "H-Cont%", "Rate of contact (BIP/foul) given swing on pitch in heart", "ratio", "h_contact", "h_swing", good=1),
+    S("S-CONT%", "S-Cont%", "Rate of contact (BIP/foul) given swing on pitch in shadow", "ratio", "s_contact", "s_swing", good=1),
+    S("C-CONT%", "C-Cont%", "Rate of contact (BIP/foul) given swing on pitch in chase", "ratio", "c_contact", "c_swing", good=1),
+    S("W-CONT%", "W-Cont%", "Rate of contact (BIP/foul) given swing on pitch in waste", "ratio", "w_contact", "w_swing", good=1),
+    # swing decisions (decision model in models/decisions.py)
+    S("DECISIONS", "Decisions", "Number of pitches with a corresponding Decision Grade", "count", "dec", fmt="int", good=0),
+    S("0-0 DECISIONS", "0-0 Decisions", "Number of first pitches with a corresponding Decision Grade",
+      "count", "dec_00", fmt="int", good=0),
+    S("<2K DECISIONS", "<2k Decisions", "Number of pitches in less than 2-strike counts with a corresponding Decision Grade",
+      "count", "dec_lt2", fmt="int", good=0),
+    S("2K DECISIONS", "2k Decisions", "Number of pitches in 2-strike counts with a corresponding Decision Grade",
+      "count", "dec_2k", fmt="int", good=0),
+    S("FB DECISIONS", "FB Decisions", "Number of fastballs with a corresponding Decision Grade", "count", "dec_fb", fmt="int", good=0),
+    S("BB DECISIONS", "BB Decisions", "Number of breaking balls with a corresponding Decision Grade", "count", "dec_bb", fmt="int", good=0),
+    S("OS DECISIONS", "OS Decisions", "Number of offspeed pitches with a corresponding Decision Grade", "count", "dec_os", fmt="int", good=0),
+    S("GD%", "GD%", "Rate of good decisions\n(placeholder decision model until ours is built)", "ratio", "gd", "dec", good=1),
+    S("GD% 0-0", "GD% 0-0", "Rate of good decisions on first pitch", "ratio", "gd_00", "dec_00", good=1),
+    S("GD% <2K", "GD% <2k", "Rate of good decisions with less than two strikes", "ratio", "gd_lt2", "dec_lt2", good=1),
+    S("GD% 2K", "GD% 2k", "Rate of good decisions with two strikes", "ratio", "gd_2k", "dec_2k", good=1),
+    S("GD% FB", "GD% FB", "Rate of good decisions on fastballs", "ratio", "gd_fb", "dec_fb", good=1),
+    S("GD% BB", "GD% BB", "Rate of good decisions on breaking balls", "ratio", "gd_bb", "dec_bb", good=1),
+    S("GD% OS", "GD% OS", "Rate of good decisions on offspeed", "ratio", "gd_os", "dec_os", good=1),
+    S("CHASE%", "Chase%", "Rate of batter swing given out-of-zone pitch", "ratio", "o_swing", "o_pit", good=-1),
+    S("PRE2K O-SWING%", "Pre2k O-Swing%", "Rate of chase (before 2 strikes)", "ratio", "o_swing_lt2", "o_pit_lt2", good=-1),
+    S("2K O-SWING%", "2k O-Swing%", "Rate of chase (with 2 strikes)", "ratio", "o_swing_2k", "o_pit_2k", good=-1),
+    S("H-SWING%", "H-Swing%", "Rate of swing per heart pitch", "ratio", "h_swing", "h_pit", good=1),
+    S("S-SWING%", "S-Swing%", "Rate of swing per shadow pitch", "ratio", "s_swing", "s_pit", good=0),
+    S("C-SWING%", "C-Swing%", "Rate of swing per chase pitch", "ratio", "c_swing", "c_pit", good=-1),
+    S("W-SWING%", "W-Swing%", "Rate of swing per waste pitch", "ratio", "w_swing", "w_pit", good=-1),
     # direction
     S("PULL%", "PULL%", "Rate of BIP to pull side\n[RHB & SprayAngle ≤ -15° or LHB & SprayAngle ≥ 15°]",
       "ratio", "pull", "spr", good=0),
@@ -210,7 +265,10 @@ def prep(df: pd.DataFrame, model: str | None = None) -> pd.DataFrame:
         d[col] = trk & (ev < t)
     for t in (90, 95, 100, 105):
         d[f"ev_gt{t}"] = trk & (ev > t)
-    d["barrel"] = trk & _col(df, "launch_speed_angle").eq(6)
+    xba, xslg = _col(df, "estimated_ba_using_speedangle"), _col(df, "estimated_slg_using_speedangle")
+    has_x = xba.notna() & xslg.notna()
+    d["barrel"] = trk & np.where(has_x, (xba >= 0.5) & (xslg >= 1.5), _col(df, "launch_speed_angle").eq(6))
+    d["ld"] = trk & (la >= 10) & (la <= 30)
 
     d["weak_gb"] = trk & (((la >= -90) & (la < -30)) | ((ev <= 50) & (la >= -30) & (la < 10)))
     d["gb"] = trk & (ev > 50) & (la >= -30) & (la < 10)
@@ -225,6 +283,9 @@ def prep(df: pd.DataFrame, model: str | None = None) -> pd.DataFrame:
     d["oppo"] = spr & np.where(rhb, spray >= 15, spray <= -15)
     d["mid"] = spr & (spray > -15) & (spray < 15)
     d["airpull"] = spr & (ev > 80) & (la >= 10) & (la <= 45) & np.where(rhb, spray <= -10, spray >= 10)
+    d["ldfb"] = d["ld"] | d["fb"]
+    d["la_hh"] = la.where(trk & (ev >= 95))
+    d["ev_fb"] = ev.where(d["fb"])
     d["fb_spr"] = d["fb"] & spr
     d["fb_pull"] = d["fb"] & d["pull"]
 
@@ -235,10 +296,57 @@ def prep(df: pd.DataFrame, model: str | None = None) -> pd.DataFrame:
     d["xw"] = xw.fillna(0).where(wden > 0, 0)
     d["bip_w"] = bip & (wden > 0)
     d["xw_bip"] = xw.fillna(0).where(d["bip_w"], 0)
+    d["wv_bip"] = d["wv"].where(d["bip_w"], 0)
+
+    # strikeouts / walks
+    d["k"] = ev_.isin(["strikeout", "strikeout_double_play"])
+    d["bb"] = ev_.isin(["walk", "intent_walk"])
+
+    # bat tracking (Statcast 2023+)
+    bs = _col(df, "bat_speed")
+    d["bat_speed"] = bs.where(d["swing"] & bs.notna())
+    d["bs_n"] = d["bat_speed"].notna()
+    d["swing_length"] = _col(df, "swing_length").where(d["bs_n"])
+    d["attack_angle"] = _col(df, "attack_angle").where(d["swing"])
+
+    # contact by zone / pitch hardness / attack zone
+    contact = d["swing"] & ~d["whiff"]
+    att = attack_zone(df)
+    hard = _col(df, "pitch_type", "").isin(FASTBALLS)
+    d["contact"] = contact
+    d["z_contact"] = contact & is_z
+    d["zh_swing"], d["zh_contact"] = d["swing"] & is_z & hard, contact & is_z & hard
+    d["zs_swing"], d["zs_contact"] = d["swing"] & is_z & ~hard, contact & is_z & ~hard
+    for code, name in (("h", "Heart"), ("s", "Shadow"), ("c", "Chase"), ("w", "Waste")):
+        z_ = att.eq(name)
+        d[f"{code}_pit"], d[f"{code}_swing"], d[f"{code}_contact"] = z_, d["swing"] & z_, contact & z_
+
+    # chase by count
+    strikes = _col(df, "strikes", 0).fillna(0)
+    balls = _col(df, "balls", 0).fillna(0)
+    two_k = strikes >= 2
+    d["o_pit_lt2"], d["o_swing_lt2"] = is_o & ~two_k, d["o_swing"] & ~two_k
+    d["o_pit_2k"], d["o_swing_2k"] = is_o & two_k, d["o_swing"] & two_k
+
+    # swing decisions (model in models/decisions.py)
+    good = good_decision(df, d["swing"], att)
+    dec = good.notna()
+    g1 = good.fillna(0).astype(float)
+    pg = pitch_group(df)
+    first = (balls == 0) & (strikes == 0)
+    for suffix, mask in (("", dec), ("_00", dec & first), ("_lt2", dec & ~two_k), ("_2k", dec & two_k),
+                         ("_fb", dec & pg.eq("Fastball")), ("_bb", dec & pg.eq("Breaking")),
+                         ("_os", dec & pg.eq("Offspeed"))):
+        d[f"dec{suffix}"] = mask
+        d[f"gd{suffix}"] = g1.where(mask, 0)
+
+    # batting team (for Split By Team)
+    top = _col(df, "inning_topbot", "").eq("Top")
+    d["bat_team"] = _col(df, "away_team", "").where(top, _col(df, "home_team", ""))
 
     # groupings
     d["zone_io"] = pd.Series(np.select([is_z, is_o], ["In Zone", "Out of Zone"], None), index=df.index)
-    d["attack"] = attack_zone(df)
+    d["attack"] = att
     d["count_grp"] = count_group(df)
     d["platoon"] = _col(df, "p_throws", "").map({"L": "vs LHP", "R": "vs RHP"})
     d["pitch_grp"] = pitch_group(df)
@@ -248,10 +356,19 @@ def prep(df: pd.DataFrame, model: str | None = None) -> pd.DataFrame:
 # ----------------------------------------------------------------------------
 # Aggregation
 # ----------------------------------------------------------------------------
-SUM_COLS = ["pit", "swing", "whiff", "foul", "z_pit", "o_pit", "z_swing", "o_swing", "z_whiff", "o_whiff",
-            "pa", "bip", "trk", "ev_lt80", "ev_gt90", "ev_gt95", "ev_gt100", "ev_gt105", "barrel",
-            "weak_gb", "gb", "fb", "weak_fb", "spr", "pull", "oppo", "mid", "airpull", "fb_spr", "fb_pull",
-            "wden", "wv", "xw", "bip_w", "xw_bip"]
+def _needs():
+    sums, shapes = set(), set()
+    for st_ in CATALOG.values():
+        if st_.kind == "count":
+            sums.add(st_.a)
+        elif st_.kind == "ratio":
+            sums.update((st_.a, st_.b))
+        else:
+            shapes.add((st_.kind, st_.a))
+    return sorted(sums), sorted(shapes)
+
+
+SUM_COLS, SHAPES = _needs()
 
 
 def _top8(s: pd.Series) -> float:
@@ -261,21 +378,31 @@ def _top8(s: pd.Series) -> float:
     return s.nlargest(max(1, math.ceil(len(s) / 8))).mean()
 
 
+def _shape(x, kind, grouped: bool):
+    if kind == "mean":
+        return x.mean()
+    if kind == "max":
+        return x.max()
+    if kind == "q90":
+        return x.quantile(0.9)
+    return x.apply(_top8) if grouped else _top8(x)
+
+
 def compute(d: pd.DataFrame, by: list[str] | None = None, keys: list[str] | None = None) -> pd.DataFrame:
     """Stat values (raw numbers) per group. by=None -> one row, index 'All'."""
     keys = keys or ALL_KEYS
     if d is None or d.empty:
         return pd.DataFrame(columns=keys)
+    missing = {c: 0 for c in SUM_COLS if c not in d} | {c: np.nan for _, c in SHAPES if c not in d}
+    if missing:
+        d = d.assign(**missing)
     if by:
         g = d.groupby(by, dropna=True, observed=True)
         sums = g[SUM_COLS].sum()
-        ev = g["ev"]
-        extra = pd.DataFrame({"la_mean": g["la"].mean(), "ev_mean": ev.mean(), "ev_max": ev.max(),
-                              "ev_q90": ev.quantile(0.9), "ev_top8": ev.apply(_top8)})
+        extra = pd.DataFrame({f"{k}:{c}": _shape(g[c], k, True) for k, c in SHAPES})
     else:
         sums = d[SUM_COLS].sum().to_frame("All").T
-        extra = pd.DataFrame({"la_mean": [d["la"].mean()], "ev_mean": [d["ev"].mean()], "ev_max": [d["ev"].max()],
-                              "ev_q90": [d["ev"].quantile(0.9)], "ev_top8": [_top8(d["ev"])]}, index=["All"])
+        extra = pd.DataFrame({f"{k}:{c}": [_shape(d[c], k, False)] for k, c in SHAPES}, index=["All"])
     sums = sums.astype(float)
     out = pd.DataFrame(index=sums.index)
     for k in keys:
@@ -285,14 +412,8 @@ def compute(d: pd.DataFrame, by: list[str] | None = None, keys: list[str] | None
         elif s.kind == "ratio":
             den = sums[s.b]
             out[k] = (sums[s.a] / den).where(den > 0)
-        elif s.kind == "mean":
-            out[k] = extra[f"{s.a}_mean"]
-        elif s.kind == "max":
-            out[k] = extra["ev_max"]
-        elif s.kind == "q90":
-            out[k] = extra["ev_q90"]
-        elif s.kind == "top8":
-            out[k] = extra["ev_top8"]
+        else:
+            out[k] = extra[f"{s.kind}:{s.a}"]
     return out
 
 

@@ -63,11 +63,51 @@ def build(d: pd.DataFrame, min_pa: int = hm.SD_MIN_PA, model: str | None = None)
     return out
 
 
-def save(ref: pd.DataFrame, season: int) -> Path:
+def signature() -> str:
+    """Fingerprint of everything that changes the numbers: stat definitions, the pitch
+    flags in prep(), the reference builder, and which xwOBA / decision models are active.
+    If it changes, saved reference files are out of date. (Comments and page layout
+    changes don't affect it.)"""
+    import hashlib
+    import inspect
+
+    from models import decisions, xwoba
+    parts = [repr(sorted((k, s.kind, s.a, s.b) for k, s in hm.CATALOG.items())),
+             inspect.getsource(hm.prep), inspect.getsource(build), str(hm.SD_MIN_PA), str(hm.SPRAY_SCALE),
+             xwoba.ACTIVE, inspect.getsource(xwoba.MODELS[xwoba.ACTIVE]),
+             decisions.ACTIVE, inspect.getsource(decisions.MODELS[decisions.ACTIVE])]
+    return hashlib.sha1("\n".join(parts).encode()).hexdigest()[:12]
+
+
+def _meta_path(season: int) -> Path:
+    return DATA / f"hitting_{season}.json"
+
+
+def save(ref: pd.DataFrame, season: int, last_game: str | None = None) -> Path:
+    import json
+    from datetime import datetime
     DATA.mkdir(parents=True, exist_ok=True)
     p = DATA / f"hitting_{season}.csv.gz"
     ref.to_csv(p, index=False)
+    _meta_path(season).write_text(json.dumps({
+        "signature": signature(), "built": datetime.now().isoformat(timespec="seconds"),
+        "last_game": last_game}, indent=1))
     return p
+
+
+def meta(season: int) -> dict:
+    import json
+    try:
+        return json.loads(_meta_path(season).read_text())
+    except (OSError, ValueError):
+        return {}
+
+
+def status(season: int) -> str:
+    """'missing' | 'stale' (built with older definitions) | 'current'."""
+    if not (DATA / f"hitting_{season}.csv.gz").exists():
+        return "missing"
+    return "current" if meta(season).get("signature") == signature() else "stale"
 
 
 def load(season: int) -> dict:

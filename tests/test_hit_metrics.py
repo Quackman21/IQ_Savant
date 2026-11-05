@@ -117,3 +117,45 @@ def test_nullable_pybaseball_types():
     from core import league_ref
     nullable["batter"] = 1
     assert not league_ref.build(hm.prep(nullable), min_pa=0).empty
+
+
+def _located(desc, px, pz, strikes=0, pitch="FF", **kw):
+    """A pitch at a plate location (zone 3.4 / 1.6 ft): center = (0, 2.5)."""
+    return dict(type="S" if desc != "ball" else "B", description=desc, events=None, plate_x=px, plate_z=pz,
+                sz_top=3.4, sz_bot=1.6, strikes=strikes, balls=0, pitch_type=pitch, stand="R",
+                zone=5 if abs(px) < 0.7 and 1.6 < pz < 3.4 else 13, **kw)
+
+
+def test_decisions_placeholder_and_swing_zones():
+    rows = [
+        _located("foul", 0, 2.5),                       # heart swing  -> good
+        _located("called_strike", 0, 2.5),              # heart take   -> bad
+        _located("ball", 0, 3.9),                       # chase take   -> good
+        _located("swinging_strike", 0, 3.9, strikes=2), # chase swing  -> bad (2k)
+        _located("called_strike", 0.75, 2.5, strikes=2),# shadow take with 2k -> bad
+        _located("ball", 0.75, 2.5),                    # shadow take <2k -> fine
+    ]
+    v = hm.compute(hm.prep(pd.DataFrame(rows))).iloc[0]
+    assert v["DECISIONS"] == 6 and math.isclose(v["GD%"], 3 / 6)
+    assert v["2K DECISIONS"] == 2 and v["GD% 2K"] == 0
+    assert math.isclose(v["H-SWING%"], 0.5) and v["C-SWING%"] == 0.5
+    assert v["2K O-SWING%"] == 0.5                      # 2 two-strike pitches out of zone, 1 swung at
+    assert math.isclose(v["H-CONT%"], 1.0)              # the heart swing was a foul (contact)
+
+
+def test_ball_flight_and_barrel_definition():
+    rows = [_bip(100, 20, estimated_ba_using_speedangle=0.6, estimated_slg_using_speedangle=1.6),   # barrel (xBA/xSLG)
+            _bip(100, 20, estimated_ba_using_speedangle=0.6, estimated_slg_using_speedangle=1.2),   # not a barrel
+            _bip(96, 40), _bip(80, 5)]
+    v = hm.compute(hm.prep(pd.DataFrame(rows))).iloc[0]
+    assert math.isclose(v["BARREL%"], 1 / 4)
+    assert math.isclose(v["LD%"], 2 / 4)                # LA 20, 20
+    assert math.isclose(v["LAHHB"], (20 + 20 + 40) / 3) # hard-hit = EV >= 95
+    assert v["MAX EV (FLY)"] == 100 and math.isclose(v["EV (FLY)"], (100 + 100 + 96) / 3)
+
+
+def test_bat_tracking():
+    rows = [_pitch("foul", 5, bat_speed=70, swing_length=7), _pitch("swinging_strike", 5, bat_speed=76, swing_length=7.4),
+            _pitch("called_strike", 5, bat_speed=None)]
+    v = hm.compute(hm.prep(pd.DataFrame(rows))).iloc[0]
+    assert v["# BAT SPEEDS"] == 2 and v["AVG BAT SPEED"] == 73 and v["TOP 8TH BAT SPEED"] == 76

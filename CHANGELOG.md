@@ -1,5 +1,30 @@
 # IQ Savant – version history
 
+## v13.1 – 2026-11-05
+- New: python -m pipeline.update -- one command that rebuilds only what's needed (missing seasons,
+  seasons built with older stat definitions / models, and the current season during the year),
+  then commits + pushes. Safe to stop (Ctrl+C) and re-run any time. --check lists what's out of date.
+- Each league reference file now records which version of the definitions built it.
+- Pages show one quiet note when MLB comparisons are missing or out of date.
+
+## v13 – 2026-11-05
+- Core 4 built out: Core 4, Bat Speed, Bat-To-Ball, Swing Decisions, Ball Flight tabs with the
+  reference site's columns and hover definitions (proprietary Kinatrax / run-value columns replaced
+  by public Statcast equivalents or left for our own models).
+- Grades on a Grade Scale toggle: 20-80 (50 avg, 10/SD) | Percentile | Plus (100 avg, 10/SD).
+  Inputs in core/core4.py GRADES (Bat Speed <- top 1/8 EV, SC Bat Speed <- top 1/8 bat speed,
+  Bat-To-Ball <- Cont%, Decision <- GD%, Ball Flight <- xwOBACON).
+- Swing decision placeholder model (models/decisions.py) -- swap for ours later like xwOBA.
+- New Periods picker (compact button + scrollable panel): Default / Full Seasons / Curr Season,
+  full seasons, and per season Latest Week, Last 30 Days, and each month. Same look on Core 4,
+  Catching, Infield, Outfield and Baserunning (those use full seasons).
+- Split: Aggregate (row per period) or Combined; Split By Team; Stat Category Regular/Postseason/both;
+  Display Stats or Percentiles.
+- Barrel% now uses the reference definition (xBA >= .500 and xSLG >= 1.500) everywhere.
+- New catalog stats: K%, BB%, LD%, LD+FB%, LAHHB, Attack angle, fly-ball EV, bat speed, contact by
+  zone (Z/H/S/C/W, hard/soft), chase by count, swing rates by attack zone, decisions, wOBACON.
+- Rebuild the league reference with --force so the new stats get MLB averages.
+
 ## v12.1 – 2026-11-05
 - Fix: pybaseball returns blanks as <NA>, which crashed the league reference build (and could
   crash Calendar / Player Profile). All Statcast now goes through core/statcast_clean.py first.

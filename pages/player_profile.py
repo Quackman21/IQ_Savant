@@ -15,7 +15,11 @@ from core import hitting, league_ref, mlb_api, pitching
 from core.statcast_clean import clean
 from core.player import bio, draft_entry, position_games, signing_entry, summary_tabs
 from ui import data
+from core import core4 as c4
+from ui.core4 import table_html as core4_table
 from ui.hitting import overview_html, tab_html
+from ui.periods import picker as period_picker
+from ui.periods import resolve as resolve_period
 from ui.player import empty_html, header_html, percentile_html, table_html
 
 show = st.html if hasattr(st, "html") else (lambda h: st.markdown(h, unsafe_allow_html=True))
@@ -83,6 +87,19 @@ def league(season: int) -> dict:
 @st.cache_data(ttl=3600, show_spinner=False)
 def league_ref_for(season: int) -> dict:
     return league_ref.load(season)
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def ref_status(season: int) -> str:
+    return league_ref.status(season)
+
+
+def data_note(seasons) -> None:
+    """One quiet line when the MLB reference is missing / built with older definitions."""
+    bad = sorted({y for y in seasons if ref_status(y) != "current"})
+    if bad:
+        st.caption(f"MLB comparisons for {', '.join(map(str, bad))} are missing or built with older stat "
+                   "definitions — run `python -m pipeline.update` next time you step away.")
 
 
 @st.cache_data(ttl=24 * 3600, show_spinner=False)
@@ -429,9 +446,7 @@ if main == "Summary":
         d = hm.prep(sc)
         ref = league_ref_for(season)
         ctx = {"player": f'{b["first"]} {b["last"]}', "season_label": str(season)}
-        if not ref:
-            st.caption(f"Colours and MLB comparisons appear once the {season} league reference is built "
-                       f"(python -m pipeline.build_league_reference {season}).")
+        data_note([season])
 
         # rows down the side: zone grouping + any splits (apply to Rates / Contact / Exit)
         r = st.columns([3.2, 2.2, 1.6])
@@ -467,52 +482,106 @@ if main == "Summary":
 
     # ---------------------------------------------------------------- CORE 4
     elif sub == "Core 4":
-        c = st.columns([1.6, 1.1, 0.5, 1.6, 1.3, 1.3])
+        c = st.columns([2.3, 1.2, 1.5, 1.0, 1.7, 2.1])
         with c[0]:
-            periods = st.multiselect("Periods", years, default=years[:3], key="c4_periods")
+            st.caption("Periods")
+            periods = period_picker("c4", years)
         with c[1]:
-            agg = st.selectbox("Split", ["Aggregate", "By Season"], key="c4_split")
+            agg = st.selectbox("Split", ["Aggregate", "Combined"], key="c4_split",
+                               help="Aggregate = one row per period. Combined = all selected periods as one row.")
+        with c[2]:
+            cat = st.selectbox("Stat Category", ["Regular", "Postseason", "Reg + Post"], key="c4_cat")
         with c[3]:
-            seg("Split By", ["Level", "Org", "Team"], key="c4_by", disabled=True, help="Coming soon")
+            by_team = seg("Split By", ["Team"], key="c4_by") == "Team"
         with c[4]:
             disp = seg("Display", ["Stats", "Percentiles"], default="Stats", key="c4_disp") or "Stats"
         with c[5]:
-            st.selectbox("Relative to", ["MLB"], key="c4_rel")
-        periods = sorted(periods, reverse=True)
+            scale = seg("Grade Scale", c4.SCALES, default="20-80", key="c4_scale") or "20-80"
         if not periods:
-            st.caption("Pick at least one season.")
+            st.caption("Pick at least one period.")
             st.stop()
 
-        frames = {y: statcast(pid, f"{y}-03-01", f"{y}-11-30") for y in periods}
-        frames = {y: f[f["game_type"].eq("R")] if "game_type" in f else f for y, f in frames.items()}
-        if agg == "Aggregate":
-            nonempty = [f for f in frames.values() if not f.empty]
-            label = f"{min(periods)}–{max(periods)}" if len(periods) > 1 else str(periods[0])
-            groups_by_row = {label: hitting.core4(pd.concat(nonempty) if nonempty else pd.DataFrame())}
-        else:
-            groups_by_row = {str(y): hitting.core4(f) for y, f in frames.items()}
+        keep_types = {"Regular": {"R"}, "Postseason": POSTSEASON, "Reg + Post": {"R"} | POSTSEASON}[cat]
+        seasons_raw = {}
+        for y in sorted({p_.season for p_ in periods}, reverse=True):
+            df_y = statcast(pid, f"{y}-03-01", f"{y}-11-30")
+            if not df_y.empty and "game_type" in df_y:
+                df_y = df_y[df_y["game_type"].isin(keep_types)]
+            seasons_raw[y] = df_y
 
-        match = {"Core 4": ("bat_speed", "whiff", "chase", "brl", "xwoba"),
-                 "Bat Speed": ("bat_speed", "squared", "swing_length", "blast"),
-                 "Bat-To-Ball": ("whiff", "k_percent", "contact", "squared"),
-                 "Swing Decisions": ("chase", "bb_percent", "swing"),
-                 "Ball Flight": ("exit_velocity", "brl", "hard_hit", "sweet", "xslg", "launch", "xiso")}
-        tabs = st.tabs(list(match))
-        for tab, name in zip(tabs, match):
+        def age_at(day) -> str:
+            try:
+                bd = date.fromisoformat(p.get("birthDate", ""))
+                return f"{(day - bd).days / 365.25:.1f}"
+            except ValueError:
+                return "-"
+
+        def describe(df_, label_year, period_label, mid):
+            types = set(df_["game_type"].astype(str)) if "game_type" in df_ else {"R"}
+            typ = ", ".join(t for t, ok in (("Reg", "R" in types), ("Post", bool(types & POSTSEASON))) if ok)
+            return {"Year": label_year, "Period": period_label, "Age": age_at(mid), "Type": typ, "vs": "All"}
+
+        rows_c4, chunks = [], []
+        for per in periods:
+            raw_y = seasons_raw.get(per.season, pd.DataFrame())
+            if raw_y.empty:
+                continue
+            win = resolve_period(per, raw_y["game_date"])
+            if not win:
+                continue
+            start_d, end_d, plabel = win
+            gd = pd.to_datetime(raw_y["game_date"]).dt.date
+            part = raw_y[(gd >= start_d) & (gd <= end_d)]
+            if part.empty:
+                continue
+            chunks.append(part)
+            if agg == "Combined":
+                continue
+            dd = hm.prep(part)
+            ref_y = league_ref_for(per.season).get(("all", "All"), {})
+            mid = start_d + (end_d - start_d) / 2
+            groups = [(t, dd[dd["bat_team"] == t]) for t in sorted(dd["bat_team"].dropna().unique())] \
+                if by_team else [(", ".join(sorted(dd["bat_team"].dropna().unique())), dd)]
+            for team, g_ in groups:
+                if g_.empty:
+                    continue
+                lead = describe(part, per.season, plabel, mid)
+                lead["Team"] = team
+                rows_c4.append({"lead": lead, "vals": hm.compute(g_).iloc[0], "ref": ref_y})
+        if agg == "Combined" and chunks:
+            allp = pd.concat(chunks)
+            key_cols = [k for k in ("game_pk", "at_bat_number", "pitch_number") if k in allp]
+            if key_cols:
+                allp = allp.drop_duplicates(subset=key_cols)
+            dd = hm.prep(allp)
+            yrs = sorted({p_.season for p_ in periods})
+            label_year = str(yrs[0]) if len(yrs) == 1 else f"{yrs[0]}–{yrs[-1]}"
+            gd = pd.to_datetime(allp["game_date"]).dt.date
+            mid = gd.min() + (gd.max() - gd.min()) / 2
+            ref_y = league_ref_for(yrs[-1]).get(("all", "All"), {})
+            groups = [(t, dd[dd["bat_team"] == t]) for t in sorted(dd["bat_team"].dropna().unique())] \
+                if by_team else [(", ".join(sorted(dd["bat_team"].dropna().unique())), dd)]
+            for team, g_ in groups:
+                lead = describe(allp, label_year, "Combined", mid)
+                lead["Team"] = team
+                rows_c4.append({"lead": lead, "vals": hm.compute(g_).iloc[0], "ref": ref_y})
+
+        ctx = {"player": f'{b["first"]} {b["last"]}', "season_label": str(TODAY.year)}
+        data_note({p_.season for p_ in periods})
+        tabs = st.tabs(list(c4.TABS))
+        for tab, name in zip(tabs, c4.TABS):
             with tab:
-                if disp == "Stats":
-                    show(table_html({k: g[name] for k, g in groups_by_row.items()}))
-                else:
-                    pct = board_percentiles("percentiles", periods, pid, match[name], already=True)
-                    show(percentile_html(pct))
-                    st.caption("Savant percentile ranks vs. MLB"
-                               + (", averaged across the selected seasons." if len(periods) > 1 else "."))
+                show(core4_table(c4.TABS[name], rows_c4, ctx, scale, disp))
+        if any(int(str(r["lead"]["Year"])[:4]) < 2023 for r in rows_c4 if str(r["lead"]["Year"])[:4].isdigit()):
+            st.caption("Bat tracking (bat speed, swing length, attack angle) starts in 2023 — earlier seasons show –.")
+        st.caption("Decision stats use a placeholder decision model (models/decisions.py) until ours is built.")
 
     # ---------------------------------------------------------------- CATCHING
     elif sub == "Catching":
         c = st.columns([1.6, 1.6, 2.2, 1.6])
         with c[0]:
-            periods = sorted(st.multiselect("Periods", years, default=years[:3], key="ca_periods"), reverse=True)
+            st.caption("Periods")
+            periods = sorted({p_.season for p_ in period_picker("ca", years, by_month=False)}, reverse=True)
         with c[2]:
             seg("Split By", ["Level", "Org", "Team"], key="ca_by", disabled=True, help="Coming soon")
         with c[3]:
@@ -541,7 +610,8 @@ if main == "Summary":
     elif sub == "Baserunning":
         c = st.columns([1.6, 1.6, 2.2, 1.6])
         with c[0]:
-            periods = sorted(st.multiselect("Periods", years, default=years[:3], key="br_periods"), reverse=True)
+            st.caption("Periods")
+            periods = sorted({p_.season for p_ in period_picker("br", years, by_month=False)}, reverse=True)
         with c[2]:
             seg("Split By", ["Level", "Org", "Team"], key="br_by", disabled=True, help="Coming soon")
         with c[3]:
@@ -572,7 +642,8 @@ if main == "Summary":
         k = "if" if infield else "of"
         c = st.columns([1.6, 1.6, 2.2, 1.6])
         with c[0]:
-            periods = sorted(st.multiselect("Periods", years, default=years[:3], key=f"{k}_periods"), reverse=True)
+            st.caption("Periods")
+            periods = sorted({p_.season for p_ in period_picker(k, years, by_month=False)}, reverse=True)
         with c[2]:
             seg("Split By", ["Level", "Org", "Team"], key=f"{k}_by", disabled=True, help="Coming soon")
         with c[3]:

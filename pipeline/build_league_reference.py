@@ -79,9 +79,8 @@ def main(argv: list[str]) -> None:
     first = int(years[0])
     last = int(years[1]) if len(years) > 1 else first
     for season in range(first, last + 1):
-        path = league_ref.DATA / f"hitting_{season}.csv.gz"
-        if path.exists() and not force:
-            print(f"[{season}] already built — skipping ({path.name}). Use --force to rebuild.", flush=True)
+        if not force and league_ref.status(season) == "current":
+            print(f"[{season}] already up to date — skipping. Use --force to rebuild anyway.", flush=True)
             continue
         t = time.time()
         print(f"[{season}] pulling Statcast a week at a time…", flush=True)
@@ -91,7 +90,8 @@ def main(argv: list[str]) -> None:
             continue
         print(f"[{season}] {len(raw):,} pitches; computing…", flush=True)
         ref = league_ref.build(hm.prep(raw), model=xwoba.ACTIVE)
-        path = league_ref.save(ref, season)
+        last_game = str(pd.to_datetime(raw["game_date"]).max().date()) if "game_date" in raw else None
+        path = league_ref.save(ref, season, last_game)
         print(f"[{season}] saved {path} ({len(ref):,} rows) in {time.time() - t:.0f}s", flush=True)
         del raw, ref
 
