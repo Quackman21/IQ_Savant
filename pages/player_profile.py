@@ -19,6 +19,7 @@ from core import core4 as c4
 from ui.core4 import table_html as core4_table
 from ui.hitting import overview_html, tab_html
 from ui.periods import picker as period_picker
+from ui.periods import display_order as period_order
 from ui.periods import resolve as resolve_period
 from ui.player import empty_html, header_html, percentile_html, table_html
 
@@ -496,7 +497,7 @@ if main == "Summary":
         with c[4]:
             disp = seg("Display", ["Stats", "Percentiles"], default="Stats", key="c4_disp") or "Stats"
         with c[5]:
-            scale = seg("Grade Scale", c4.SCALES, default="20-80", key="c4_scale") or "20-80"
+            scale = seg("Evaluation Method", c4.SCALES, default="20-80", key="c4_scale") or "20-80"
         if not periods:
             st.caption("Pick at least one period.")
             st.stop()
@@ -522,7 +523,7 @@ if main == "Summary":
             return {"Year": label_year, "Period": period_label, "Age": age_at(mid), "Type": typ, "vs": "All"}
 
         rows_c4, chunks = [], []
-        for per in periods:
+        for per in sorted(periods, key=period_order):
             raw_y = seasons_raw.get(per.season, pd.DataFrame())
             if raw_y.empty:
                 continue
@@ -547,7 +548,8 @@ if main == "Summary":
                     continue
                 lead = describe(part, per.season, plabel, mid)
                 lead["Team"] = team
-                rows_c4.append({"lead": lead, "vals": hm.compute(g_).iloc[0], "ref": ref_y})
+                rows_c4.append({"lead": lead, "vals": hm.compute(g_).iloc[0], "ref": ref_y,
+                                "season_row": per.kind == "season"})
         if agg == "Combined" and chunks:
             allp = pd.concat(chunks)
             key_cols = [k for k in ("game_pk", "at_bat_number", "pitch_number") if k in allp]

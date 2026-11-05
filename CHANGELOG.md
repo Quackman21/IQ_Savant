@@ -1,5 +1,12 @@
 # IQ Savant – version history
 
+## v13.2 – 2026-11-05
+- Core 4: "Grade Scale" renamed "Evaluation Method" (20-80 | Percentile | Plus).
+- Row order per season: Latest Week, Last 30 Days, months newest -> oldest, then the full Season row
+  last -- bold with thick lines above and below.
+- Grade columns left blank (no inputs) until our own grade models are built.
+- No 20-80 cap: once grades are back, an extreme month can show 90+ (or below 20).
+
 ## v13.1 – 2026-11-05
 - New: python -m pipeline.update -- one command that rebuilds only what's needed (missing seasons,
   seasons built with older stat definitions / models, and the current season during the year),

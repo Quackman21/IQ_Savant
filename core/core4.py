@@ -1,11 +1,11 @@
 """Core 4: Bat Speed, Bat-To-Ball, Swing Decisions, Ball Flight.
 
-Grades are how many standard deviations a hitter is from MLB average on one
-input stat, shown on the scale the user picks:
-    20-80       50 = average, 10 points per standard deviation (clipped 20..80)
-    Percentile  share of MLB hitters he's better than (from the same z-score)
+Grade columns are in place but BLANK until our own grade models exist.
+When a model is ready, set its `stat` (or plug a model in) in GRADES below and
+the column fills in on the Evaluation Method the user picks:
+    20-80       50 = average, 10 points per standard deviation (NOT capped: a 90 month shows 90)
+    Percentile  share of MLB hitters he's better than
     Plus        100 = average, 10 points per standard deviation
-Each grade's input lives in GRADES below -- change it there to change the grade.
 """
 from __future__ import annotations
 
@@ -22,23 +22,23 @@ SCALES = ["20-80", "Percentile", "Plus"]
 class Grade:
     key: str
     label: str
-    stat: str             # catalog stat the grade is built from
+    stat: str | None      # input for the grade -- None = blank until our model is built
     desc: str
 
 
 GRADES = {g.key: g for g in [
-    Grade("BAT SPEED GRADE", "Bat Speed Grade", "HHEV",
+    Grade("BAT SPEED GRADE", "Bat Speed Grade", None,
           "20-80 Grade, Top 8th Exit Velocity\n(bat speed shows up in the hardest-hit balls)"),
-    Grade("SC BAT SPEED GRADE", "SC Bat Speed Grade", "TOP 8TH BAT SPEED", "20-80 Grade, Top 8th Statcast bat speed"),
-    Grade("B2B GRADE", "Bat-To-Ball Grade", "CONT%", "20-80 Grade, Bat-to-ball\n[from contact rate on swings]"),
-    Grade("DECISION GRADE", "Decision Grade", "GD%", "20-80 Grade, Swing Decision\n[from rate of good decisions]"),
-    Grade("0-0 DECISION GRADE", "0-0 Decision Grade", "GD% 0-0", "20-80 Grade, Swing Decision on first pitch"),
-    Grade("<2K DECISION GRADE", "<2k Decision Grade", "GD% <2K", "20-80 Grade, Swing Decision with less than two strikes"),
-    Grade("2K DECISION GRADE", "2k Decision Grade", "GD% 2K", "20-80 Grade, Swing Decision with two strikes"),
-    Grade("FB DECISION GRADE", "FB Decision Grade", "GD% FB", "20-80 Grade, Swing Decision on fastballs"),
-    Grade("BB DECISION GRADE", "BB Decision Grade", "GD% BB", "20-80 Grade, Swing Decision on breaking balls"),
-    Grade("OS DECISION GRADE", "OS Decision Grade", "GD% OS", "20-80 Grade, Swing Decision on offspeed"),
-    Grade("BALL FLIGHT GRADE", "Ball Flight Grade", "xwOBACON", "20-80 Grade, Ball Flight\n[from xwOBA on contact]"),
+    Grade("SC BAT SPEED GRADE", "SC Bat Speed Grade", None, "20-80 Grade, Top 8th Statcast bat speed"),
+    Grade("B2B GRADE", "Bat-To-Ball Grade", None, "20-80 Grade, Bat-to-ball\n[from contact rate on swings]"),
+    Grade("DECISION GRADE", "Decision Grade", None, "20-80 Grade, Swing Decision\n[from rate of good decisions]"),
+    Grade("0-0 DECISION GRADE", "0-0 Decision Grade", None, "20-80 Grade, Swing Decision on first pitch"),
+    Grade("<2K DECISION GRADE", "<2k Decision Grade", None, "20-80 Grade, Swing Decision with less than two strikes"),
+    Grade("2K DECISION GRADE", "2k Decision Grade", None, "20-80 Grade, Swing Decision with two strikes"),
+    Grade("FB DECISION GRADE", "FB Decision Grade", None, "20-80 Grade, Swing Decision on fastballs"),
+    Grade("BB DECISION GRADE", "BB Decision Grade", None, "20-80 Grade, Swing Decision on breaking balls"),
+    Grade("OS DECISION GRADE", "OS Decision Grade", None, "20-80 Grade, Swing Decision on offspeed"),
+    Grade("BALL FLIGHT GRADE", "Ball Flight Grade", None, "20-80 Grade, Ball Flight\n[from xwOBA on contact]"),
 ]}
 
 # Columns every Core 4 tab starts with (after Year / Period / Age / Type / Team / vs)
@@ -87,7 +87,7 @@ def to_scale(z: float, scale: str) -> float:
         return 100 * 0.5 * (1 + math.erf(z / math.sqrt(2)))
     if scale == "Plus":
         return 100 + 10 * z
-    return max(20.0, min(80.0, 50 + 10 * z))
+    return 50 + 10 * z              # no 20-80 cap on purpose: an extreme month should show as extreme
 
 
 def fmt_grade(v: float) -> str:
@@ -97,6 +97,8 @@ def fmt_grade(v: float) -> str:
 def grade(key: str, vals, ref_row: dict, scale: str) -> tuple[float, float]:
     """(grade on the chosen scale, z)."""
     g = GRADES[key]
+    if not g.stat:                    # model not built yet -> blank
+        return math.nan, math.nan
     z = z_score(vals.get(g.stat), ref_row, g.stat)
     return to_scale(z, scale), z
 
@@ -134,7 +136,7 @@ def label_of(key: str) -> str:
 
 def desc_of(key: str, scale: str = "20-80") -> str:
     if key in GRADES:
-        d = GRADES[key].desc
+        d = GRADES[key].desc + ("" if GRADES[key].stat else "\n(blank until our grade model is built)")
         return d.replace("20-80 Grade", {"20-80": "20-80 Grade", "Percentile": "Percentile",
                                          "Plus": "Plus (100 = average)"}[scale])
     if key in DERIVED:

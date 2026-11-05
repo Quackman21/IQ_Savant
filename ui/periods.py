@@ -39,6 +39,13 @@ class Period:
         return f"{self.season} | {calendar.month_abbr[self.month]}"
 
 
+def display_order(p: "Period") -> tuple:
+    """Rows: newest season first; inside a season Latest Week, Last 30 Days,
+    months newest -> oldest, and the full Season row LAST."""
+    rank = {"week": 0, "last30": 1, "month": 2, "season": 99}[p.kind]
+    return (-p.season, rank, -p.month)
+
+
 def options(seasons: list[int], by_month: bool = True) -> list[Period]:
     out = [Period(str(y), y, "season") for y in seasons]
     if by_month:

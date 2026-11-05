@@ -11,6 +11,10 @@ from core import hit_metrics as hm
 from ui.hitting import CSS, _popup, _z, cell, color
 
 LEAD = ["Year", "Period", "Age", "Type", "Team", "vs"]
+SEASON_CSS = """<style>
+.ht tr.season td{border-top:3px solid #16202b;border-bottom:3px solid #16202b;font-weight:700}
+.ht tr.season td.lbl{font-weight:700}
+</style>"""
 
 
 def _th(key: str, right: bool, sep: bool, scale: str) -> str:
@@ -29,6 +33,8 @@ def _cell(key: str, vals, ref: dict, ctx: dict, samples, sep: bool, scale: str, 
     if kind == "grade":
         g = c4.GRADES[key]
         v, z = c4.grade(key, vals, ref, scale)
+        if not g.stat:                                   # blank until our model exists
+            return f'<td class="{cls.strip()}"></td>'
         lg = ((ref or {}).get("PA", (math.nan,))[0], (ref or {}).get("BIP", (math.nan,))[0])
         pop = _popup(g.stat, vals.get(g.stat), (ref or {}).get(g.stat), z, ctx, samples, lg)
         return (f'<td class="{cls}c" tabindex="0" style="{color(g.stat, z)}">'
@@ -64,10 +70,11 @@ def table_html(keys: list[str], rows: list[dict], ctx: dict, scale: str, display
         vals, ref = r["vals"], r["ref"]
         samples = (vals.get("PA"), vals.get("BIP"))
         ctx_r = dict(ctx, season_label=str(r["lead"]["Year"]))
-        body += "<tr>" + "".join(f'<td class="lbl">{escape(str(r["lead"].get(h, "")))}</td>' for h in LEAD)
+        tr = ' class="season"' if r.get("season_row") else ""
+        body += f"<tr{tr}>" + "".join(f'<td class="lbl">{escape(str(r["lead"].get(h, "")))}</td>' for h in LEAD)
         body += "".join(_cell(k, vals, ref, ctx_r, samples, i in seps, scale, display) for i, k in enumerate(keys))
         body += "</tr>"
     note = ""
     if display == "Percentiles":
         note = '<div class="ht-note">Percentiles vs. MLB hitters (from each stat\'s average and spread).</div>'
-    return CSS + f'<div class="ht"><table>{head}{body}</table></div>{note}'
+    return CSS + SEASON_CSS + f'<div class="ht"><table>{head}{body}</table></div>{note}'
