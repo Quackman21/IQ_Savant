@@ -14,6 +14,11 @@ LEAD = ["Year", "Period", "Age", "Type", "Team", "vs"]
 SEASON_CSS = """<style>
 .ht tr.season td{border-top:3px solid #16202b;border-bottom:3px solid #16202b;font-weight:700}
 .ht tr.season td.lbl{font-weight:700}
+/* keep Year + Period visible while scrolling sideways */
+.ht table.pin th:nth-child(1),.ht table.pin td:nth-child(1){position:sticky;left:0;z-index:3;
+  min-width:56px;max-width:56px;background:#fff}
+.ht table.pin th:nth-child(2),.ht table.pin td:nth-child(2){position:sticky;left:56px;z-index:3;
+  min-width:112px;background:#fff;box-shadow:2px 0 0 #9aa4ad}
 </style>"""
 
 
@@ -77,4 +82,4 @@ def table_html(keys: list[str], rows: list[dict], ctx: dict, scale: str, display
     note = ""
     if display == "Percentiles":
         note = '<div class="ht-note">Percentiles vs. MLB hitters (from each stat\'s average and spread).</div>'
-    return CSS + SEASON_CSS + f'<div class="ht"><table>{head}{body}</table></div>{note}'
+    return CSS + SEASON_CSS + f'<div class="ht"><table class="pin">{head}{body}</table></div>{note}'

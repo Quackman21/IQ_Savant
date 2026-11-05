@@ -67,4 +67,4 @@ def table_html(spec: list, rows: list[dict]) -> str:
             style = _pct_style(v) if f == "pctile" else _pct_style(r.get("pct", {}).get(key))
             body += f'<td class="{"sep" if i in seps else ""}" style="{style}">{escape(_fmt(v, f))}</td>'
         body += "</tr>"
-    return CSS + SEASON_CSS + f'<div class="ht"><table>{head}{body}</table></div>'
+    return CSS + SEASON_CSS + f'<div class="ht"><table class="pin">{head}{body}</table></div>'

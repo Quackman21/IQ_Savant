@@ -45,3 +45,25 @@ def test_table_blank_grades_and_season_rows():
 def test_defense_tabs():
     assert list(dfn.TABS) == ["Infield", "Outfield", "Catching"]
     assert dfn.defense_tabs("P", {}) == []
+
+
+def test_framing_model_any_period():
+    import numpy as np
+    from models import framing
+    r = np.random.default_rng(0)
+    n = 20000
+    df = pd.DataFrame({"description": r.choice(["called_strike", "ball"], n),
+                       "plate_x": r.uniform(-1.4, 1.4, n), "plate_z": r.uniform(0.8, 4.2, n),
+                       "sz_top": 3.4, "sz_bot": 1.6, "stand": r.choice(["L", "R"], n),
+                       "fielder_2": r.choice([1, 2, 3], n),
+                       "game_date": r.choice(["2025-05-01", "2025-06-15", "2025-08-20"], n)})
+    # catcher 1 steals strikes: flip some of his balls to strikes
+    m = (df.fielder_2 == 1) & (df.description == "ball") & (r.random(n) < 0.15)
+    df.loc[m, "description"] = "called_strike"
+    daily = framing.daily_table(framing.framing_pitches(df))
+    season = framing.summarize(daily, "2025-03-01", "2025-11-30")
+    assert season[1]["F_RS"] > 0 > min(season[2]["F_RS"], season[3]["F_RS"])
+    assert season[1]["F_TOZ"] == 100 and set(season[1]) >= {"F_OPPS", "F_AS", "F_GS", "F_BOZ"}
+    june = framing.summarize(daily, "2025-06-01", "2025-06-30")
+    assert june[1]["F_OPPS"] < season[1]["F_OPPS"]         # months work
+    assert framing.summarize(daily, "2025-09-01", "2025-09-30") == {}

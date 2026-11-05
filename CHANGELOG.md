@@ -1,5 +1,14 @@
 # IQ Savant – version history
 
+## v14.1 – 2026-11-05
+- Catcher framing now comes from our own framing model (models/framing.py) built from public pitch
+  data: framing opps, framing runs and arm side / glove side / top / bottom percentiles for ANY
+  period (months, latest week). Savant's framing download no longer works with pybaseball.
+  Built by the data update (python -m pipeline.update) -> data/league/catching_<season>.csv.gz.
+- Fielding Run Value fetched straight from Savant (missing from the installed pybaseball).
+- Outfield jump: match Savant's resp_fielder_id column (jump numbers now fill in).
+- Year + Period stay pinned on the left while Core 4 / Defense tables scroll sideways.
+
 ## v14 – 2026-11-05
 - New "Defense" Summary tab (replaces separate Catching / Infield / Outfield tabs); underneath it,
   only the groups the player plays: Catching | Infield | Outfield.

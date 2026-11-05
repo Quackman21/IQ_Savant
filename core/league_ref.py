@@ -71,8 +71,8 @@ def signature() -> str:
     import hashlib
     import inspect
 
-    from models import decisions, xwoba
-    parts = [repr(sorted((k, s.kind, s.a, s.b) for k, s in hm.CATALOG.items())),
+    from models import decisions, framing, xwoba
+    parts = [inspect.getsource(framing.MODELS[framing.ACTIVE]), str(framing.RUNS_PER_STRIKE),repr(sorted((k, s.kind, s.a, s.b) for k, s in hm.CATALOG.items())),
              inspect.getsource(hm.prep), inspect.getsource(build), str(hm.SD_MIN_PA), str(hm.SPRAY_SCALE),
              xwoba.ACTIVE, inspect.getsource(xwoba.MODELS[xwoba.ACTIVE]),
              decisions.ACTIVE, inspect.getsource(decisions.MODELS[decisions.ACTIVE])]
@@ -105,7 +105,7 @@ def meta(season: int) -> dict:
 
 def status(season: int) -> str:
     """'missing' | 'stale' (built with older definitions) | 'current'."""
-    if not (DATA / f"hitting_{season}.csv.gz").exists():
+    if not (DATA / f"hitting_{season}.csv.gz").exists() or not (DATA / f"catching_{season}.csv.gz").exists():
         return "missing"
     return "current" if meta(season).get("signature") == signature() else "stale"
 
@@ -120,3 +120,17 @@ def load(season: int) -> dict:
     for r in df.itertuples():
         out.setdefault((r.dims, str(r.vals)), {})[r.stat] = (r.avg, r.sd)
     return out
+
+
+def save_catching(daily: pd.DataFrame, season: int) -> Path:
+    DATA.mkdir(parents=True, exist_ok=True)
+    p = DATA / f"catching_{season}.csv.gz"
+    daily.to_csv(p, index=False)
+    return p
+
+
+def load_catching(season: int) -> pd.DataFrame:
+    p = DATA / f"catching_{season}.csv.gz"
+    if not p.exists():
+        return pd.DataFrame()
+    return pd.read_csv(p, dtype={"game_date": str})

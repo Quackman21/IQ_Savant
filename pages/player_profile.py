@@ -11,6 +11,8 @@ import pybaseball as pb
 import streamlit as st
 
 from core import hit_metrics as hm
+from core import savant
+from models import framing as framing_model
 from core import hitting, league_ref, mlb_api, pitching
 from core.statcast_clean import clean
 from core.player import bio, draft_entry, position_games, signing_entry, summary_tabs
@@ -95,6 +97,11 @@ def league_ref_for(season: int) -> dict:
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
+def catching_daily(season: int) -> pd.DataFrame:
+    return league_ref.load_catching(season)
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
 def ref_status(season: int) -> str:
     return league_ref.status(season)
 
@@ -126,7 +133,7 @@ def statcast_p(pid: int, start: str, end: str) -> pd.DataFrame:
 def board(kind: str, year: int) -> pd.DataFrame:
     """Savant leaderboards via pybaseball. 'frv:5' = fielding run value at 3B, etc."""
     if kind.startswith("frv:"):
-        fn = lambda: pb.statcast_fielding_run_value(year, int(kind[4:]), 1)
+        fn = lambda: savant.fielding_run_value(year, int(kind[4:]), 1)
     elif kind.startswith("oaa:"):
         fn = lambda: pb.statcast_outs_above_average(year, int(kind[4:]), 1)
     else:
@@ -194,8 +201,8 @@ def seg(label, options, default=None, key=None, disabled=False, help=None, colla
     return v
 
 
-ID_COLS = ("player_id", "entity_id", "id", "catcher_id", "mlbam_id", "batter")
-SKIP = {"year", "age", "team_id", "player_id", "entity_id", "id", "catcher_id", "mlbam_id", "batter",
+ID_COLS = ("player_id", "entity_id", "resp_fielder_id", "id", "catcher_id", "mlbam_id", "batter")
+SKIP = {"year", "age", "team_id", "player_id", "entity_id", "resp_fielder_id", "id", "catcher_id", "mlbam_id", "batter",
         "player_name", "last_name", "first_name", "name", "team", "team_name", "position"}
 LOWER_IS_BETTER = ("time", "exchange", "pop", "whiff", "k_percent", "chase", "swing_length")
 
@@ -710,8 +717,6 @@ if main == "Summary":
                 b_["frv"] = sum(dfn.col(r_, "run") for r_ in frv if r_ is not None) if any(
                     r_ is not None for r_ in frv) else math.nan
             else:
-                b_["framing_board"] = board("framing", year)
-                b_["framing"] = row_for(b_["framing_board"], pid)
                 b_["pop"] = row_for(board("poptime", year), pid)
                 b_["frv"] = row_for(board("frv:2", year), pid)
             return b_
@@ -757,12 +762,13 @@ if main == "Summary":
                         rate = dfn.col(cr, f"{k}star", "percent")
                         vals[f"S{k}"] = rate / 100 if rate == rate and rate > 1 else rate
                         pct[f"S{k}"] = dfn.pctile(cb, rate, f"{k}star", "percent")
+                if grp == "Catching":
+                    fr = framing_model.summarize(catching_daily(per.season), start_d.isoformat(),
+                                                 end_d.isoformat(), p.get("pitchHand", {}).get("code", "R"),
+                                                 min_n=40 if per.kind == "season" else 10).get(pid, {})
+                    vals.update(fr)
                 if sb and grp == "Catching":
-                    fr, fb, pop, frv = sb.get("framing"), sb.get("framing_board"), sb.get("pop"), sb.get("frv")
-                    vals["F_OPPS"] = dfn.col(fr, "called", exclude=("rate",)) if fr is not None else math.nan
-                    f_rs = dfn.col(fr, "runs_extra")
-                    vals["F_RS"] = f_rs if f_rs == f_rs else dfn.col(fr, "fram", "run")
-                    vals.update(dfn.framing_zones(fr, fb, p.get("pitchHand", {}).get("code", "R")))
+                    pop, frv = sb.get("pop"), sb.get("frv")
                     vals["B_RS"] = dfn.col(frv, "block")
                     vals["T_RS"] = dfn.col(frv, "throw")
                     vals["POP"] = dfn.col(pop, "pop_2b", exclude=("count", "cs", "sb_", "rank"))
@@ -775,7 +781,11 @@ if main == "Summary":
             with tab:
                 show(defense_table(dfn.TABS[grp][name], rows_d))
         st.caption("DRS, OPA / FPA / CPA and all grades stay blank until our models are built. "
-                   "Statcast columns (OAA, FRV, jump, catch probability, framing, pop time) are full seasons only.")
+                   "Statcast columns (OAA, FRV, jump, catch probability, pop time) are full seasons only.")
+        if grp == "Catching":
+            st.caption("Framing comes from our own framing model (models/framing.py), so it works for any period. "
+                       "It needs the data update: python -m pipeline.update")
+            data_note({p_.season for p_ in periods})
 
     # ---------------------------------------------------------------- PITCHING
     elif sub == "Pitching":
