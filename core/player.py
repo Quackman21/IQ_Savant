@@ -143,7 +143,7 @@ def position_games(fielding_splits: list[dict], since: int) -> dict[str, int]:
 
 
 def summary_tabs(primary: str, games: dict[str, int], career_pa: int) -> list[str]:
-    """Hitting / Core 4 / Catching / Infield / Outfield / Baserunning / Pitching,
+    """Hitting / Core 4 / Defense / Baserunning / Pitching,
     depending on where the player actually plays."""
     def plays(group: set[str], primary_hit: bool) -> bool:
         return primary_hit or sum(games.get(p, 0) for p in group) >= MIN_GAMES
@@ -155,12 +155,8 @@ def summary_tabs(primary: str, games: dict[str, int], career_pa: int) -> list[st
         tabs.append("Pitching")
     if hitter:
         tabs += ["Hitting", "Core 4"]
-        if plays({"C"}, primary == "C"):
-            tabs.append("Catching")
-        if plays(INFIELD, primary in INFIELD):
-            tabs.append("Infield")
-        if plays(OUTFIELD, primary in OUTFIELD):
-            tabs.append("Outfield")
+        if plays({"C"}, primary == "C") or plays(INFIELD, primary in INFIELD) or plays(OUTFIELD, primary in OUTFIELD):
+            tabs.append("Defense")          # Catching / Infield / Outfield live under Defense
         tabs.append("Baserunning")
     if pitcher and "Pitching" not in tabs:
         tabs.append("Pitching")

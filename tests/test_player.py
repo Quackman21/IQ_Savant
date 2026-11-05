@@ -49,10 +49,12 @@ def test_summary_tabs_by_position():
               {"season": "2020", "position": {"abbreviation": "LF"}, "stat": {"gamesPlayed": 40}}]
     g = position_games(splits, since=2024)
     assert g == {"C": 90, "1B": 12}                      # 2020 LF too old
-    assert summary_tabs("C", g, 2000) == ["Hitting", "Core 4", "Catching", "Infield", "Baserunning"]
-    assert summary_tabs("CF", {"CF": 150}, 600) == ["Hitting", "Core 4", "Outfield", "Baserunning"]
-    assert summary_tabs("SS", {"SS": 100, "2B": 30, "LF": 15}, 500) == \
-        ["Hitting", "Core 4", "Infield", "Outfield", "Baserunning"]
+    assert summary_tabs("C", g, 2000) == ["Hitting", "Core 4", "Defense", "Baserunning"]
+    assert summary_tabs("CF", {"CF": 150}, 600) == ["Hitting", "Core 4", "Defense", "Baserunning"]
+    from core.defense import defense_tabs
+    assert defense_tabs("C", g) == ["Catching", "Infield"]
+    assert defense_tabs("SS", {"SS": 100, "2B": 30, "LF": 15}) == ["Infield", "Outfield"]
+    assert defense_tabs("CF", {"CF": 150}) == ["Outfield"]
     assert summary_tabs("P", {"P": 60}, 0) == ["Pitching"]
     assert summary_tabs("TWP", {"P": 20}, 1500)[0] == "Pitching"
     assert "Hitting" in summary_tabs("TWP", {"P": 20}, 1500)

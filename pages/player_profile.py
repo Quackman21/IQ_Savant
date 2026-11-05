@@ -17,6 +17,10 @@ from core.player import bio, draft_entry, position_games, signing_entry, summary
 from ui import data
 from core import core4 as c4
 from ui.core4 import table_html as core4_table
+import math
+
+from core import defense as dfn
+from ui.defense import table_html as defense_table
 from ui.hitting import overview_html, tab_html
 from ui.periods import picker as period_picker
 from ui.periods import display_order as period_order
@@ -123,6 +127,8 @@ def board(kind: str, year: int) -> pd.DataFrame:
     """Savant leaderboards via pybaseball. 'frv:5' = fielding run value at 3B, etc."""
     if kind.startswith("frv:"):
         fn = lambda: pb.statcast_fielding_run_value(year, int(kind[4:]), 1)
+    elif kind.startswith("oaa:"):
+        fn = lambda: pb.statcast_outs_above_average(year, int(kind[4:]), 1)
     else:
         fn = {"percentiles": lambda: pb.statcast_batter_percentile_ranks(year),
               "p_percentiles": lambda: pb.statcast_pitcher_percentile_ranks(year),
@@ -144,12 +150,42 @@ def board(kind: str, year: int) -> pd.DataFrame:
 # =============================================================================
 # Small helpers
 # =============================================================================
+def keep_choice(key: str, options: list, default=None) -> None:
+    """Before a tab bar draws: if its saved value is missing / not an option, reset it to the default."""
+    if key in st.session_state and st.session_state[key] not in options:
+        st.session_state[key] = default if default in options else options[0]
+
+
+def hold(key: str) -> None:
+    """on_change: clicking the already-selected tab would clear it (nothing highlighted).
+    Put the last choice back instead, so one option is always selected."""
+    last = f"{key}__last"
+    if st.session_state.get(key) in (None, []):
+        st.session_state[key] = st.session_state.get(last)
+    else:
+        st.session_state[last] = st.session_state[key]
+
+
+def age_years(day) -> str:
+    try:
+        bd = date.fromisoformat(p.get("birthDate", ""))
+        return f"{(day - bd).days / 365.25:.1f}"
+    except (ValueError, NameError):
+        return "-"
+
+
 def seg(label, options, default=None, key=None, disabled=False, help=None, collapsed=False,
-        selection_mode="single"):
+        selection_mode="single", on_change=None):
     vis = "collapsed" if collapsed else "visible"
+    if key and selection_mode == "single" and default is not None:
+        keep_choice(key, options, default)
+        if on_change is None:
+            on_change = lambda: hold(key)
+        st.session_state.setdefault(f"{key}__last", st.session_state.get(key, default))
     if hasattr(st, "segmented_control"):
         v = st.segmented_control(label, options, default=default, key=key, disabled=disabled,
-                                 help=help, label_visibility=vis, selection_mode=selection_mode)
+                                 help=help, label_visibility=vis, selection_mode=selection_mode,
+                                 on_change=on_change)
     elif selection_mode == "multi":
         v = st.multiselect(label, options, default=default or [], key=key, disabled=disabled, help=help)
     else:
@@ -373,29 +409,36 @@ SUB_TABS = summary_tabs(primary, games_at, career_pa)
 
 # tab bars styled like the reference: main = bold uppercase with underline,
 # sub = grey "A | B | C" links with the active one green and underlined
-st.markdown("""<style>
+ACTIVE = (':is([data-testid$="Active"],[kind$="Active"],[aria-checked="true"],[aria-pressed="true"],'
+          '[aria-selected="true"])')
+st.markdown(("""<style>
+/* every toggle on the page: the selected option is bold and dark */
+[data-testid="stButtonGroup"] buttonACTIVE p{
+  font-weight:800!important;color:#16202b!important}
 .st-key-pp_main [data-testid="stButtonGroup"]{display:flex;justify-content:center;
   border-bottom:1px solid #e3e7ea;width:100%}
 .st-key-pp_main button{background:transparent!important;border:none!important;border-radius:0!important;
   box-shadow:none!important;padding:10px 20px!important;border-bottom:3px solid transparent!important}
-.st-key-pp_main button p{font-weight:700!important;letter-spacing:.8px;text-transform:uppercase;
+.st-key-pp_main button p{font-weight:600!important;letter-spacing:.8px;text-transform:uppercase;
   color:#8a949d;font-size:14px!important}
-.st-key-pp_main button[data-testid$="Active"]{border-bottom-color:#16202b!important}
-.st-key-pp_main button[data-testid$="Active"] p{color:#16202b}
-.st-key-pp_sub{background:#f1f3f2;padding:8px 10px;margin:6px 0 10px}
-.st-key-pp_sub [data-testid="stButtonGroup"]{gap:0}
-.st-key-pp_sub button{background:transparent!important;border:none!important;border-radius:0!important;
-  box-shadow:none!important;padding:2px 14px!important}
-.st-key-pp_sub button p{font-weight:600!important;letter-spacing:.4px;text-transform:uppercase;
-  color:#8a949d;font-size:14px!important}
-.st-key-pp_sub button + button{border-left:1px solid #b9c0c6!important}
-.st-key-pp_sub button[data-testid$="Active"] p{color:#3fa37f;text-decoration:underline;text-underline-offset:4px}
+.st-key-pp_main buttonACTIVE{border-bottom-color:#16202b!important}
+.st-key-pp_main buttonACTIVE p{color:#16202b!important;font-weight:800!important}
+.st-key-pp_sub, .st-key-pp_def{background:#f1f3f2;padding:8px 10px;margin:6px 0 10px}
+.st-key-pp_def{background:#f7f8f8;margin-top:-4px}
+.st-key-pp_sub [data-testid="stButtonGroup"], .st-key-pp_def [data-testid="stButtonGroup"]{gap:0}
+.st-key-pp_sub button, .st-key-pp_def button{background:transparent!important;border:none!important;
+  border-radius:0!important;box-shadow:none!important;padding:2px 14px!important}
+.st-key-pp_sub button p, .st-key-pp_def button p{font-weight:600!important;letter-spacing:.4px;
+  text-transform:uppercase;color:#8a949d;font-size:14px!important}
+.st-key-pp_sub button + button, .st-key-pp_def button + button{border-left:1px solid #b9c0c6!important}
+.st-key-pp_sub buttonACTIVE p, .st-key-pp_def buttonACTIVE p{color:#3fa37f!important;font-weight:800!important;
+  text-decoration:underline;text-underline-offset:4px}
 .stTabs [data-baseweb="tab-list"]{background:#f5f6f6;gap:0}
 .stTabs [data-baseweb="tab"]{flex:1;justify-content:center;padding:10px 6px}
-.stTabs [data-baseweb="tab"] p{font-weight:700;color:#8a949d;text-transform:uppercase;letter-spacing:.4px}
+.stTabs [data-baseweb="tab"] p{font-weight:600;color:#8a949d;text-transform:uppercase;letter-spacing:.4px}
 .stTabs [aria-selected="true"]{background:#fff;border:1px solid #dfe3e6;border-bottom:none;border-radius:6px 6px 0 0}
-.stTabs [aria-selected="true"] p{color:#16202b}
-</style>""", unsafe_allow_html=True)
+.stTabs [aria-selected="true"] p{color:#16202b;font-weight:800}
+</style>""").replace("ACTIVE", ACTIVE), unsafe_allow_html=True)
 
 main = seg("Section", ["Summary", "Stats", "Game Log", "Sandbox"], default="Summary",
            key="pp_main", collapsed=True) or "Summary"
@@ -578,36 +621,6 @@ if main == "Summary":
             st.caption("Bat tracking (bat speed, swing length, attack angle) starts in 2023 — earlier seasons show –.")
         st.caption("Decision stats use a placeholder decision model (models/decisions.py) until ours is built.")
 
-    # ---------------------------------------------------------------- CATCHING
-    elif sub == "Catching":
-        c = st.columns([1.6, 1.6, 2.2, 1.6])
-        with c[0]:
-            st.caption("Periods")
-            periods = sorted({p_.season for p_ in period_picker("ca", years, by_month=False)}, reverse=True)
-        with c[2]:
-            seg("Split By", ["Level", "Org", "Team"], key="ca_by", disabled=True, help="Coming soon")
-        with c[3]:
-            disp = seg("Display", ["Stats", "Percentiles"], default="Stats", key="ca_disp") or "Stats"
-
-        def show_board(kind, match=None):
-            if disp == "Stats":
-                show(table_html(board_stats(kind, periods, pid, match), "Season"))
-            else:
-                show(percentile_html(board_percentiles(kind, periods, pid, match)))
-
-        tabs = st.tabs(["Overview", "Framing", "Blocking", "Throwing"])
-        with tabs[0]:
-            show_board("framing", ("runs", "strike_rate", "rv"))
-            show_board("poptime", ("pop_2b", "arm", "exchange"))
-        with tabs[1]:
-            show_board("framing")
-        with tabs[2]:
-            show(empty_html("Blocking is set up and waiting — Savant's blocking leaderboard isn't in pybaseball yet."))
-        with tabs[3]:
-            show_board("poptime")
-        if not any(row_for(board("framing", y), pid) is not None for y in periods if not board("framing", y).empty):
-            st.caption("Catching data only exists for players who caught in those seasons.")
-
     # ---------------------------------------------------------------- BASERUNNING
     elif sub == "Baserunning":
         c = st.columns([1.6, 1.6, 2.2, 1.6])
@@ -638,62 +651,131 @@ if main == "Summary":
             else:
                 show(percentile_html(board_percentiles("sprint", periods, pid)))
 
-    # ---------------------------------------------------------------- INFIELD / OUTFIELD
-    elif sub in ("Infield", "Outfield"):
-        infield = sub == "Infield"
-        k = "if" if infield else "of"
-        c = st.columns([1.6, 1.6, 2.2, 1.6])
+    # ---------------------------------------------------------------- DEFENSE
+    elif sub == "Defense":
+        groups = dfn.defense_tabs(primary, games_at) or ["Infield"]
+        keep_choice("pp_def", groups)
+        grp = seg("Defense view", groups, default=groups[0], key="pp_def", collapsed=True,
+                  on_change=lambda: hold("pp_def"))
+        grp = grp if grp in groups else groups[0]
+        here = dfn.GROUP_POS[grp]
+        played = [x for x in here if games_at.get(x, 0) > 0] or ([primary] if primary in here else here)
+
+        c = st.columns([2.3, 1.3, 2.4, 1.0, 1.7])
         with c[0]:
             st.caption("Periods")
-            periods = sorted({p_.season for p_ in period_picker(k, years, by_month=False)}, reverse=True)
-        with c[2]:
-            seg("Split By", ["Level", "Org", "Team"], key=f"{k}_by", disabled=True, help="Coming soon")
+            periods = period_picker(f"d_{grp}", years)
+        with c[1]:
+            pos_pick = "Aggregate"
+            if grp != "Catching":
+                pos_pick = st.selectbox("Pos", ["Aggregate"] + played, key=f"d_{grp}_pos")
         with c[3]:
-            disp = seg("Display", ["Stats", "Percentiles"], default="Stats", key=f"{k}_disp") or "Stats"
-        here = INFIELD_POS if infield else OUTFIELD_POS
-        played = [pos for pos in here if games_at.get(pos, 0) > 0]
-        if not played and primary in here:
-            played = [primary]
-        st.caption("Positions played (last 3 seasons): " +
-                   (", ".join(f"{pos} ({games_at[pos]} G)" for pos in here if games_at.get(pos)) or primary))
+            by_team = seg("Split By", ["Level", "Org", "Team"], key=f"d_{grp}_by",
+                          help="Level / Org arrive with MiLB") == "Team"
+        with c[4]:
+            seg("Display", ["Stats", "Percentiles"], default="Stats", key=f"d_{grp}_disp",
+                on_change=lambda: hold(f"d_{grp}_disp"))
+        positions = here if pos_pick == "Aggregate" else [pos_pick]
+        if not periods:
+            st.caption("Pick at least one period.")
+            st.stop()
 
-        def show_board(kind, match=None):
-            if disp == "Stats":
-                show(table_html(board_stats(kind, periods, pid, match), "Season"))
+        teams_by_year = {}
+
+        def abbr(year, tid):
+            if year not in teams_by_year:
+                teams_by_year[year] = data.teams_for(year)
+            return teams_by_year[year].get(tid, {}).get("abbr", "")
+
+        def game_dates(year):
+            log = stats(pid, "hitting", "gameLog", season=year, sportId=1)
+            return pd.Series([s_.get("date") for s_ in log])
+
+        def season_boards(year):
+            """Savant leaderboard rows for this player (full seasons only)."""
+            b_ = {}
+            if grp == "Infield":
+                oaa_key = "oaa_if" if pos_pick == "Aggregate" else f"oaa:{dfn.POS_NUM[pos_pick]}"
+                b_["oaa"] = row_for(board(oaa_key, year), pid)
+                frv = [row_for(board(f"frv:{dfn.POS_NUM[x]}", year), pid) for x in positions]
+                b_["frv"] = sum(dfn.col(r_, "run") for r_ in frv if r_ is not None) if any(
+                    r_ is not None for r_ in frv) else math.nan
+            elif grp == "Outfield":
+                oaa_key = "oaa_of" if pos_pick == "Aggregate" else f"oaa:{dfn.POS_NUM[pos_pick]}"
+                b_["oaa"] = row_for(board(oaa_key, year), pid)
+                b_["jump"] = row_for(board("of_jump", year), pid)
+                b_["catch_board"] = board("of_catch", year)
+                b_["catch"] = row_for(b_["catch_board"], pid)
+                frv = [row_for(board(f"frv:{dfn.POS_NUM[x]}", year), pid) for x in positions]
+                b_["frv"] = sum(dfn.col(r_, "run") for r_ in frv if r_ is not None) if any(
+                    r_ is not None for r_ in frv) else math.nan
             else:
-                show(percentile_html(board_percentiles(kind, periods, pid, match)))
+                b_["framing_board"] = board("framing", year)
+                b_["framing"] = row_for(b_["framing_board"], pid)
+                b_["pop"] = row_for(board("poptime", year), pid)
+                b_["frv"] = row_for(board("frv:2", year), pid)
+            return b_
 
-        def run_value():
-            rows = {}
-            for y in periods:
-                for pos in played:
-                    num = POS_NUM.get(pos)
-                    df = board(f"frv:{num}", y) if num else pd.DataFrame()
-                    r = row_for(df, pid) if not df.empty else None
-                    if r is not None:
-                        rows[f"{y} {pos}"] = {pretty(cn): (round(float(r[cn]), 2) if pd.notna(r[cn]) else "-")
-                                              for cn in numeric_cols(df)}
-            show(table_html(rows, "Season"))
+        rows_d = []
+        for per in sorted(periods, key=period_order):
+            if per.kind == "season":
+                splits = stats(pid, "fielding", "season", season=per.season, sportId=1)
+                start_d, end_d, plabel = date(per.season, 3, 1), date(per.season, 11, 30), "Season"
+            else:
+                win = resolve_period(per, game_dates(per.season))
+                if not win:
+                    continue
+                start_d, end_d, plabel = win
+                splits = stats(pid, "fielding", "byDateRange", season=per.season, sportId=1,
+                               startDate=start_d.isoformat(), endDate=min(end_d, TODAY).isoformat())
+            team_sets = [None]
+            if by_team:
+                team_sets = sorted({s_.get("team", {}).get("id") for s_ in splits if s_.get("team", {}).get("id")})
+            sb = season_boards(per.season) if per.kind == "season" else {}
+            for team in team_sets:
+                sp = [s_ for s_ in splits if team is None or s_.get("team", {}).get("id") == team]
+                m = dfn.mlb_counts(sp, positions)
+                if not m["G"]:
+                    continue
+                mid = start_d + (end_d - start_d) / 2
+                lead = {"Year": per.season, "Period": plabel, "Age": age_years(mid), "Type": "Reg",
+                        "ORG": ", ".join(filter(None, (abbr(per.season, t) for t in m["team_ids"]))),
+                        "LVL >": "MLB", "Pos >": m["Pos"]}
+                vals = {k: m[k] for k in ("N", "INN", "PO", "A", "E", "DP", "SB", "CS", "CS%", "T_OPPS")}
+                pct = {}
+                if sb and grp in ("Infield", "Outfield"):
+                    vals["OAA"] = dfn.col(sb.get("oaa"), "outs_above_average")
+                    vals["FRV"] = sb.get("frv")
+                if sb and grp == "Outfield":
+                    j = sb.get("jump")
+                    vals["REACT_FT"] = dfn.col(j, "reaction")
+                    vals["BURST_FT"] = dfn.col(j, "burst")
+                    vals["ROUTE_FT"] = dfn.col(j, "rout")
+                    cr, cb = sb.get("catch"), sb.get("catch_board")
+                    for k in range(1, 6):
+                        vals[f"S{k}_N"] = dfn.col(cr, f"{k}star", "opp")
+                        rate = dfn.col(cr, f"{k}star", "percent")
+                        vals[f"S{k}"] = rate / 100 if rate == rate and rate > 1 else rate
+                        pct[f"S{k}"] = dfn.pctile(cb, rate, f"{k}star", "percent")
+                if sb and grp == "Catching":
+                    fr, fb, pop, frv = sb.get("framing"), sb.get("framing_board"), sb.get("pop"), sb.get("frv")
+                    vals["F_OPPS"] = dfn.col(fr, "called", exclude=("rate",)) if fr is not None else math.nan
+                    f_rs = dfn.col(fr, "runs_extra")
+                    vals["F_RS"] = f_rs if f_rs == f_rs else dfn.col(fr, "fram", "run")
+                    vals.update(dfn.framing_zones(fr, fb, p.get("pitchHand", {}).get("code", "R")))
+                    vals["B_RS"] = dfn.col(frv, "block")
+                    vals["T_RS"] = dfn.col(frv, "throw")
+                    vals["POP"] = dfn.col(pop, "pop_2b", exclude=("count", "cs", "sb_", "rank"))
+                    vals["XFER"] = dfn.col(pop, "exchange")
+                    vals["ARM"] = dfn.col(pop, "arm")
+                rows_d.append({"lead": lead, "vals": vals, "pct": pct, "season_row": per.kind == "season"})
 
-        names = ["Overview", "Outs Above Average", "Run Value"] if infield else \
-            ["Overview", "Outs Above Average", "Jump", "Catch Probability", "Directional"]
-        tabs = st.tabs(names)
-        with tabs[0]:
-            show_board(f"oaa_{k}", ("outs_above_average", "fielding_runs", "success_rate"))
-            if not infield:
-                show_board("of_jump", ("jump", "reaction", "burst", "route"))
-        with tabs[1]:
-            show_board(f"oaa_{k}")
-        if infield:
-            with tabs[2]:
-                run_value()
-        else:
-            with tabs[2]:
-                show_board("of_jump")
-            with tabs[3]:
-                show_board("of_catch")
-            with tabs[4]:
-                show_board("of_dir")
+        tabs = st.tabs(list(dfn.TABS[grp]))
+        for tab, name in zip(tabs, dfn.TABS[grp]):
+            with tab:
+                show(defense_table(dfn.TABS[grp][name], rows_d))
+        st.caption("DRS, OPA / FPA / CPA and all grades stay blank until our models are built. "
+                   "Statcast columns (OAA, FRV, jump, catch probability, framing, pop time) are full seasons only.")
 
     # ---------------------------------------------------------------- PITCHING
     elif sub == "Pitching":

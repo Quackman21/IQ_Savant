@@ -1,5 +1,19 @@
 # IQ Savant – version history
 
+## v14 – 2026-11-05
+- New "Defense" Summary tab (replaces separate Catching / Infield / Outfield tabs); underneath it,
+  only the groups the player plays: Catching | Infield | Outfield.
+- Infield (incl. 1B via Pos dropdown): Grades + Star tabs. Outfield: Grades + Star tabs.
+  Catching: Overview, Framing, Blocking, Throwing. Same Periods picker / Season rows as Core 4.
+- Filled now: MLB fielding counts for any period (#, Inn, PO, A, E, DP, SB/CS against), and on Season
+  rows Statcast OAA, FRV, outfield jump (reaction / burst / route), catch probability by star,
+  catcher framing (+ arm side / glove side / top / bottom percentiles), blocking & throwing runs,
+  pop time, exchange, arm strength.
+- Blank for our models: DRS family, OPA / FPA / CPA, every grade, infield Star tab, catcher
+  blocking-by-location, Frame Speed Grade (reserved for the SAM 3 glove model).
+- Level / Org columns kept for MLB/MiLB.
+- Selected toggle is always shown (bold, dark); clicking the selected option no longer clears it.
+
 ## v13.2 – 2026-11-05
 - Core 4: "Grade Scale" renamed "Evaluation Method" (20-80 | Percentile | Plus).
 - Row order per season: Latest Week, Last 30 Days, months newest -> oldest, then the full Season row
