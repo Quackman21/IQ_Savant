@@ -13,6 +13,7 @@ def test_signature_and_plan(tmp_path, monkeypatch):
     ref = pd.DataFrame({"dims": ["all"], "vals": ["All"], "stat": ["EV"], "avg": [89.0], "sd": [2.0], "n": [1]})
     league_ref.save(ref, 2024, "2024-09-29")
     league_ref.save_catching(pd.DataFrame({"game_date": [], "catcher": []}), 2024)
+    league_ref.save_fielding(pd.DataFrame({"game_date": [], "player": []}), 2024)
     assert league_ref.status(2024) == "current" and league_ref.status(2025) == "missing"
     # offseason: only the missing seasons
     assert update.plan(date(2026, 11, 5)) == [(2026, "missing"), (2025, "missing")]
@@ -29,6 +30,7 @@ def test_in_season_refresh(tmp_path, monkeypatch):
     ref = pd.DataFrame({"dims": ["all"], "vals": ["All"], "stat": ["EV"], "avg": [89.0], "sd": [2.0], "n": [1]})
     league_ref.save(ref, 2026)
     league_ref.save_catching(pd.DataFrame({"game_date": [], "catcher": []}), 2026)
+    league_ref.save_fielding(pd.DataFrame({"game_date": [], "player": []}), 2026)
     import json
     m = league_ref.meta(2026)
     m["built"] = "2026-06-30T23:00:00"                   # built last night

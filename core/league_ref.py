@@ -102,7 +102,7 @@ def signature() -> str:
              xwoba.ACTIVE, inspect.getsource(xwoba.MODELS[xwoba.ACTIVE]), _artifact_hash(xwoba.ACTIVE),
              decisions.ACTIVE, inspect.getsource(decisions.MODELS[decisions.ACTIVE]),
              _artifact_hash(decisions.ACTIVE, "decisions"), _sa_hash(),
-             _artifact_hash("iq_v1", "decisions")]                 # framing uses the called-strike model too
+             _artifact_hash("iq_v1", "decisions"), _fielding_hash()]                 # framing uses the called-strike model too
     return hashlib.sha1("\n".join(parts).encode()).hexdigest()[:12]
 
 
@@ -132,7 +132,7 @@ def meta(season: int) -> dict:
 
 def status(season: int) -> str:
     """'missing' | 'stale' (built with older definitions) | 'current'."""
-    if not (DATA / f"hitting_{season}.csv.gz").exists() or not (DATA / f"catching_{season}.csv.gz").exists():
+    if not all((DATA / f"{k}_{season}.csv.gz").exists() for k in ("hitting", "catching", "fielding")):
         return "missing"
     return "current" if meta(season).get("signature") == signature() else "stale"
 
@@ -154,6 +154,29 @@ def save_catching(daily: pd.DataFrame, season: int) -> Path:
     p = DATA / f"catching_{season}.csv.gz"
     daily.to_csv(p, index=False)
     return p
+
+
+def save_fielding(daily: pd.DataFrame, season: int) -> Path:
+    DATA.mkdir(parents=True, exist_ok=True)
+    p = DATA / f"fielding_{season}.csv.gz"
+    daily.to_csv(p, index=False)
+    return p
+
+
+def load_fielding(season: int) -> pd.DataFrame:
+    p = DATA / f"fielding_{season}.csv.gz"
+    if not p.exists():
+        return pd.DataFrame()
+    return pd.read_csv(p, dtype={"game_date": str})
+
+
+def _fielding_hash() -> str:
+    import hashlib
+    from models import fielding
+    try:
+        return hashlib.sha1(fielding.ARTIFACT.read_bytes()).hexdigest()[:12]
+    except OSError:
+        return ""
 
 
 def load_catching(season: int) -> pd.DataFrame:

@@ -1,0 +1,75 @@
+===== SHIFT ERA (2015-2022) -- its own models =====
+IQ fielding -- test report
+Each half of the games credited by models trained on the OTHER half. Runs from the fielding team's side.
+
+Out-chance check (balls in play, grouped by the model's out chance):
+  MODEL SAID     ACTUALLY OUT     PLAYS
+    0%-10%       2% ->    1%     156,048
+   10%-20%      15% ->   14%      22,789
+   20%-30%      25% ->   25%      16,069
+   30%-40%      35% ->   35%      14,461
+   40%-50%      45% ->   45%      13,873
+   50%-60%      55% ->   55%      15,626
+   60%-70%      65% ->   65%      20,848
+   70%-80%      76% ->   75%      34,610
+   80%-90%      86% ->   86%      99,257
+   90%-100%     96% ->   96%     415,480
+
+  run value of an out vs a hit by ball type: GB 0.73, LD 0.80, FB 0.84, PU 0.78 | double play vs not: 0.16 runs
+
+Repeatable? player's 1st half vs 2nd half at a position (80+ responsible plays each half):
+  POS    OPA / play r  DRS / inning r  PLAYERS
+  1B            0.197           0.223      141
+  2B            0.234           0.251      205
+  3B            0.335           0.318      173
+  SS            0.426           0.448      211
+  LF            0.358           0.351      126
+  CF            0.414           0.418      183
+  RF            0.275           0.284      154
+
+2022 DRS leaders by position (400+ innings) -- eye test (models trained on the other half):
+  1B:  Ty France +5 | Lewin Díaz +4 | Josh Naylor +3 | Christian Walker +3   ...   C.J. Cron -3 | Anthony Rizzo -4
+  2B:  Andrés Giménez +13 | Santiago Espinal +12 | Marcus Semien +9 | Jose Altuve +8   ...   Ozzie Albies -8 | Jonathan India -8
+  3B:  Ke'Bryan Hayes +17 | Austin Riley +10 | Nolan Arenado +9 | Alex Bregman +9   ...   Maikel Franco -5 | Eduardo Escobar -10
+  SS:  Nico Hoerner +15 | Trea Turner +11 | Andrew Velazquez +8 | Corey Seager +7   ...   Bo Bichette -7 | Luis García Jr. -11
+  LF:  Steven Kwan +10 | Brandon Marsh +8 | Ian Happ +4 | Andrew Benintendi +3   ...   Tommy Pham -14 | Jurickson Profar -15
+  CF:  Jose Siri +6 | Cristian Pache +3 | Jake Meyers +2 | Adolis García +2   ...   Christopher Morel -13 | Bryan Reynolds -18
+  RF:  Jackie Bradley Jr. +5 | Mookie Betts +4 | Kyle Tucker +2 | Kole Calhoun +0   ...   Nick Castellanos -11 | Juan Soto -14
+
+===== SHIFT BAN (2023+) -- its own models =====
+IQ fielding -- test report
+Each half of the games credited by models trained on the OTHER half. Runs from the fielding team's side.
+
+Out-chance check (balls in play, grouped by the model's out chance):
+  MODEL SAID     ACTUALLY OUT     PLAYS
+    0%-10%       2% ->    1%      88,870
+   10%-20%      15% ->   13%      10,048
+   20%-30%      25% ->   24%       7,182
+   30%-40%      35% ->   35%       6,630
+   40%-50%      45% ->   45%       6,881
+   50%-60%      55% ->   55%       8,009
+   60%-70%      65% ->   65%      11,040
+   70%-80%      76% ->   76%      18,613
+   80%-90%      86% ->   86%      51,750
+   90%-100%     96% ->   96%     242,496
+
+  run value of an out vs a hit by ball type: GB 0.71, LD 0.78, FB 0.82, PU 0.77 | double play vs not: 0.16 runs
+
+Repeatable? player's 1st half vs 2nd half at a position (80+ responsible plays each half):
+  POS    OPA / play r  DRS / inning r  PLAYERS
+  1B            0.269           0.264       76
+  2B            0.180           0.203      104
+  3B            0.253           0.280       88
+  SS            0.137           0.144      113
+  LF            0.115           0.120       93
+  CF            0.272           0.268      124
+  RF            0.266           0.227       92
+
+2026 DRS leaders by position (400+ innings) -- eye test (models trained on the other half):
+  1B:  Matt Olson +8 | Willson Contreras +5 | Josh Naylor +5 | Ty France +4   ...   Andrew Vaughn -4 | Mark Vientos -5
+  2B:  Brice Turang +8 | Ketel Marte +6 | Nasim Nuñez +5 | JJ Wetherholt +4   ...   Luke Keaschall -6 | Jazz Chisholm Jr. -6
+  3B:  Caleb Durbin +6 | Javier Sanoja +6 | Zack Gelof +5 | Nolan Arenado +4   ...   Alec Bohm -9 | Nick Gonzales -12
+  SS:  Taylor Walls +14 | Masyn Winn +7 | Colson Montgomery +5 | Bobby Witt Jr. +4   ...   Francisco Lindor -8 | Trea Turner -16
+  LF:  Cody Bellinger +11 | Chandler Simpson +8 | Jackson Chourio +8 | Heriberto Hernández +6   ...   JJ Bleday -4 | Jarren Duran -12
+  CF:  Pete Crow-Armstrong +14 | Evan Carter +11 | Michael Harris II +9 | Cedric Mullins +9   ...   Dane Myers -6 | Oneil Cruz -8
+  RF:  Corbin Carroll +15 | Wilyer Abreu +10 | Seiya Suzuki +8 | Victor Mesa Jr. +6   ...   Luke Keaschall -7 | Carson Benge -7

@@ -12,6 +12,7 @@ import streamlit as st
 
 from core import hit_metrics as hm
 from core import savant
+from models import fielding as fielding_model
 from models import framing as framing_model
 from core import hitting, league_ref, mlb_api, pitching
 from core.statcast_clean import clean
@@ -102,6 +103,11 @@ def league_ref_for(season: int) -> dict:
 @st.cache_data(ttl=3600, show_spinner=False)
 def catching_daily(season: int) -> pd.DataFrame:
     return league_ref.load_catching(season)
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def fielding_daily(season: int) -> pd.DataFrame:
+    return league_ref.load_fielding(season)
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
@@ -824,6 +830,24 @@ if main == "Summary":
                                                  end_d.isoformat(), p.get("pitchHand", {}).get("code", "R"),
                                                  min_n=40 if per.kind == "season" else 10).get(pid, {})
                     vals.update(fr)
+                inn = m["INN"]
+                per_season = lambda x: x / inn * fielding_model.SEASON_INN if inn and x == x else math.nan
+                if grp in ("Infield", "Outfield"):           # our DRS model, any period
+                    nums = [dfn.POS_NUM[x] for x in positions]
+                    fz = fielding_model.summarize(fielding_daily(per.season), start_d.isoformat(),
+                                                  end_d.isoformat(), nums).get(pid, {})
+                    vals.update({k: v for k, v in fz.items() if k not in ("IQ_INN",)})
+                    if fz:
+                        for k_ in range(1, 6):
+                            pct.pop(f"S{k_}", None)              # our stars replace Savant's
+                        vals["DRS/S"] = per_season(fz["DRS"])
+                        board_rates = fielding_model.season_rates(fielding_daily(per.season), nums)
+                        if len(board_rates) and vals["DRS/S"] == vals["DRS/S"]:
+                            vals["PCT_MLB"] = vals["PCT_LVL"] = 100 * (board_rates < vals["DRS/S"]).mean()
+                if grp == "Catching":
+                    bz = fielding_model.summarize(fielding_daily(per.season), start_d.isoformat(),
+                                                  end_d.isoformat(), [2]).get(pid, {})
+                    vals["B_OPPS"] = bz.get("B_OPPS", math.nan)
                 if sb and grp == "Catching":
                     pop, frv = sb.get("pop"), sb.get("frv")
                     vals["B_RS"] = dfn.col(frv, "block")
@@ -831,14 +855,24 @@ if main == "Summary":
                     vals["POP"] = dfn.col(pop, "pop_2b", exclude=("count", "cs", "sb_", "rank"))
                     vals["XFER"] = dfn.col(pop, "exchange")
                     vals["ARM"] = dfn.col(pop, "arm")
+                if grp == "Catching":
+                    f_rs, b_rs, t_rs = vals.get("F_RS", math.nan), vals.get("B_RS", math.nan), vals.get("T_RS", math.nan)
+                    if all(x == x for x in (f_rs, b_rs, t_rs)):     # blocking / throwing: full seasons only
+                        vals["DRS"] = f_rs + b_rs + t_rs
+                        vals["DRS/S"] = per_season(vals["DRS"])
+                    vals["F_RS/S"], vals["B_RS/S"], vals["T_RS/S"] = per_season(f_rs), per_season(b_rs), per_season(t_rs)
+                    parts_ = [vals.get(k_, math.nan) for k_ in ("F_OPPS", "B_OPPS", "T_OPPS")]
+                    vals["OPPS"] = sum(x for x in parts_ if x == x) if any(x == x for x in parts_) else math.nan
                 rows_d.append({"lead": lead, "vals": vals, "pct": pct, "season_row": per.kind == "season"})
 
         tabs = st.tabs(list(dfn.TABS[grp]))
         for tab, name in zip(tabs, dfn.TABS[grp]):
             with tab:
                 show(defense_table(dfn.TABS[grp][name], rows_d))
-        st.caption("DRS, OPA / FPA / CPA and all grades stay blank until our models are built. "
-                   "Statcast columns (OAA, FRV, jump, catch probability, pop time) are full seasons only.")
+        st.caption("DRS, RS, OPA / FPA / CPA and stars come from our fielding model (any period; needs "
+                   "python -m pipeline.train_fielding + the data update). Tool grades need player-tracking data that "
+                   "isn't public. Statcast columns (OAA, FRV, jump, pop time) are full seasons only; catching DRS adds "
+                   "Statcast blocking / throwing, so it shows on season rows.")
         if grp == "Catching":
             st.caption("Framing comes from our own framing model (models/framing.py), so it works for any period. "
                        "It needs the data update: python -m pipeline.update")

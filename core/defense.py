@@ -4,8 +4,10 @@ Sources
   * MLB fielding stats (any date range -> months work): chances, PO, A, E, DP, innings, SB/CS against
   * Savant leaderboards (full seasons only, via pybaseball): OAA, fielding run value, outfielder
     jump, catch probability, catcher framing, pop time
-  * Blank (our models later): DRS family, OPA / FPA / CPA, every grade, infield Star tab,
-    catcher blocking-by-location, Frame Speed Grade (-> SAM 3 glove model)
+  * IQ fielding model (models/fielding.py, any period): DRS, RS Field / Range / Arm, DP runs, OPA / FPA / CPA,
+    stars, DRS / Season + percentiles, catcher DRS (framing + Statcast blocking / throwing), blocking opps
+  * Blank (need player-tracking data that isn't public): tool grades, RS 1B receiving, range vs conversion
+    splits, catcher blocking-by-location, Frame Speed Grade (-> SAM 3 glove model)
 """
 from __future__ import annotations
 
@@ -23,10 +25,12 @@ LEAD = ["Year", "Period", "Age", "Type", "ORG", "LVL >", "Pos >"]
 # (key, label, hover definition, format)   format: int num1 num2 pct pctile time mph blank grade
 # "|" starts a new column group (thin divider)
 B = "blank"
-_DRS = [("DRS", "DRS", "Defensive Runs Saved (our DRS model — coming)", B)]
-_RATE = ["|", ("DRS/S", "DRS / Season", "DRS per full season (rate)", B),
-         ("PCT_MLB", "Percentile (MLB)", "Percentile of DRS / Season vs MLB", B),
-         ("PCT_LVL", "Percentile (LVL)", "Percentile of DRS / Season vs the level", B)]
+_DRS = [("DRS", "DRS", "Defensive Runs Saved (IQ fielding model, any period)\nInfield: RS Field + double-play runs. "
+                       "Outfield: RS Range + RS Arm. Runs vs an average fielder at the position", "num1s")]
+_RATE = ["|", ("DRS/S", "DRS / Season", "DRS per 1,200 innings (a full season)", "num1s"),
+         ("PCT_MLB", "Percentile (MLB)", "Percentile of DRS / Season vs MLB players at the same position(s) "
+                                         "that season (300+ innings)", "pctile"),
+         ("PCT_LVL", "Percentile (LVL)", "Percentile of DRS / Season vs the level (MLB for now)", "pctile")]
 _FIELDING = ["|", ("INN", "Inn", "Innings at the position(s)", "num1"),
              ("PO", "PO", "Putouts", "int"), ("A", "A", "Assists", "int"),
              ("E", "E", "Errors", "int"), ("DP", "DP", "Double plays", "int")]
@@ -37,11 +41,14 @@ def _g(label, desc):
 
 
 IF_GRADES_TAB = [("N", "#", "Chances (putouts + assists + errors)", "int"), "|", *_DRS,
-                 ("RS_FIELD", "RS Field", "Runs Saved on field plays (sum of pre-throw Rv Added)", B),
-                 ("RS_1B", "RS 1B Rec", "Runs Saved from first base receiving (sum of DeltaOutCatch * 0.67)", B),
+                 ("RS_FIELD", "RS Field", "Runs saved turning batted balls into outs: OPA x run value of an out vs "
+                  "a hit on that kind of ball", "num1s"),
+                 ("RS_1B", "RS 1B Rec", "Runs saved from first base receiving (needs throw tracking -- not public)", B),
                  *_RATE, "|",
-                 ("OPA", "OPA", "Total Out Probability Added (sum of model OPA per play)", B),
-                 ("FPA", "FPA", "Total Fielded Probability Added (IsFielded - Prob(Fielded))", B), "|",
+                 ("OPA", "OPA", "Out Probability Added: out made = 1 - out chance; not made = -(out chance x his "
+                  "share of the play). Out chance from exit velo, launch angle, direction, distance", "num1s"),
+                 ("FPA", "FPA", "Fielded Probability Added: fielded by him (1 / 0) - chance he'd be the one to field "
+                  "it", "num1s"), "|",
                  _g("First Step Grade", "Out Probability Added by fielder speed towards the ball in first second off bat"),
                  _g("Range Grade", "Out Probability Added by fielder between time of field (first contact) and off bat"),
                  _g("Conversion Grade", "On fielded balls, the difference between Out Prob at Throw (or step on base) "
@@ -61,25 +68,30 @@ def _stars(kind: str, measure: str):
     for k in range(1, 6):
         out += [(f"S{k}_N", f"{k} Star Plays", f"# of plays with {kind} Probability between {STAR_EDGES[k]}", "int"),
                 (f"S{k}", f"{k} Star", f"{measure} on plays with {kind} Probability between {STAR_EDGES[k]}",
-                 "pct" if kind == "Catch" else B)]
+                 "pct" if kind == "Catch" else "num1s")]
         if k < 5:
             out.append("|")
     return out
 
 
 IF_STAR_TAB = [("N", "#", "Chances", "int"), "|", *_DRS,
-               ("RS_FIELD", "RS Field", "Runs Saved on field plays", B),
-               ("RS_1B", "RS 1B Rec", "Runs Saved from first base receiving", B), *_RATE, "|",
+               ("RS_FIELD", "RS Field", "Runs saved turning batted balls into outs", "num1s"),
+               ("RS_1B", "RS 1B Rec", "Runs saved from first base receiving (needs throw tracking -- not public)", B),
+               *_RATE, "|",
                *_stars("Out", "Out Probability Added")]
 
 OF_GRADES_TAB = [("N", "#", "Chances (putouts + assists + errors)", "int"), "|", *_DRS,
-                 ("RS_RANGE", "RS Range", "Outfield Defensive Runs Saved from range", B),
-                 ("RS_CONV", "RS Conversion", "Outfield Defensive Runs Saved from converting catchable balls", B),
-                 ("RS_ARM", "RS Arm", "Total Outfield Defensive Runs Saved from limiting baserunners", B),
+                 ("RS_RANGE", "RS Range", "Runs saved catching balls: CPA x run value of a catch vs a hit. "
+                  "Includes conversion (public data can't tell whether he reached the ball)", "num1s"),
+                 ("RS_CONV", "RS Conversion", "Runs from converting balls he reached (needs fielder tracking -- "
+                  "not public; it's inside RS Range)", B),
+                 ("RS_ARM", "RS Arm", "Runs saved limiting baserunners on balls he fielded with runners on: expected "
+                  "run value of the play - actual (holds, extra bases, assists)", "num1s"),
                  *_RATE, "|",
-                 ("CPA", "CPA", "Total Catch Probability Added (IsCaught - Prob(Caught))", B),
-                 ("CPA_R", "CPA Range", "Catch Probability Added from range", B),
-                 ("CPA_C", "CPA Conversion", "Catch Probability Added from conversion", B), "|",
+                 ("CPA", "CPA", "Catch Probability Added: caught = 1 - catch chance; not caught = -(catch chance x "
+                  "his share)", "num1s"),
+                 ("CPA_R", "CPA Range", "Catch Probability Added from range (needs fielder tracking -- not public)", B),
+                 ("CPA_C", "CPA Conversion", "Catch Probability Added from conversion (needs fielder tracking)", B), "|",
                  _g("Range", "20-80 range grade"),
                  _g("Reaction", "Catch probability added from the fielder's first step"),
                  _g("Acceleration", "Catch probability added from the fielder's average speed over the first two "
@@ -104,28 +116,29 @@ OF_GRADES_TAB = [("N", "#", "Chances (putouts + assists + errors)", "int"), "|",
                  *_FIELDING]
 
 OF_STAR_TAB = [("N", "#", "Chances", "int"), "|", *_DRS,
-               ("RS_ARM", "RS Arm", "Outfield Defensive Runs Saved from limiting baserunners", B), *_RATE, "|",
-               *_stars("Catch", "Catch rate (Statcast catch probability, full seasons)")]
+               ("RS_ARM", "RS Arm", "Runs saved limiting baserunners", "num1s"), *_RATE, "|",
+               *_stars("Catch", "Catch rate (IQ catch chance, any period)")]
 
-C_OVERVIEW = [("OPPS", "Opps Total", "# of framing, blocking, and throwing opportunities", B),
+C_OVERVIEW = [("OPPS", "Opps Total", "# of framing, blocking, and throwing opportunities", "int"),
               ("F_OPPS", "Framing Opps", "# of framing opportunities (taken pitches he received)", "int"),
-              ("B_OPPS", "Blocking Opps", "# of blocking opportunities", B),
+              ("B_OPPS", "Blocking Opps", "# of blocking opportunities: pitches in the dirt with runners on", "int"),
               ("T_OPPS", "Throwing Opps", "# of throwing opportunities (stolen base attempts)", "int"), "|",
-              ("DRS", "DRS", "Catching DRS", B),
+              ("DRS", "DRS", "Catching DRS: Framing + Blocking + Throwing runs (blocking / throwing are Statcast "
+                             "full seasons, so this shows on season rows)", "num1s"),
               ("F_RS", "Framing Runs", "Framing runs saved (our framing model, any period): each extra strike x what "
                "a strike instead of a ball is worth in that count", "num1s"),
               ("B_RS", "Blocking RS", "Blocking runs (Statcast, full seasons)", "num1"),
               ("T_RS", "Throwing RS", "Throwing runs (Statcast, full seasons)", "num1"), "|",
-              ("DRS/S", "DRS / Season", "Catching DRS Rate", B),
-              ("F_RS/S", "Framing RS / Season", "Framing DRS Rate", B),
-              ("B_RS/S", "Blocking RS / Season", "Blocking DRS Rate", B),
-              ("T_RS/S", "Throwing RS / Season", "Throwing DRS Rate", B)]
-C_FRAMING = [("DRS", "DRS", "Catching DRS", B), ("DRS/S", "DRS / Season", "Catching DRS Rate", B), "|",
+              ("DRS/S", "DRS / Season", "Catching DRS per 1,200 innings", "num1s"),
+              ("F_RS/S", "Framing RS / Season", "Framing runs per 1,200 innings", "num1s"),
+              ("B_RS/S", "Blocking RS / Season", "Blocking runs per 1,200 innings", "num1s"),
+              ("T_RS/S", "Throwing RS / Season", "Throwing runs per 1,200 innings", "num1s")]
+C_FRAMING = [("DRS", "DRS", "Catching DRS: Framing + Blocking + Throwing (season rows)", "num1s"), ("DRS/S", "DRS / Season", "Catching DRS per 1,200 innings", "num1s"), "|",
              ("F_OPPS", "Framing Opps", "# of framing opportunities: every taken pitch (called strike or ball) he "
               "received", "int"),
              ("F_RS", "Framing Runs", "Framing runs saved: each extra strike x what a strike instead of a ball is worth "
               "in that count (about 0.07 runs at 0-0, 0.59 at 3-2)", "num1s"),
-             ("F_RS/S", "Framing RS / Season", "Framing DRS Rate", B), "|",
+             ("F_RS/S", "Framing RS / Season", "Framing runs per 1,200 innings", "num1s"), "|",
              ("F_XS", "Extra Strikes", "Strikes above (+) / below (-) a league-average catcher on the same pitches.\n"
               "Each taken pitch: (1 if called a strike, 0 if a ball) - its strike chance. A 45% pitch called a "
               "strike = +0.55, called a ball = -0.45. Strike chance = league-average umpire, from location vs the "
@@ -141,18 +154,18 @@ C_FRAMING = [("DRS", "DRS", "Catching DRS", B), ("DRS/S", "DRS / Season", "Catch
              ("F_BOZ", "Framing BOZ", "Strike rate on edge pitches, bottom of zone — percentile vs MLB catchers",
               "pctile"), "|",
              _g("Frame Speed Grade", "20-80 grade for glove speed towards middle of zone (our SAM 3 glove model)")]
-C_BLOCKING = [("DRS", "DRS", "Catching DRS", B), ("DRS/S", "DRS / Season", "Catching DRS Rate", B), "|",
-              ("B_OPPS", "Blocking Opps", "# of blocking opportunities", B),
+C_BLOCKING = [("DRS", "DRS", "Catching DRS: Framing + Blocking + Throwing (season rows)", "num1s"), ("DRS/S", "DRS / Season", "Catching DRS per 1,200 innings", "num1s"), "|",
+              ("B_OPPS", "Blocking Opps", "# of blocking opportunities: pitches in the dirt with runners on", "int"),
               ("B_RS", "Blocking RS", "Blocking DRS (Statcast blocking runs, full seasons)", "num1"),
-              ("B_RS/S", "Blocking RS / Season", "Blocking DRS Rate", B), "|",
+              ("B_RS/S", "Blocking RS / Season", "Blocking runs per 1,200 innings", "num1s"), "|",
               ("B_AIR", "Blocking Air", "Blocking on pitches not in the dirt — percentile", B),
               ("B_DAS", "Blocking Dirt AS", "Blocking on pitches in the dirt, arm side — percentile", B),
               ("B_DMID", "Blocking Dirt Mid", "Blocking on pitches in the dirt, middle — percentile", B),
               ("B_DGS", "Blocking Dirt GS", "Blocking on pitches in the dirt, glove side — percentile", B)]
-C_THROWING = [("DRS", "DRS", "Catching DRS", B), ("DRS/S", "DRS / Season", "Catching DRS Rate", B), "|",
+C_THROWING = [("DRS", "DRS", "Catching DRS: Framing + Blocking + Throwing (season rows)", "num1s"), ("DRS/S", "DRS / Season", "Catching DRS per 1,200 innings", "num1s"), "|",
               ("T_OPPS", "Throwing Opps", "# of throwing opportunities (stolen base attempts)", "int"),
               ("T_RS", "Throwing RS", "Throwing DRS (Statcast throwing runs, full seasons)", "num1"),
-              ("T_RS/S", "Throwing RS / Season", "Throwing DRS Rate", B), "|",
+              ("T_RS/S", "Throwing RS / Season", "Throwing runs per 1,200 innings", "num1s"), "|",
               ("POP", "Pop Time", "Time elapsed between catcher receiving pitch and throw landing at base "
                                   "(to 2B, Statcast, full seasons)", "time"),
               ("XFER", "Xfer", "Exchange time: glove to release (Statcast, full seasons)", "time"),

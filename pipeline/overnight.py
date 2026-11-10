@@ -7,6 +7,7 @@
      Seasons already saved are skipped, so a stopped run picks up where it left off.
   2. Train SAxwOBA -- two models, shift era (2015-2022) and shift ban (2023+), no carryover.
   3. Train IQ Swing Decisions -- two models, 2015-2022 and 2023+ -- and switch it on.
+     Then IQ fielding (DRS parts) and IQ Stuff+ / Location+, same era split.
   4. Commit + push the trained models.
   5. Rebuild every season's MLB averages from the saved downloads (no second download) and push.
 
@@ -100,6 +101,11 @@ def _run(argv: list[str]) -> None:
     step("train SAxwOBA (shift era + shift ban)", lambda: train_saxwoba.main(["--since", str(FIRST)]), results)
     step("train IQ Swing Decisions (2015-2022 + 2023+) and switch on",
          lambda: train_decisions.main(["--since", str(FIRST), "--activate"]), results)
+
+    step("train IQ fielding (DRS parts)", lambda: __import__("pipeline.train_fielding", fromlist=["main"]).main(
+        ["--since", str(FIRST)]), results)
+    step("train IQ Stuff+ / Location+", lambda: __import__("pipeline.train_pitch_quality", fromlist=["main"]).main(
+        ["--since", str(FIRST)]), results)
 
     def push_models():
         git("add", "-A")

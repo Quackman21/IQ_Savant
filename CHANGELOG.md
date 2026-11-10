@@ -1,5 +1,18 @@
 # IQ Savant – version history
 
+## v18.0 – 2026-11-10
+- IQ fielding (models/fielding.py): DRS and its parts from public pitch data, any period, era models.
+  Out chance per ball (EV, LA, direction, distance, side); responsibility = who makes the out on balls like it;
+  OPA / CPA, FPA, RS Field / RS Range (OPA x out-vs-hit run value), DP runs, RS Arm (expected - actual run value
+  on balls an outfielder fields with runners on), stars by out / catch chance. No batter speed (USE_SPEED).
+- Defense page: Infield DRS = RS Field + DP runs; Outfield DRS = RS Range + RS Arm; DRS / Season per 1,200
+  innings + MLB percentiles; our stars (any period) replace Savant's; catcher DRS = framing + Statcast blocking
+  + throwing (season rows), every RS / Season rate, Blocking Opps (pitches in the dirt with runners on), Opps Total.
+- Still blank (need player-tracking data that isn't public): tool grades, RS 1B receiving, range vs conversion
+  splits, catcher blocking by location, Frame Speed Grade.
+- python -m pipeline.train_fielding ; the data update now also saves data/league/fielding_<year>.csv.gz.
+- pipeline.overnight also trains fielding and Stuff+ / Location+.
+
 ## v17.0.1 – 2026-11-10
 - Test fix: the placeholder swing-decision test now pins the placeholder model, so it passes when IQ Swing
   Decisions is switched on (it failed on the Mac after the overnight job turned the real model on).

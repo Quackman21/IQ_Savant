@@ -129,6 +129,8 @@ def main(argv: list[str]) -> None:
         ref = league_ref.build(hm.prep(raw), model=xwoba.ACTIVE)
         from models import framing
         league_ref.save_catching(framing.daily_table(framing.framing_pitches(hm.clean(raw))), season)
+        from models import fielding                     # DRS parts per game / player / position
+        league_ref.save_fielding(fielding.daily_table(hm.clean(raw)), season)
         last_game = str(pd.to_datetime(raw["game_date"]).max().date()) if "game_date" in raw else None
         path = league_ref.save(ref, season, last_game)
         print(f"[{season}] saved {path} ({len(ref):,} rows) in {time.time() - t:.0f}s", flush=True)
