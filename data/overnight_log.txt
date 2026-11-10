@@ -74,3 +74,33 @@ Traceback (most recent call last):
 FileNotFoundError: [Errno 2] No such file or directory: '/Users/ivanquackenbush/Dev/IQ_Savant/data/raw/statcast_2019.csv.tmp' -> '/Users/ivanquackenbush/Dev/IQ_Savant/data/raw/statcast_2019.csv.gz'
 
 [2026-11-10 02:55] START  commit + push the models
+[2026-11-10 02:55] DONE   commit + push the models  (0 min)
+[2026-11-10 02:55] START  rebuild MLB averages (from saved downloads) + push
+[2026-11-10 04:18] FAILED train SAxwOBA (shift era + shift ban): FileNotFoundError: [Errno 2] No such file or directory: '/Users/ivanquackenbush/Dev/IQ_Savant/data/raw/statcast_2022.csv.tmp' -> '/Users/ivanquackenbush/Dev/IQ_Savant/data/raw/statcast_2022.csv.gz'
+Traceback (most recent call last):
+  File "/Users/ivanquackenbush/Dev/IQ_Savant/pipeline/overnight.py", line 45, in step
+    fn()
+  File "/Users/ivanquackenbush/Dev/IQ_Savant/pipeline/overnight.py", line 70, in <lambda>
+    step("train SAxwOBA (shift era + shift ban)", lambda: train_saxwoba.main(["--since", str(FIRST)]), results)
+  File "/Users/ivanquackenbush/Dev/IQ_Savant/pipeline/train_saxwoba.py", line 134, in main
+    all_bip = load_seasons(since)
+  File "/Users/ivanquackenbush/Dev/IQ_Savant/pipeline/train_saxwoba.py", line 53, in load_seasons
+    raw = bl.pull_season(y)
+  File "/Users/ivanquackenbush/Dev/IQ_Savant/pipeline/build_league_reference.py", line 98, in pull_season
+    tmp.replace(raw_path(season))                 # only a complete file ever gets the real name
+  File "/Library/Frameworks/Python.framework/Versions/3.10/lib/python3.10/pathlib.py", line 1247, in replace
+    self._accessor.replace(self, target)
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/ivanquackenbush/Dev/IQ_Savant/data/raw/statcast_2022.csv.tmp' -> '/Users/ivanquackenbush/Dev/IQ_Savant/data/raw/statcast_2022.csv.gz'
+
+[2026-11-10 04:18] START  train IQ Swing Decisions (2015-2022 + 2023+) and switch on
+[2026-11-10 04:29] DONE   rebuild MLB averages (from saved downloads) + push  (94 min)
+[2026-11-10 04:29] ===== SUMMARY =====
+[2026-11-10 04:29]   done     git pull  (0 min)
+[2026-11-10 04:29]   FAILED: FileNotFoundError: [Errno 2] No such file or directo download every pitch 2015-2026  (22 min)
+[2026-11-10 04:29]   FAILED: FileNotFoundError: [Errno 2] No such file or directo train SAxwOBA (shift era + shift ban)  (32 min)
+[2026-11-10 04:29]   FAILED: FileNotFoundError: [Errno 2] No such file or directo train IQ Swing Decisions (2015-2022 + 2023+) and switch on  (64 min)
+[2026-11-10 04:29]   done     commit + push the models  (0 min)
+[2026-11-10 04:29]   done     rebuild MLB averages (from saved downloads) + push  (94 min)
+[2026-11-10 04:29] Reports: models/artifacts/saxwoba_report.txt, decisions_iq_v1_report.txt, decisions_video_check.csv
+[2026-11-10 04:43] DONE   train IQ Swing Decisions (2015-2022 + 2023+) and switch on  (25 min)
+[2026-11-10 04:43] START  commit + push the models
