@@ -1,0 +1,76 @@
+[2026-11-10 00:37] ===== OVERNIGHT JOB: 2015-2026 =====
+[2026-11-10 00:37] START  git pull
+[2026-11-10 00:37] DONE   git pull  (0 min)
+[2026-11-10 00:37] START  download every pitch 2015-2026
+[2026-11-10 00:49]   2015: saved
+[2026-11-10 00:57] ===== OVERNIGHT JOB: 2015-2026 =====
+[2026-11-10 00:57] START  git pull
+[2026-11-10 00:58] DONE   git pull  (0 min)
+[2026-11-10 00:58] START  download every pitch 2015-2026
+[2026-11-10 00:58]   2015: saved
+[2026-11-10 01:19] FAILED download every pitch 2015-2026: FileNotFoundError: [Errno 2] No such file or directory: '/Users/ivanquackenbush/Dev/IQ_Savant/data/raw/statcast_2016.csv.tmp' -> '/Users/ivanquackenbush/Dev/IQ_Savant/data/raw/statcast_2016.csv.gz'
+Traceback (most recent call last):
+  File "/Users/ivanquackenbush/Dev/IQ_Savant/pipeline/overnight.py", line 45, in step
+    fn()
+  File "/Users/ivanquackenbush/Dev/IQ_Savant/pipeline/overnight.py", line 66, in download
+    p = bl.ensure_season(y)
+  File "/Users/ivanquackenbush/Dev/IQ_Savant/pipeline/build_league_reference.py", line 69, in ensure_season
+    pull_season(season)
+  File "/Users/ivanquackenbush/Dev/IQ_Savant/pipeline/build_league_reference.py", line 98, in pull_season
+    tmp.replace(raw_path(season))                 # only a complete file ever gets the real name
+  File "/Library/Frameworks/Python.framework/Versions/3.10/lib/python3.10/pathlib.py", line 1247, in replace
+    self._accessor.replace(self, target)
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/ivanquackenbush/Dev/IQ_Savant/data/raw/statcast_2016.csv.tmp' -> '/Users/ivanquackenbush/Dev/IQ_Savant/data/raw/statcast_2016.csv.gz'
+
+[2026-11-10 01:19]   2016: saved
+[2026-11-10 01:19] START  train SAxwOBA (shift era + shift ban)
+[2026-11-10 01:51] FAILED train SAxwOBA (shift era + shift ban): FileNotFoundError: [Errno 2] No such file or directory: '/Users/ivanquackenbush/Dev/IQ_Savant/data/raw/statcast_2017.csv.tmp' -> '/Users/ivanquackenbush/Dev/IQ_Savant/data/raw/statcast_2017.csv.gz'
+Traceback (most recent call last):
+  File "/Users/ivanquackenbush/Dev/IQ_Savant/pipeline/overnight.py", line 45, in step
+    fn()
+  File "/Users/ivanquackenbush/Dev/IQ_Savant/pipeline/overnight.py", line 70, in <lambda>
+    step("train SAxwOBA (shift era + shift ban)", lambda: train_saxwoba.main(["--since", str(FIRST)]), results)
+  File "/Users/ivanquackenbush/Dev/IQ_Savant/pipeline/train_saxwoba.py", line 134, in main
+    all_bip = load_seasons(since)
+  File "/Users/ivanquackenbush/Dev/IQ_Savant/pipeline/train_saxwoba.py", line 53, in load_seasons
+    raw = bl.pull_season(y)
+  File "/Users/ivanquackenbush/Dev/IQ_Savant/pipeline/build_league_reference.py", line 98, in pull_season
+    tmp.replace(raw_path(season))                 # only a complete file ever gets the real name
+  File "/Library/Frameworks/Python.framework/Versions/3.10/lib/python3.10/pathlib.py", line 1247, in replace
+    self._accessor.replace(self, target)
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/ivanquackenbush/Dev/IQ_Savant/data/raw/statcast_2017.csv.tmp' -> '/Users/ivanquackenbush/Dev/IQ_Savant/data/raw/statcast_2017.csv.gz'
+
+[2026-11-10 01:51]   2017: saved
+[2026-11-10 01:51] START  train IQ Swing Decisions (2015-2022 + 2023+) and switch on
+[2026-11-10 02:23] FAILED download every pitch 2015-2026: FileNotFoundError: [Errno 2] No such file or directory: '/Users/ivanquackenbush/Dev/IQ_Savant/data/raw/statcast_2018.csv.tmp' -> '/Users/ivanquackenbush/Dev/IQ_Savant/data/raw/statcast_2018.csv.gz'
+Traceback (most recent call last):
+  File "/Users/ivanquackenbush/Dev/IQ_Savant/pipeline/overnight.py", line 45, in step
+    fn()
+  File "/Users/ivanquackenbush/Dev/IQ_Savant/pipeline/overnight.py", line 66, in download
+    p = bl.ensure_season(y)
+  File "/Users/ivanquackenbush/Dev/IQ_Savant/pipeline/build_league_reference.py", line 69, in ensure_season
+    pull_season(season)
+  File "/Users/ivanquackenbush/Dev/IQ_Savant/pipeline/build_league_reference.py", line 98, in pull_season
+    tmp.replace(raw_path(season))                 # only a complete file ever gets the real name
+  File "/Library/Frameworks/Python.framework/Versions/3.10/lib/python3.10/pathlib.py", line 1247, in replace
+    self._accessor.replace(self, target)
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/ivanquackenbush/Dev/IQ_Savant/data/raw/statcast_2018.csv.tmp' -> '/Users/ivanquackenbush/Dev/IQ_Savant/data/raw/statcast_2018.csv.gz'
+
+[2026-11-10 02:23] START  train SAxwOBA (shift era + shift ban)
+[2026-11-10 02:55] FAILED train IQ Swing Decisions (2015-2022 + 2023+) and switch on: FileNotFoundError: [Errno 2] No such file or directory: '/Users/ivanquackenbush/Dev/IQ_Savant/data/raw/statcast_2019.csv.tmp' -> '/Users/ivanquackenbush/Dev/IQ_Savant/data/raw/statcast_2019.csv.gz'
+Traceback (most recent call last):
+  File "/Users/ivanquackenbush/Dev/IQ_Savant/pipeline/overnight.py", line 45, in step
+    fn()
+  File "/Users/ivanquackenbush/Dev/IQ_Savant/pipeline/overnight.py", line 72, in <lambda>
+    lambda: train_decisions.main(["--since", str(FIRST), "--activate"]), results)
+  File "/Users/ivanquackenbush/Dev/IQ_Savant/pipeline/train_decisions.py", line 349, in main
+    d = compact(season_pitches(year))
+  File "/Users/ivanquackenbush/Dev/IQ_Savant/pipeline/train_decisions.py", line 46, in season_pitches
+    df = bl.pull_season(year)
+  File "/Users/ivanquackenbush/Dev/IQ_Savant/pipeline/build_league_reference.py", line 98, in pull_season
+    tmp.replace(raw_path(season))                 # only a complete file ever gets the real name
+  File "/Library/Frameworks/Python.framework/Versions/3.10/lib/python3.10/pathlib.py", line 1247, in replace
+    self._accessor.replace(self, target)
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/ivanquackenbush/Dev/IQ_Savant/data/raw/statcast_2019.csv.tmp' -> '/Users/ivanquackenbush/Dev/IQ_Savant/data/raw/statcast_2019.csv.gz'
+
+[2026-11-10 02:55] START  commit + push the models

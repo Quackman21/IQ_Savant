@@ -115,14 +115,14 @@ def _bip(df):
 
 
 def _xwoba(df) -> tuple[float, float]:
-    """(wOBA, xwOBA) the way Savant does it: xwOBA uses expected values on
-    batted balls and actual values for walks / HBP / strikeouts."""
+    """(wOBA, xwOBA): xwOBA from the site's active xwOBA model (models/xwoba.py) -- expected
+    values on batted balls, actual values for walks / HBP / strikeouts."""
+    from models.xwoba import expected_woba
     d = df[df["woba_denom"].fillna(0) > 0] if "woba_denom" in df else df.iloc[0:0]
     if d.empty:
         return float("nan"), float("nan")
     woba = d["woba_value"].fillna(0).sum() / d["woba_denom"].sum()
-    est = d["estimated_woba_using_speedangle"] if "estimated_woba_using_speedangle" in d else d["woba_value"]
-    x = np.where(d["type"].eq("X") & est.notna(), est, d["woba_value"].fillna(0)).sum() / d["woba_denom"].sum()
+    x = expected_woba(d).fillna(0).sum() / d["woba_denom"].sum()
     return woba, x
 
 
@@ -195,8 +195,8 @@ def rolling(df: pd.DataFrame, window: int = 50) -> pd.DataFrame:
     pa = df[df["woba_denom"].fillna(0) > 0].sort_values(["game_date", "at_bat_number"])
     if len(pa) < 5:
         return pd.DataFrame()
-    est = pa.get("estimated_woba_using_speedangle", pa["woba_value"])
-    x = np.where(pa["type"].eq("X") & est.notna(), est, pa["woba_value"].fillna(0))
+    from models.xwoba import expected_woba
+    x = expected_woba(pa).fillna(0).values                 # the site's active xwOBA model
     w = min(window, len(pa))
     out = pd.DataFrame({
         "PA": range(1, len(pa) + 1),

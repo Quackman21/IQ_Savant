@@ -1,0 +1,100 @@
+IQ xwOBA -- version comparison
+Every number: each season scored by a model trained WITHOUT that season.
+
+Columns:
+  FUTURE r   1st-half number vs the hitter's ACTUAL 2nd-half wOBACON. THE main test. Higher = better.
+  SAME r     season number vs that season's actual wOBACON (200+ BIP). How closely it matches
+             what happened -- higher is NOT automatically better: luck matches results too.
+  LOG LOSS   how well it predicts each ball's outcome (lower = better). Park-neutral versions
+             are scored in the average park, not the real one, so they give up a little here.
+  BALL ERR   per-ball accuracy: typical gap between a ball's xwOBA and the wOBA it produced
+             (lower = each ball's number is closer to what happened).
+  DRIFT      worst season: league IQ xwOBACON minus actual, BEFORE calibration fixes it.
+  name@0.5 = no_spray + 50% of that version's spray adjustment (EV / LA lead, spray adjusts).
+
+  VERSION       FUTURE r   SAME r  LOG LOSS  BALL ERR    DRIFT   WHAT IT IS
+  no_spray         0.528    0.852    0.5589    0.4307   -0.021   park-neutral, no direction at all
+  air              0.483    0.870    0.4791    0.3815   -0.022   park-neutral, exact spray on air balls only
+  fly              0.494    0.863    0.5303    0.4012   -0.022   park-neutral, exact spray only on true fly balls (LA 25-45)
+  hr_dir           0.493    0.862    0.5409    0.4036   -0.022   park-neutral; direction ONLY decides home run vs not (spray on air balls); rest no direction
+  blur18           0.500    0.862    0.5259    0.4069   +0.034   park-neutral, spray on every ball, blurred +-18 deg
+  air@0.25         0.522    0.862    0.5244    0.4094   -0.021   no_spray + 25% of air's spray adjustment (park-neutral, exact spray on air balls only)
+  air@0.5          0.512    0.869    0.5026    0.3937   -0.022   no_spray + 50% of air's spray adjustment (park-neutral, exact spray on air balls only)
+  air@0.75         0.499    0.872    0.4874    0.3842   -0.022   no_spray + 75% of air's spray adjustment (park-neutral, exact spray on air balls only)
+  fly@0.25         0.522    0.858    0.5462    0.4176   -0.021   no_spray + 25% of fly's spray adjustment (park-neutral, exact spray only on true fly balls (LA 25-45))
+  fly@0.5          0.515    0.862    0.5384    0.4081   -0.022   no_spray + 50% of fly's spray adjustment (park-neutral, exact spray only on true fly balls (LA 25-45))
+  fly@0.75         0.505    0.864    0.5331    0.4026   -0.022   no_spray + 75% of fly's spray adjustment (park-neutral, exact spray only on true fly balls (LA 25-45))
+  hr_dir@0.25      0.522    0.858    0.5513    0.4196   -0.021   no_spray + 25% of hr_dir's spray adjustment (park-neutral; direction ONLY decides home run vs not (spray on air balls); rest no direction)
+  hr_dir@0.5       0.514    0.861    0.5462    0.4113   -0.022   no_spray + 50% of hr_dir's spray adjustment (park-neutral; direction ONLY decides home run vs not (spray on air balls); rest no direction)
+  hr_dir@0.75      0.504    0.863    0.5427    0.4059   -0.022   no_spray + 75% of hr_dir's spray adjustment (park-neutral; direction ONLY decides home run vs not (spray on air balls); rest no direction)
+  blur18@0.25      0.524    0.857    0.5411    0.4212   -0.012   no_spray + 25% of blur18's spray adjustment (park-neutral, spray on every ball, blurred +-18 deg)
+  blur18@0.5       0.518    0.861    0.5316    0.4142   +0.019   no_spray + 50% of blur18's spray adjustment (park-neutral, spray on every ball, blurred +-18 deg)
+  blur18@0.75      0.510    0.862    0.5268    0.4095   +0.026   no_spray + 75% of blur18's spray adjustment (park-neutral, spray on every ball, blurred +-18 deg)
+  (no-skill)                         0.9357
+
+References (same hitters):
+  Savant xwOBA     0.538    0.862   (uses sprint speed on some ground balls)
+  Actual wOBACON    0.424    1.000
+  Savant per-ball error   0.4308
+  (881 hitter-seasons with 100+ batted balls in each half)
+
+How reliable are the FUTURE r numbers? (881 hitter-seasons resampled 1,000 times)
+  RANGE = 95% of resamples.  GAP = this version minus no_spray, same hitters each time;
+  if the GAP range doesn't cross 0, the difference is real, not luck of which hitters were in the sample.
+
+  VERSION      FUTURE r           RANGE      GAP         GAP RANGE      2023   2024   2025   2026
+  no_spray        0.528     0.474-0.579                                0.556  0.515  0.525  0.505
+  air             0.483     0.424-0.538   -0.045  -0.065 to -0.026     0.518  0.454  0.496  0.456
+  fly             0.494     0.437-0.549   -0.034  -0.048 to -0.022     0.529  0.478  0.492  0.465
+  hr_dir          0.493     0.435-0.547   -0.036  -0.049 to -0.023     0.531  0.462  0.498  0.469
+  blur18          0.500     0.444-0.555   -0.028  -0.041 to -0.015     0.530  0.462  0.510  0.485
+  air@0.25        0.522     0.467-0.572   -0.006  -0.011 to -0.002     0.552  0.506  0.522  0.497
+  air@0.5         0.512     0.456-0.564   -0.016  -0.026 to -0.006     0.544  0.493  0.516  0.487
+  air@0.75        0.499     0.441-0.554   -0.029  -0.044 to -0.015     0.532  0.476  0.507  0.473
+  fly@0.25        0.522     0.468-0.573   -0.006  -0.009 to -0.003     0.553  0.509  0.520  0.498
+  fly@0.5         0.515     0.460-0.567   -0.013  -0.020 to -0.007     0.547  0.501  0.513  0.489
+  fly@0.75        0.505     0.449-0.559   -0.023  -0.033 to -0.013     0.539  0.491  0.504  0.478
+  hr_dir@0.25     0.522     0.468-0.573   -0.006  -0.009 to -0.003     0.553  0.505  0.521  0.498
+  hr_dir@0.5      0.514     0.459-0.567   -0.014  -0.021 to -0.008     0.548  0.493  0.515  0.490
+  hr_dir@0.75     0.504     0.448-0.559   -0.024  -0.034 to -0.015     0.541  0.479  0.507  0.481
+  blur18@0.25     0.524     0.470-0.575   -0.004  -0.008 to -0.001     0.552  0.505  0.524  0.502
+  blur18@0.5      0.518     0.464-0.570   -0.011  -0.017 to -0.004     0.546  0.493  0.521  0.498
+  blur18@0.75     0.510     0.455-0.563   -0.018  -0.028 to -0.009     0.539  0.478  0.516  0.492
+  Savant          0.538     0.485-0.587   +0.010  +0.003 to +0.017     0.569  0.535  0.523  0.511
+
+Direction as a SKILL (credit = this version minus no_spray, same balls):
+  REPEAT    a hitter's 1st-half direction credit vs his 2nd-half credit (higher = real skill;
+            holes and luck don't repeat)
+  PULL-AIR  season credit vs his rate of pulled air balls     (should be clearly +)
+  OPPO-GB   season credit vs his rate of opposite-field grounders (+ if the model rewards it)
+  SIZE      how much direction moves hitters' season xwOBACON (SD, in points of wOBA)
+
+  VERSION       REPEAT  PULL-AIR  OPPO-GB   SIZE
+  air             0.25     +0.46    -0.24     15
+  fly             0.21     +0.35    -0.16     11
+  hr_dir          0.33     +0.38    -0.19     11
+  blur18          0.57     -0.08    +0.28     13
+  air@0.25        0.25     +0.46    -0.24      4
+  air@0.5         0.25     +0.46    -0.24      7
+  air@0.75        0.25     +0.46    -0.24     11
+  fly@0.25        0.21     +0.35    -0.16      3
+  fly@0.5         0.21     +0.35    -0.16      6
+  fly@0.75        0.21     +0.35    -0.16      8
+  hr_dir@0.25     0.33     +0.38    -0.19      3
+  hr_dir@0.5      0.33     +0.38    -0.19      6
+  hr_dir@0.75     0.33     +0.38    -0.19      8
+  blur18@0.25     0.57     -0.08    +0.28      3
+  blur18@0.5      0.57     -0.08    +0.28      7
+  blur18@0.75     0.57     -0.08    +0.28     10
+
+THE PICK: fly@0.25 -- no_spray + 25% of fly's spray adjustment (park-neutral, exact spray only on true fly balls (LA 25-45))
+  No version passed both tests. Picked the spray version that loses the least predictive value while still crediting pulled air balls: fly@0.25 (future r 0.522, gap -0.006).
+Ground-ball hole check (85-105 mph ground balls, 3-degree bins, pull-adjusted spray):
+  how much each version swings with the actual spikes (higher = following the holes).
+  no_spray is the floor (~0.5: hitters' EV / LA differ by direction) -- near it = no hole leak:
+    no_spray   +0.52
+    air        +0.52
+    fly        +0.52
+    hr_dir     +0.52
+    blur18     +0.47
+    fly@0.25   +0.52

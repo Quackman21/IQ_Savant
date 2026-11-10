@@ -18,7 +18,7 @@ import numpy as np
 import pandas as pd
 
 from core.statcast_clean import clean
-from models.decisions import good_decision
+from models.decisions import decision_detail
 from models.xwoba import expected_woba
 
 # ----------------------------------------------------------------------------
@@ -150,7 +150,18 @@ CATALOG: dict[str, Stat] = {s.key: s for s in [
     S("FB DECISIONS", "FB Decisions", "Number of fastballs with a corresponding Decision Grade", "count", "dec_fb", fmt="int", good=0),
     S("BB DECISIONS", "BB Decisions", "Number of breaking balls with a corresponding Decision Grade", "count", "dec_bb", fmt="int", good=0),
     S("OS DECISIONS", "OS Decisions", "Number of offspeed pitches with a corresponding Decision Grade", "count", "dec_os", fmt="int", good=0),
-    S("GD%", "GD%", "Rate of good decisions\n(placeholder decision model until ours is built)", "ratio", "gd", "dec", good=1),
+    S("GD%", "GD%", "Rate of good decisions: how OFTEN he made the right swing / take call\n"
+      "[Good / (Good + Bad), coin-flip pitches left out; placeholder zone model until IQ Swing Decisions is on]",
+      "ratio", "gd", "dec", good=1),
+    S("DEC QUAL", "DEC QUAL", "Decision Quality: HOW right or wrong his swing / take calls were, not just which\n"
+      "[average decision score per pitch: (chosen option - the other) / what was at stake in that count, x100; "
+      "0 = coin flip, each pitch capped at +-150. Blank until IQ Swing Decisions is on]",
+      "ratio", "dq_sum", "dq_n", fmt="num1", good=1),
+    S("DEC RUNS", "DEC RUNS", "Decision Runs: runs gained (+) or lost (-) by his swing / take choices vs what a "
+      "league-average hitter would choose on the same pitches\n[sum over graded pitches; not count-adjusted, so "
+      "3-2 mistakes cost more. Blank until IQ Swing Decisions is on]", "count", "druns", "dq_n", fmt="num1", good=1),
+    S("DEC RUNS/100", "DEC RUNS/100", "Decision Runs per 100 graded pitches\n[Decision Runs / graded pitches x 100]",
+      "ratio", "druns100", "dq_n", fmt="num2", good=1),
     S("GD% 0-0", "GD% 0-0", "Rate of good decisions on first pitch", "ratio", "gd_00", "dec_00", good=1),
     S("GD% <2K", "GD% <2k", "Rate of good decisions with less than two strikes", "ratio", "gd_lt2", "dec_lt2", good=1),
     S("GD% 2K", "GD% 2k", "Rate of good decisions with two strikes", "ratio", "gd_2k", "dec_2k", good=1),
@@ -329,8 +340,14 @@ def prep(df: pd.DataFrame, model: str | None = None) -> pd.DataFrame:
     d["o_pit_2k"], d["o_swing_2k"] = is_o & two_k, d["o_swing"] & two_k
 
     # swing decisions (model in models/decisions.py)
-    good = good_decision(df, d["swing"], att)
+    detail = decision_detail(df, d["swing"], att)
+    good = detail["good"]
     dec = good.notna()
+    q = detail["quality"]
+    d["dq_n"] = q.notna()                                  # every graded decision, neutral included
+    d["dq_sum"] = q.fillna(0)
+    d["druns"] = detail["runs"].fillna(0)
+    d["druns100"] = 100 * d["druns"]
     g1 = good.fillna(0).astype(float)
     pg = pitch_group(df)
     first = (balls == 0) & (strikes == 0)
@@ -361,6 +378,8 @@ def _needs():
     for st_ in CATALOG.values():
         if st_.kind == "count":
             sums.add(st_.a)
+            if st_.b:
+                sums.add(st_.b)
         elif st_.kind == "ratio":
             sums.update((st_.a, st_.b))
         else:
@@ -408,7 +427,7 @@ def compute(d: pd.DataFrame, by: list[str] | None = None, keys: list[str] | None
     for k in keys:
         s = CATALOG[k]
         if s.kind == "count":
-            out[k] = sums[s.a]
+            out[k] = sums[s.a].where(sums[s.b] > 0) if s.b else sums[s.a]     # b = "only if any of these"
         elif s.kind == "ratio":
             den = sums[s.b]
             out[k] = (sums[s.a] / den).where(den > 0)
@@ -428,6 +447,8 @@ def fmt(key: str, v) -> str:
     if f == "int":
         n = int(round(v))
         return f"{n / 1000:.1f}K" if n >= 100_000 else f"{n}"
+    if f == "num2":
+        return f"{v:.2f}"
     return f"{v:.1f}"
 
 
@@ -439,6 +460,8 @@ def fmt_delta(key: str, v) -> str:
         return f"{100 * v:+.1f}%"
     if f == "rate3":
         return f"{v:+.3f}".replace("0.", ".", 1)
+    if f == "num2":
+        return f"{v:+.2f}"
     return f"{v:+.1f}"
 
 

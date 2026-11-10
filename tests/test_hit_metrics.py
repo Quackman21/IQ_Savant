@@ -70,7 +70,7 @@ def test_ev_stats():
 
 
 def test_xwoba_model_slot():
-    v = hm.compute(hm.prep(df())).iloc[0]
+    v = hm.compute(hm.prep(df(), model="savant")).iloc[0]
     assert math.isclose(v["xwOBACON"], (1.5 + 5 * 0.5) / 6)
     from models import xwoba
     xwoba.MODELS["flat"] = lambda d: pd.Series(0.3, index=d.index)

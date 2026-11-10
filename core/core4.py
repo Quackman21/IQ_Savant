@@ -54,7 +54,7 @@ TABS = {
                                  "0-0 DECISION GRADE", "<2K DECISION GRADE", "2K DECISION GRADE",
                                  "FB DECISIONS", "BB DECISIONS", "OS DECISIONS",
                                  "FB DECISION GRADE", "BB DECISION GRADE", "OS DECISION GRADE",
-                                 "GD%", "SWING%", "CHASE%", "PRE2K O-SWING%", "2K O-SWING%",
+                                 "GD%", "DEC QUAL", "DEC RUNS", "DEC RUNS/100", "SWING%", "CHASE%", "PRE2K O-SWING%", "2K O-SWING%",
                                  "H-SWING%", "S-SWING%", "C-SWING%", "W-SWING%"],
     "Ball Flight": SHARED + ["BALL FLIGHT GRADE", "BALL FLIGHT 600", "LA", "LAHHB", "ATTACK", "xwOBACON",
                              "xwOBACON MLB", "WEAK GB%", "GB%", "FB%", "WEAK FB%", "LD%", "LD+FB%", "PULL%",

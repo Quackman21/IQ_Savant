@@ -22,6 +22,12 @@ def _fmt(v, f: str) -> str:
         return f"{v:.2f}"
     if f == "pct":
         return f"{100 * v:.1f}%"
+    if f == "pcts":
+        return f"{100 * v:+.1f}%"
+    if f == "num1s":
+        return f"{v:+.1f}"
+    if f == "num2s":
+        return f"{v:+.2f}"
     if f == "time":
         return f"{v:.2f}s"
     if f == "mph":

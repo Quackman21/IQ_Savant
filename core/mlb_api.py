@@ -66,6 +66,17 @@ def get_season_games(season: int) -> list[dict]:
     return _flatten(data)
 
 
+def get_game_venues(season: int) -> dict[int, tuple[int, str]]:
+    """game_pk -> (venue id, ballpark name) for every regular-season / postseason game.
+    One small call per season (used to make IQ xwOBA park-neutral)."""
+    out = {}
+    for g in get_season_games(season):
+        v = g.get("venue") or {}
+        if g.get("gamePk") and v.get("id"):
+            out[int(g["gamePk"])] = (int(v["id"]), v.get("name", ""))
+    return out
+
+
 def get_standings(season: int, on: str | None = None) -> dict:
     """Regular-season standings for both leagues (records, splits, clinch flags).
     `on` = 'YYYY-MM-DD' for standings as of the end of that day; None = latest."""

@@ -1,0 +1,95 @@
+IQ Swing Decisions v1 -- test report
+Each half of the season's games scored by a model trained on the OTHER half.
+Runners + outs at 50% strength; they can't flip a decision count + location call clear (|z| >= 0.25); neutral = |z| < 0.05.
+
+What each count is worth (runs, batting side) -- from real run values:
+  COUNT   BALL   STRIKE   IN PLAY   AT STAKE (ball - strike)
+  0-0    +0.035   -0.039    +0.049       0.074
+  1-0    +0.067   -0.046    +0.022       0.114
+  0-1    +0.029   -0.066    +0.070       0.094
+  2-0    +0.098   -0.066    -0.027       0.164
+  1-1    +0.049   -0.066    +0.051       0.115
+  0-2    +0.030   -0.155    +0.112       0.185
+  3-0    +0.129   -0.066    -0.026       0.195
+  2-1    +0.100   -0.072    +0.021       0.172
+  1-2    +0.043   -0.183    +0.090       0.226
+  3-1    +0.194   -0.081    -0.052       0.275
+  2-2    +0.092   -0.223    +0.072       0.315
+  3-2    +0.275   -0.312    -0.011       0.586
+  (contact: +0.83 runs per 1.000 of expected xwOBA above average)
+
+Graded pitches: 710,651  |  good 64.2%  bad 29.7%  neutral 6.1%
+
+By count (share of decisions):     SWINGS good / bad / neutral     TAKES good / bad / neutral
+  0-0      swings   33% /  57% /  10%  (n 57,095)   takes    79% /  15% /   6%  (n 124,430)
+  1-0      swings   18% /  64% /  18%  (n 29,703)   takes    86% /   7% /   7%  (n 40,194)
+  0-1      swings   44% /  49% /   7%  (n 44,837)   takes    85% /  13% /   2%  (n 46,616)
+  2-0      swings    6% /  77% /  18%  (n 9,400)   takes    90% /   2% /   7%  (n 14,358)
+  1-1      swings   41% /  50% /  10%  (n 38,672)   takes    85% /  11% /   4%  (n 32,284)
+  0-2      swings   52% /  45% /   2%  (n 24,761)   takes    90% /   9% /   1%  (n 23,750)
+  3-0      swings    6% /  78% /  15%  (n 562)   takes    88% /   5% /   7%  (n 7,083)
+  2-1      swings   26% /  52% /  21%  (n 20,983)   takes    86% /   7% /   7%  (n 15,745)
+  1-2      swings   55% /  44% /   2%  (n 40,002)   takes    89% /  10% /   1%  (n 29,518)
+  3-1      swings    0% /  84% /  15%  (n 8,065)   takes    96% /   0% /   4%  (n 7,649)
+  2-2      swings   61% /  38% /   1%  (n 37,923)   takes    86% /  13% /   1%  (n 21,117)
+  3-2      swings   70% /  29% /   1%  (n 25,145)   takes    80% /  19% /   1%  (n 10,759)
+
+Tier check -- share graded GOOD by IQ zone (Heart / Sub-heart / Edge are inside the zone):
+                                 Heart   Sub-heart        Edge  Edge (off)       Chase       Waste
+  0-0 swings                       79%         48%         19%          2%          0%          0%
+  0-0 takes                        13%         35%         63%         94%        100%        100%
+  before 2 strikes swings          73%         52%         26%          3%          0%          0%
+  before 2 strikes takes           20%         37%         62%         93%        100%        100%
+  2 strikes swings                100%        100%        100%         88%          2%          0%
+  2 strikes takes                   0%          0%          0%          9%         98%        100%
+  (- = fewer than 30 pitches)
+
+Flip report -- how often each layer changed the grade from count + location alone:
+  runners + outs: 2.0% of graded pitches
+  game state: not in v1
+    most: 1st      0 out  -> 3.8% flipped (n 38,327)
+    most: 1st+3rd  1 out  -> 3.7% flipped (n 6,718)
+    most: 3rd      1 out  -> 3.4% flipped (n 5,394)
+    most: empty    0 out  -> 3.0% flipped (n 174,282)
+    most: 2nd+3rd  1 out  -> 2.8% flipped (n 5,522)
+
+Called-strike check (taken pitches, grouped by the model's strike chance):
+  MODEL SAID     ACTUALLY CALLED STRIKE     PITCHES
+    0%-10%       1% avg ->    1%          226,915
+   10%-20%      15% avg ->   15%           11,943
+   20%-30%      25% avg ->   25%            7,764
+   30%-40%      35% avg ->   36%            5,639
+   40%-50%      45% avg ->   44%            4,614
+   50%-60%      55% avg ->   56%            4,003
+   60%-70%      65% avg ->   64%            4,966
+   70%-80%      75% avg ->   74%            6,477
+   80%-90%      86% avg ->   85%           10,615
+   90%-100%     98% avg ->   99%           88,449
+
+Repeatable? hitter's 1st half vs 2nd half (250+ graded pitches each half; higher = real skill):
+  IQ GD%                   r = 0.777   (333 hitters)
+  IQ Decision Quality      r = 0.762   (338 hitters)
+  IQ Decision Runs / 100   r = 0.790   (338 hitters)
+  Placeholder GD%          r = 0.687   (338 hitters)
+
+Same season, hitters with 600+ graded pitches (403): correlation with
+                         BB%      K%     BB%-K%
+  IQ GD%                 +0.72   -0.04    +0.37
+  IQ Decision Quality    +0.74   -0.08    +0.42
+  IQ Decision Runs/100   +0.73   -0.04    +0.37
+  Placeholder GD%        +0.55   -0.05    +0.29
+  (GD% vs Decision Quality across hitters: r = 0.97 -- lower = they tell you more different things)
+
+Best and worst decision-makers by Decision Runs (does the list pass the eye test?):
+  HITTER                   DEC RUNS     GD%  DEC QUAL    BB%     K%
+  Taylor Ward                 +27.7   77.0%     +42.3  16.0%  21.4%
+  Kevin McGonigle             +22.4   75.3%     +40.0  13.2%  14.1%
+  Geraldo Perdomo             +20.9   74.5%     +40.1  14.1%  12.6%
+  Xander Bogaerts             +19.2   74.0%     +37.8  12.3%  17.9%
+  Miguel Vargas               +18.0   73.8%     +38.3  13.6%  17.9%
+  ...
+  Zach Neto                   -16.8   63.5%     +23.8   9.8%  30.5%
+  Ceddanne Rafaela            -17.7   59.8%     +17.9   3.6%  20.3%
+  Ernie Clement               -17.7   59.3%     +16.3   3.5%   9.3%
+  Salvador Perez              -23.5   59.5%     +16.2   3.5%  18.9%
+  Michael Harris II           -24.0   58.7%     +16.9   3.5%  19.0%

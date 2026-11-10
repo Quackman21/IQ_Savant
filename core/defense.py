@@ -108,11 +108,12 @@ OF_STAR_TAB = [("N", "#", "Chances", "int"), "|", *_DRS,
                *_stars("Catch", "Catch rate (Statcast catch probability, full seasons)")]
 
 C_OVERVIEW = [("OPPS", "Opps Total", "# of framing, blocking, and throwing opportunities", B),
-              ("F_OPPS", "Framing Opps", "# of framing opportunities", "int"),
+              ("F_OPPS", "Framing Opps", "# of framing opportunities (taken pitches he received)", "int"),
               ("B_OPPS", "Blocking Opps", "# of blocking opportunities", B),
               ("T_OPPS", "Throwing Opps", "# of throwing opportunities (stolen base attempts)", "int"), "|",
               ("DRS", "DRS", "Catching DRS", B),
-              ("F_RS", "Framing RS", "Framing runs (Statcast, full seasons)", "num1"),
+              ("F_RS", "Framing Runs", "Framing runs saved (our framing model, any period): each extra strike x what "
+               "a strike instead of a ball is worth in that count", "num1s"),
               ("B_RS", "Blocking RS", "Blocking runs (Statcast, full seasons)", "num1"),
               ("T_RS", "Throwing RS", "Throwing runs (Statcast, full seasons)", "num1"), "|",
               ("DRS/S", "DRS / Season", "Catching DRS Rate", B),
@@ -120,9 +121,20 @@ C_OVERVIEW = [("OPPS", "Opps Total", "# of framing, blocking, and throwing oppor
               ("B_RS/S", "Blocking RS / Season", "Blocking DRS Rate", B),
               ("T_RS/S", "Throwing RS / Season", "Throwing DRS Rate", B)]
 C_FRAMING = [("DRS", "DRS", "Catching DRS", B), ("DRS/S", "DRS / Season", "Catching DRS Rate", B), "|",
-             ("F_OPPS", "Framing Opps", "# of framing opportunities", "int"),
-             ("F_RS", "Framing RS", "Framing DRS (Statcast framing runs, full seasons)", "num1"),
+             ("F_OPPS", "Framing Opps", "# of framing opportunities: every taken pitch (called strike or ball) he "
+              "received", "int"),
+             ("F_RS", "Framing Runs", "Framing runs saved: each extra strike x what a strike instead of a ball is worth "
+              "in that count (about 0.07 runs at 0-0, 0.59 at 3-2)", "num1s"),
              ("F_RS/S", "Framing RS / Season", "Framing DRS Rate", B), "|",
+             ("F_XS", "Extra Strikes", "Strikes above (+) / below (-) a league-average catcher on the same pitches.\n"
+              "Each taken pitch: (1 if called a strike, 0 if a ball) - its strike chance. A 45% pitch called a "
+              "strike = +0.55, called a ball = -0.45. Strike chance = league-average umpire, from location vs the "
+              "hitter's zone, count, batter side and pitch type", "num1s"),
+             ("F_XS/G", "Extra Strikes / Game", "Extra Strikes per game caught", "num2s"),
+             ("F_SLAA", "SLAA", "Strikes Looking Above Average per framing opportunity\n[Extra Strikes / Framing Opps]",
+              "pcts"),
+             ("F_SLAA+", "SLAA+", "Called strikes vs expected, 100 = average\n[100 x called strikes / expected called "
+              "strikes; 105 = 5% more strikes than an average catcher]", "int"), "|",
              ("F_AS", "Framing AS", "Strike rate on edge pitches, arm side — percentile vs MLB catchers", "pctile"),
              ("F_GS", "Framing GS", "Strike rate on edge pitches, glove side — percentile vs MLB catchers", "pctile"),
              ("F_TOZ", "Framing TOZ", "Strike rate on edge pitches, top of zone — percentile vs MLB catchers", "pctile"),

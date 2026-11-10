@@ -18,6 +18,7 @@ import sys
 import time
 import warnings
 from datetime import date, timedelta
+from pathlib import Path
 
 import pandas as pd
 
@@ -46,7 +47,34 @@ def _pull_chunk(start: str, end: str) -> pd.DataFrame:
     return pd.DataFrame()
 
 
+RAW_DIR = Path(__file__).resolve().parent.parent / "data" / "raw"      # not pushed to GitHub
+
+
+def raw_path(season: int) -> Path:
+    return RAW_DIR / f"statcast_{season}.csv.gz"
+
+
+def season_complete(season: int, today: date | None = None) -> bool:
+    today = today or date.today()
+    return season < today.year or today.month >= 11
+
+
+def ensure_season(season: int) -> Path | None:
+    """Download a finished season once and keep it (every pitch, every column). Later runs -- the MLB
+    averages, SAxwOBA, swing decisions -- read the saved file instead of downloading again."""
+    p = raw_path(season)
+    if p.exists():
+        return p
+    print(f"[{season}] downloading every pitch a week at a time…", flush=True)
+    pull_season(season)
+    return p if p.exists() else None
+
+
 def pull_season(season: int) -> pd.DataFrame:
+    p = raw_path(season)
+    if p.exists():
+        print(f"[{season}] using saved pitches ({p.name})", flush=True)
+        return pd.read_csv(p, low_memory=False)
     from pybaseball import cache
     cache.enable()
     d, last = date(season, 3, 1), min(date(season, 11, 30), date.today())
@@ -63,6 +91,11 @@ def pull_season(season: int) -> pd.DataFrame:
     df = pd.concat(parts, ignore_index=True)
     if "game_type" in df:
         df = df[df["game_type"].astype(str).eq("R")]
+    if season_complete(season):                       # keep finished seasons; the live season changes daily
+        RAW_DIR.mkdir(parents=True, exist_ok=True)
+        tmp = raw_path(season).with_suffix(".tmp")
+        df.to_csv(tmp, index=False, compression="gzip")
+        tmp.replace(raw_path(season))                 # only a complete file ever gets the real name
     return df
 
 

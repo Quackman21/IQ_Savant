@@ -1,5 +1,9 @@
-"""Catcher framing model (placeholder, built from public pitch data so it works for
-any date range). Like xwOBA / decisions: swap the model by changing ACTIVE.
+"""Catcher framing, built from public pitch data so it works for any date range.
+ACTIVE = iq_v1 (every taken pitch, league-umpire strike chance from IQ Swing Decisions, count-valued runs);
+placeholder_v0 kept below (shadow pitches only, location-bin strike rate).
+
+Metrics (summarize): Framing Opps, Extra Strikes, Extra Strikes / Game, SLAA (per pitch), SLAA+ (100 = avg),
+Framing Runs, and edge percentiles (arm side / glove side / top / bottom).
 
 Framing pitches = taken pitches (called strike / ball) in the Shadow zone.
 Expected strike = MLB called-strike rate for that location bin and batter side
@@ -46,8 +50,40 @@ def placeholder_v0(df: pd.DataFrame) -> pd.DataFrame:
                          "strike": d["strike"], "exp": d["exp"]})
 
 
-MODELS = {"placeholder_v0": placeholder_v0}
-ACTIVE = "placeholder_v0"
+def iq_v1(df: pd.DataFrame) -> pd.DataFrame:
+    """IQ framing: EVERY taken pitch (called strike / ball) the catcher received.
+    exp = league-average-umpire strike chance from the IQ Swing Decisions called-strike model (location vs
+          the hitter's own zone, count, batter side, pitch type -- not the catcher, umpire or pitcher).
+    extra strike = (1 if called strike else 0) - exp   (45% pitch called a strike +0.55, a ball -0.45)
+    runs = extra strike x what a strike instead of a ball is worth in that count.
+    Falls back to the placeholder until the decision model is trained."""
+    from models import decisions_iq as dq
+    if df is None or df.empty or dq.load() is None or not {"balls", "strikes"} <= set(df.columns):
+        return placeholder_v0(df)                       # not trained yet / no count -> old model
+    need = {"description", "plate_x", "plate_z", "sz_top", "sz_bot", "fielder_2", "game_date"}
+    if not need <= set(df.columns):
+        return pd.DataFrame(columns=["game_date", "game_pk", "catcher", "region", "strike", "exp", "runs"])
+    d = df[df["description"].isin(TAKEN)].dropna(subset=["plate_x", "plate_z", "sz_top", "sz_bot", "fielder_2"])
+    if d.empty:
+        return pd.DataFrame(columns=["game_date", "game_pk", "catcher", "region", "strike", "exp", "runs"])
+    exp = dq.called_strike_chance(d)
+    val = dq.strike_value(d)
+    d = d.assign(exp=exp, val=val).dropna(subset=["exp"])
+    xn, zn = _norm(d)
+    r = np.maximum(xn.abs(), zn.abs())
+    edge = np.where(zn.abs() >= xn.abs(), np.where(zn > 0, "TOZ", "BOZ"), np.where(xn > 0, "SIDE+", "SIDE-"))
+    region = np.select([r < 0.67, r < 1.33], ["IN", "EDGE"], "OUT")
+    region = np.where(region == "EDGE", edge, region)               # shadow pitches keep their side
+    strike = d["description"].eq("called_strike").astype(float)
+    return pd.DataFrame({"game_date": pd.to_datetime(d["game_date"]).dt.date.astype(str),
+                         "game_pk": d["game_pk"] if "game_pk" in d else 0,
+                         "catcher": d["fielder_2"].astype(int), "region": region, "strike": strike,
+                         "exp": d["exp"], "runs": (strike - d["exp"]) * d["val"].fillna(RUNS_PER_STRIKE)})
+
+
+MODELS = {"placeholder_v0": placeholder_v0, "iq_v1": iq_v1}
+ACTIVE = "iq_v1"
+EDGE_REGIONS = {"TOZ", "BOZ", "SIDE+", "SIDE-"}
 
 
 def framing_pitches(df: pd.DataFrame, model: str | None = None) -> pd.DataFrame:
@@ -55,11 +91,14 @@ def framing_pitches(df: pd.DataFrame, model: str | None = None) -> pd.DataFrame:
 
 
 def daily_table(fp: pd.DataFrame) -> pd.DataFrame:
-    """Small file to save per season: catcher x date x region -> n, strikes, expected."""
+    """Small file to save per season: catcher x game x region -> n, strikes, expected, runs."""
     if fp.empty:
-        return pd.DataFrame(columns=["game_date", "catcher", "region", "n", "strikes", "exp"])
-    return (fp.groupby(["game_date", "catcher", "region"])
-              .agg(n=("strike", "size"), strikes=("strike", "sum"), exp=("exp", "sum")).reset_index())
+        return pd.DataFrame(columns=["game_date", "game_pk", "catcher", "region", "n", "strikes", "exp", "runs"])
+    keys = ["game_date"] + (["game_pk"] if "game_pk" in fp else []) + ["catcher", "region"]
+    agg = dict(n=("strike", "size"), strikes=("strike", "sum"), exp=("exp", "sum"))
+    if "runs" in fp:
+        agg["runs"] = ("runs", "sum")
+    return fp.groupby(keys).agg(**agg).reset_index()
 
 
 def summarize(daily: pd.DataFrame, start: str, end: str, throws: str = "R", min_n: int = 10) -> dict:
@@ -71,8 +110,15 @@ def summarize(daily: pd.DataFrame, start: str, end: str, throws: str = "R", min_
     w = daily[(daily["game_date"] >= start) & (daily["game_date"] <= end)]
     if w.empty:
         return {}
-    tot = w.groupby("catcher")[["n", "strikes", "exp"]].sum()
-    out = {c: {"F_OPPS": r.n, "F_RS": (r.strikes - r.exp) * RUNS_PER_STRIKE} for c, r in tot.iterrows()}
+    cols = ["n", "strikes", "exp"] + (["runs"] if "runs" in w else [])
+    tot = w.groupby("catcher")[cols].sum()
+    games = w.groupby("catcher")["game_pk" if "game_pk" in w else "game_date"].nunique()
+    out = {}
+    for c, r in tot.iterrows():
+        xs = r.strikes - r.exp
+        out[c] = {"F_OPPS": r.n, "F_XS": xs, "F_XS/G": xs / games[c] if games[c] else np.nan,
+                  "F_SLAA": xs / r.n if r.n else np.nan, "F_SLAA+": 100 * r.strikes / r.exp if r.exp else np.nan,
+                  "F_RS": r.runs if "runs" in r and pd.notna(r.runs) else xs * RUNS_PER_STRIKE}
     side = {"F_TOZ": "TOZ", "F_BOZ": "BOZ",
             "F_GS": "SIDE-" if throws == "R" else "SIDE+", "F_AS": "SIDE+" if throws == "R" else "SIDE-"}
     for key, region in side.items():

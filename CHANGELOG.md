@@ -1,5 +1,158 @@
 # IQ Savant – version history
 
+## v16.9 – 2026-11-10  (includes v16.8)
+- IQ framing (models/framing.py iq_v1, now active): every taken pitch a catcher received, strike chance from
+  the IQ Swing Decisions called-strike model (league-average umpire; location vs the hitter's zone, count,
+  batter side, pitch type; era models). Falls back to the placeholder until the decision model is trained.
+- New catching metrics (Defense > Catching > Framing, hover for definitions):
+  Extra Strikes = sum of (1 if called strike / 0 if ball) - strike chance;  Extra Strikes / Game;
+  SLAA = Extra Strikes per framing opportunity;  SLAA+ = 100 x called strikes / expected (100 = average);
+  Framing Runs = each extra strike x what a strike instead of a ball is worth in that count.
+- Catching data rebuilds with the new model on the next pipeline.update (included in pipeline.overnight).
+
+## v16.8 – 2026-11-10
+- python -m pipeline.overnight : the whole overnight job in one command -- git pull, download every pitch
+  2015+ once, train SAxwOBA, train + switch on IQ Swing Decisions, push the models, rebuild MLB averages, push.
+  Logged to data/overnight_log.txt; a failed step is logged and the rest still run.
+- Download once, reuse: finished seasons are saved whole in data/raw/statcast_<year>.csv.gz (~2-3 GB, not
+  pushed). The MLB-averages update, SAxwOBA and the decision model all read them -- no second download.
+- Era models, no carryover: SAxwOBA and IQ Swing Decisions each train one model on 2015-2022 (shift era) and
+  one on 2023+ (shift ban / pitch clock). Every ball / pitch is graded by its own era's model.
+- SAxwOBA leaves filled-in tracking data out of training (same exact EV + LA 50+ times in a season --
+  Statcast's defaults for missed balls, mostly 2015-2019). Report shows each era separately.
+- Decision trainer: --since 2015 (multi-season), loads compactly so 8+ million pitches fit on a laptop.
+
+## v16.7 – 2026-11-10
+- Two expected stats side by side. xwOBA / xwOBACON = Savant's (the regular one, unchanged).
+  SAxwOBA / SAxwOBACON = ours, spray-adjusted: exit velo + launch angle + spray angle, nothing else
+  (no sprint speed, batter side, park adjustment, blur, blend or calibration). models/saxwoba.py.
+- python -m pipeline.train_saxwoba : trains it on the saved 2023+ batted balls (minutes), tests it on seasons it
+  didn't see (log loss, per-ball error vs Savant, league check, future r), saves models/artifacts/saxwoba.joblib.
+- Columns: Hitting > Contact (xwOBA, SAxwOBA, xwOBACON, SAxwOBACON); Core 4 shared columns (SAxwOBA) and
+  Ball Flight (SAxwOBACON). Blank until trained. Retraining it marks MLB averages out of date.
+
+## v16.6 – 2026-11-09  (includes v16.5.x)
+- python -m pipeline.train_xwoba --best : builds the best spray-adjusted IQ xwOBA by a rule fixed in advance.
+  - Spray strength: IQ xwOBA = no_spray + strength x (spray version - no_spray). EV / LA always lead, spray
+    adjusts. Candidates air, fly, hr_dir, blur18 at 25 / 50 / 75 / 100% (blends cost no retraining).
+  - New per-ball accuracy column BALL ERR (typical gap between a ball's xwOBA and the wOBA it produced).
+  - The rule: pull-air credit >= +0.10 AND not reliably worse than no_spray at predicting (gap range reaches 0);
+    among those, lowest BALL ERR. Trains the pick on every season and saves it (not switched on unless --activate).
+  - Opens the batted-ball video check automatically.
+- python -m pipeline.xwoba_videos : outfield balls in the air, every version's xwOBA + Savant's next to what
+  happened, with Watch links. Filters: --result double, --direction pull, --min-ev 100, --n 40.
+- python -m pipeline.train_xwoba --use-saved --activate : switch on the saved model without retraining.
+- --variant accepts strengths, e.g. --variant air@0.5
+
+## v16.5.5 – 2026-11-09
+- IQ xwOBA version hr_dir: direction decides ONLY home run vs not. A second, park-neutral model gives
+  P(home run) using spray angle on balls in the air (a pulled 105 / 25 clears the fence, to center it's
+  caught); out / 1B / 2B / 3B come from the no-direction model, rescaled. Direction never touches
+  singles / doubles, where gaps and holes leak the result.
+- by_type results (real data): future r 0.486, gap to no_spray -0.043 (range -0.060 to -0.025), pull-air
+  credit only +0.05 -- not adopted. Default training version back to no_spray until hr_dir is tested.
+
+## v16.5.4 – 2026-11-09  (includes v16.5.3)
+- IQ zones (models/decisions_iq.IQ_ZONES), the coaching tiers: Heart (center -> 50% of the way to the edge),
+  Sub-heart (50-80%, the ring around the heart), Edge (80% -> the zone's edge, inside), Edge (off) (ball still
+  touching the zone), Chase, Waste. Savant's Shadow straddles the edge, so it mixes sub-heart, edge and off.
+- Report tier check now by IQ zone. Video page shows each pitch's IQ zone; decision_videos --zone filter.
+
+## v16.5.3 – 2026-11-09
+- Swing decisions: before 2 strikes a swing is judged on DAMAGE (your coaching rule: heart = swing,
+  sub-heart = swing to a lesser extent, edges = take). Contact counts only if damage-quality (expected
+  xwOBA >= .500, valued at what damage contact is worth in that count); weak contact is valued as an
+  out. New damage-chance model per pitch. With 2 strikes contact is still valued realistically.
+- Report: tier check -- share of swings / takes graded good in Heart / Shadow / Chase / Waste for 0-0,
+  before 2 strikes, and 2 strikes.
+
+## v16.5.2 – 2026-11-09
+- python -m pipeline.decision_videos: Savant video links for graded swing decisions. Looks up each pitch's
+  playId in MLB's game feed (one call per game) and opens a clickable page
+  (models/artifacts/decisions_video_check.html); falls back to the game page if a video ID isn't found.
+  Filters for a new sample: --count 0-0 --decision take --grade bad --n 40.
+
+## v16.5.1 – 2026-11-09
+- Fix: train_decisions crashed writing the report on a fresh download (pandas <NA> types in the
+  attack-zone step). Pitches now go through statcast_clean.clean() first, like the rest of the site.
+
+## v16.5 – 2026-11-09  (includes v16.3 + v16.4)
+- IQ xwOBA version by_type (now the default): park-neutral, swing only, direction blurred by ball type --
+  exact spray on fly balls (LA 25+), +-12 deg on liners (10-25), +-18 deg on grounders (under 10).
+  Keeps the pull-air and oppo-ground skills, drops precise placement between fielders.
+- Compare report: "How reliable are the FUTURE r numbers?" -- 95% ranges from 1,000 resamples of the
+  hitter-seasons, each version's gap to no_spray with its own range (gap range not crossing 0 = real
+  difference), and future r season by season.
+- One switch for xwOBA everywhere: the hitting summary and the rolling wOBA / xwOBA chart now use the
+  active xwOBA model too (they read Savant's number directly before). Every xwOBA / xwOBACON on the site
+  (tables, Core 4, MLB averages, xwOBA MLB / xwOBACON MLB, Ball Flight 600, rolling chart) follows
+  python -m pipeline.train_xwoba --activate.
+
+## v16.4 – 2026-11-09  (includes v16.3)
+- Three decision numbers per hitter, on Core 4 > Swing Decisions (hover for definitions):
+  - GD%: how OFTEN he made the right call (good / (good + bad), coin flips left out).
+  - DEC QUAL (Decision Quality): HOW right or wrong -- average count-adjusted decision score x100, each
+    pitch capped at +-150, neutral pitches included.
+  - DEC RUNS and DEC RUNS/100: runs gained / lost vs what a league-average hitter would choose on the
+    same pitches (new league swing-rate model). Not count-adjusted: impact.
+  DEC QUAL / DEC RUNS stay blank on the placeholder model.
+- Called-strike model now also uses pitch type (fastball / breaking / offspeed).
+- Report adds: called-strike check (model's chance vs how often those pitches were really called strikes),
+  repeatability + BB% / K% links for all three numbers, GD% vs Decision Quality overlap, best / worst 5
+  hitters by Decision Runs. Video-check file adds the model's strike chance and average swing chance.
+
+## v16.3 – 2026-11-09
+- IQ Swing Decisions v1 (models/decisions_iq.py): every swing / take graded good / bad / neutral for a
+  LEAGUE-AVERAGE hitter (no hitter strengths), by expected runs -- never by what happened.
+  - Count sets the stakes (ball / strike / contact values from real run values per count); contact is
+    measured against the count you're already in (3-0 contact must beat a great count, 0-2 almost any helps).
+  - Location sets the odds: called-strike chance (league umpire, count-aware zone), miss / foul / in-play
+    chance and expected contact quality (from the site's xwOBA model) for that pitch.
+  - Fouls: before 2 strikes a foul is a strike (no credit); with 2 strikes a foul keeps the at-bat alive.
+    Caught foul tips = strikes. Bunts, pitchouts, IBB and pitch-clock automatic balls / strikes not graded.
+  - Runners + outs at 50% strength, only on close calls: a clear count + location call can't be flipped.
+  - Grade relative to what was at stake in the count; narrow neutral zone for coin flips (no grade).
+- python -m pipeline.train_decisions  -- downloads one season of every pitch (step-away job, saved in
+  data/train/), tests on half the games with a model trained on the other half, report: count values,
+  grade mix by count, flip report, repeatability vs the placeholder, link to BB% / K%, plus
+  decisions_video_check.csv (20 random graded pitches to check on video). --activate switches GD% stats.
+- Retraining the decision model now marks MLB averages out of date (league reference signature).
+
+## v16.2 – 2026-11-09
+- Five more IQ xwOBA versions that keep spray angle as a skill without crediting the holes:
+  fly (exact spray on true fly balls, LA 25-45), fly_hard (95+ mph at LA 20-45), and blur8 / blur12 /
+  blur18 (spray on every ball, but each ball is valued across +-8/12/18 degrees of its angle and
+  averaged, so narrow holes between fielders wash out while pull-air / oppo-ground value stays).
+- Compare report: new "Direction as a SKILL" table -- is each hitter's direction credit repeatable
+  (1st half vs 2nd half), does it line up with pulled-air-ball rate and oppo-grounder rate, and how big is it.
+- Default version for a plain training run is now no_spray (best so far) until the comparison picks one.
+
+## v16.1 – 2026-11-09
+- IQ xwOBA versions you can compare and choose from (models/xwoba_iq.VARIANTS). Still swing only, no sprint speed.
+  - Park-neutral, done properly: the ballpark is an input while training (so Fenway's wall / short
+    porches get blamed on the park, not on EV / LA / direction); when scoring, every ball is valued in
+    every MLB park and averaged equally. Parks come from MLB's schedule (one small call per season).
+  - Spray: exact angle only on balls in the air (LA >= 10); every ball also gets pull / middle / oppo
+    (+-15 deg). On ground balls Statcast's hit coordinate is where the ball was fielded, so the exact
+    angle mostly records whether it found a hole.
+  - Calibration: each season's league IQ xwOBACON is set equal to the league's actual wOBACON.
+- python -m pipeline.train_xwoba --compare  tests every version side by side (no download beyond the
+  ballpark list): future r, same-season r, log loss, league drift, vs Savant and actual, plus a
+  ground-ball "hole check" chart (models/artifacts/xwoba_gb_spray_check.png).
+- python -m pipeline.train_xwoba --variant NAME [--activate]  trains the chosen version (default air_dir).
+
+## v16 – 2026-11-09
+- IQ xwOBA v1 (models/xwoba_iq.py): every batted ball valued from batter side + exit velo + launch
+  angle + pull-adjusted spray angle -> P(out / 1B / 2B / 3B / HR) x that season's standard wOBA weights.
+  Park-neutral (trained across all 30 parks, park never used), no sprint speed. Walks / HBP / Ks keep
+  their actual season value. Reached-on-error = out, sac flies counted, sac bunts / IBB excluded.
+- Training: python -m pipeline.train_xwoba  -- downloads batted balls only (2023 -> present, kept in
+  data/train/ so re-training is instant), tests each season on a model that never saw it, compares with
+  Savant's xwOBA, saves models/artifacts/xwoba_iq_v1.joblib + a report.
+  --activate switches the whole site to IQ xwOBA; --use-savant switches back.
+- Per-ball scoring ready for later (xwoba_iq.score_batted_balls works on any game / player / season).
+- Retraining or switching models marks the MLB averages out of date until the next pipeline.update.
+
 ## v15.1 – 2026-11-05
 - Pitching opens on the current season's averages only (one row per pitch); months, postseason and
   earlier seasons are still in the Periods panel.

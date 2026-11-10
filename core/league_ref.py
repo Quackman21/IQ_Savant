@@ -63,6 +63,31 @@ def build(d: pd.DataFrame, min_pa: int = hm.SD_MIN_PA, model: str | None = None)
     return out
 
 
+def _artifact_hash(active: str, kind: str = "xwoba") -> str:
+    """Retraining a model changes its file -> league numbers become out of date."""
+    if active != "iq_v1":
+        return ""
+    import hashlib
+    if kind == "xwoba":
+        from models import xwoba_iq as m
+    else:
+        from models import decisions_iq as m
+    try:
+        return hashlib.sha1(m.ARTIFACT.read_bytes()).hexdigest()[:12]
+    except OSError:
+        return ""
+
+
+def _sa_hash() -> str:
+    """Retraining SAxwOBA changes its MLB averages."""
+    import hashlib
+    from models import saxwoba
+    try:
+        return hashlib.sha1(saxwoba.ARTIFACT.read_bytes()).hexdigest()[:12]
+    except OSError:
+        return ""
+
+
 def signature() -> str:
     """Fingerprint of everything that changes the numbers: stat definitions, the pitch
     flags in prep(), the reference builder, and which xwOBA / decision models are active.
@@ -74,8 +99,10 @@ def signature() -> str:
     from models import decisions, framing, xwoba
     parts = [inspect.getsource(framing.MODELS[framing.ACTIVE]), str(framing.RUNS_PER_STRIKE),repr(sorted((k, s.kind, s.a, s.b) for k, s in hm.CATALOG.items())),
              inspect.getsource(hm.prep), inspect.getsource(build), str(hm.SD_MIN_PA), str(hm.SPRAY_SCALE),
-             xwoba.ACTIVE, inspect.getsource(xwoba.MODELS[xwoba.ACTIVE]),
-             decisions.ACTIVE, inspect.getsource(decisions.MODELS[decisions.ACTIVE])]
+             xwoba.ACTIVE, inspect.getsource(xwoba.MODELS[xwoba.ACTIVE]), _artifact_hash(xwoba.ACTIVE),
+             decisions.ACTIVE, inspect.getsource(decisions.MODELS[decisions.ACTIVE]),
+             _artifact_hash(decisions.ACTIVE, "decisions"), _sa_hash(),
+             _artifact_hash("iq_v1", "decisions")]                 # framing uses the called-strike model too
     return hashlib.sha1("\n".join(parts).encode()).hexdigest()[:12]
 
 

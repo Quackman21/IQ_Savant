@@ -3,3 +3,4 @@ pybaseball
 requests
 numpy
 pytest
+scikit-learn
