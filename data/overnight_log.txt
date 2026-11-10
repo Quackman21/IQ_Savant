@@ -137,3 +137,14 @@ FileNotFoundError: [Errno 2] No such file or directory: '/Users/ivanquackenbush/
 [2026-11-10 08:35] START  train IQ Swing Decisions (2015-2022 + 2023+) and switch on
 [2026-11-10 08:58] DONE   train IQ Swing Decisions (2015-2022 + 2023+) and switch on  (23 min)
 [2026-11-10 08:58] START  commit + push the models
+[2026-11-10 08:58] DONE   commit + push the models  (0 min)
+[2026-11-10 08:58] START  rebuild MLB averages (from saved downloads) + push
+[2026-11-10 09:20] DONE   rebuild MLB averages (from saved downloads) + push  (22 min)
+[2026-11-10 09:20] ===== SUMMARY =====
+[2026-11-10 09:20]   done     git pull  (0 min)
+[2026-11-10 09:20]   done     download every pitch 2015-2026  (0 min)
+[2026-11-10 09:20]   done     train SAxwOBA (shift era + shift ban)  (11 min)
+[2026-11-10 09:20]   done     train IQ Swing Decisions (2015-2022 + 2023+) and switch on  (23 min)
+[2026-11-10 09:20]   done     commit + push the models  (0 min)
+[2026-11-10 09:20]   done     rebuild MLB averages (from saved downloads) + push  (22 min)
+[2026-11-10 09:20] Reports: models/artifacts/saxwoba_report.txt, decisions_iq_v1_report.txt, decisions_video_check.csv

@@ -126,7 +126,9 @@ def _located(desc, px, pz, strikes=0, pitch="FF", **kw):
                 zone=5 if abs(px) < 0.7 and 1.6 < pz < 3.4 else 13, **kw)
 
 
-def test_decisions_placeholder_and_swing_zones():
+def test_decisions_placeholder_and_swing_zones(monkeypatch):
+    from models import decisions
+    monkeypatch.setattr(decisions, "ACTIVE", "placeholder_v0")   # this test checks the placeholder, whatever is on
     rows = [
         _located("foul", 0, 2.5),                       # heart swing  -> good
         _located("called_strike", 0, 2.5),              # heart take   -> bad

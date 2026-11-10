@@ -31,6 +31,12 @@ B, G = "blank", "grade"
 _NP = [("N", "#", "Number of pitches thrown", "int"), ("PCT", "%", "Share of pitches in this row group", "pct0")]
 
 SUMMARY = [*_NP, "|",
+           ("STUFF", "Stuff+", "IQ Stuff+: how good the pitch is from what the ball does -- velo, movement, spin, "
+                               "release, extension and differences from his fastball -- NOT location. "
+                               "100 = MLB-average pitch, 10 = 1 standard deviation", "int"),
+           ("LOC", "Location+", "IQ Location+: how good the pitch's location was for the count, pitch type and hitter "
+                                "side -- NOT velo / movement. 100 = average for that pitch type, 10 = 1 SD", "int"),
+           "|",
            ("ARESULTS", "aResults", "20-80 Grade, Actual Results Produced by Pitch", G),
            ("XRESULTS", "xResults", "20-80 Grade, Results expected out of pitcher", G),
            ("COMMAND", "Command", "The miss distance or expected miss distance of a pitch converted to the 20-80 scale", G),
@@ -140,6 +146,9 @@ def prep(df: pd.DataFrame) -> pd.DataFrame:
     d["risp"] = np.where(c("on_2b").notna() | c("on_3b").notna(), "RISP", "No RISP")
     d["game"] = d["game_date"].astype(str)
     d["cluster"] = None
+    from models import pitch_quality                     # IQ Stuff+ / Location+ (blank until trained)
+    q = pitch_quality.score(df)
+    d["stuff_plus"], d["loc_plus"] = q["stuff_plus"], q["loc_plus"]
     return d
 
 
@@ -167,6 +176,8 @@ def row_values(g: pd.DataFrame, total: int) -> dict:
         "ASW": sw / len(g) if len(g) else np.nan, "ABL": g["ball"].sum() / tk if tk else np.nan,
         "AWF": g["whiff"].sum() / sw if sw else np.nan,
         "AIPRV": g.loc[bip, "rv"].mean() if bip.any() else np.nan,
+        "STUFF": g["stuff_plus"].mean() if "stuff_plus" in g else np.nan,
+        "LOC": g["loc_plus"].mean() if "loc_plus" in g else np.nan,
     }
 
 

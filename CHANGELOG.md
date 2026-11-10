@@ -1,5 +1,21 @@
 # IQ Savant – version history
 
+## v17.0.1 – 2026-11-10
+- Test fix: the placeholder swing-decision test now pins the placeholder model, so it passes when IQ Swing
+  Decisions is switched on (it failed on the Mac after the overnight job turned the real model on).
+
+## v17.0 – 2026-11-10
+- IQ Stuff+ and Location+ (models/pitch_quality.py), after Driveline's and FanGraphs' approach. Both predict
+  each pitch's run value from the pitcher's side (balls in play use expected value of the contact, not the result).
+  - Stuff+: velo, IVB, HB (arm side +), spin, extension, release height / side, arm angle, and velo / IVB / HB
+    difference from the pitcher's primary fastball -- no location. 100 = MLB-average pitch, 10 = 1 SD.
+  - Location+: inside / away vs the hitter, height in his zone, count, pitch type, same / opposite hand --
+    no stuff. 100 = average for that pitch type, 10 = 1 SD.
+  - Era models (2015-2022, 2023+), each pitch scored by its own era's model.
+- python -m pipeline.train_pitch_quality : trains both on every saved pitch (no download), report: averages by
+  pitch type, half-to-half repeatability, how well 1st-half numbers predict 2nd-half run value, leaderboards.
+- Pitching > Summary: Stuff+ and Location+ columns per pitch type (blank until trained).
+
 ## v16.9.1 – 2026-11-10
 - Fix: two overnight jobs ran at once and fought over the same temp download file (FileNotFoundError on
   rename), so SAxwOBA / decision training never finished. Now: a lock stops a second overnight job from
