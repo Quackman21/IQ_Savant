@@ -3,3 +3,6 @@ __pycache__/
 .pytest_cache/
 data/train/
 data/raw/
+data/overnight.lock
+data/overnight_log.txt
+data/raw/*.tmp

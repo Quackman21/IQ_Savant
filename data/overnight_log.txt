@@ -104,3 +104,36 @@ FileNotFoundError: [Errno 2] No such file or directory: '/Users/ivanquackenbush/
 [2026-11-10 04:29] Reports: models/artifacts/saxwoba_report.txt, decisions_iq_v1_report.txt, decisions_video_check.csv
 [2026-11-10 04:43] DONE   train IQ Swing Decisions (2015-2022 + 2023+) and switch on  (25 min)
 [2026-11-10 04:43] START  commit + push the models
+[2026-11-10 04:43] DONE   commit + push the models  (0 min)
+[2026-11-10 04:43] START  rebuild MLB averages (from saved downloads) + push
+[2026-11-10 04:58] DONE   rebuild MLB averages (from saved downloads) + push  (16 min)
+[2026-11-10 04:58] ===== SUMMARY =====
+[2026-11-10 04:58]   done     git pull  (0 min)
+[2026-11-10 04:58]   FAILED: FileNotFoundError: [Errno 2] No such file or directo download every pitch 2015-2026  (106 min)
+[2026-11-10 04:58]   FAILED: FileNotFoundError: [Errno 2] No such file or directo train SAxwOBA (shift era + shift ban)  (115 min)
+[2026-11-10 04:58]   done     train IQ Swing Decisions (2015-2022 + 2023+) and switch on  (25 min)
+[2026-11-10 04:58]   done     commit + push the models  (0 min)
+[2026-11-10 04:58]   done     rebuild MLB averages (from saved downloads) + push  (16 min)
+[2026-11-10 04:58] Reports: models/artifacts/saxwoba_report.txt, decisions_iq_v1_report.txt, decisions_video_check.csv
+[2026-11-10 08:24] ===== OVERNIGHT JOB: 2015-2026 =====
+[2026-11-10 08:24] START  git pull
+[2026-11-10 08:24] DONE   git pull  (0 min)
+[2026-11-10 08:24] START  download every pitch 2015-2026
+[2026-11-10 08:24]   2015: saved
+[2026-11-10 08:24]   2016: saved
+[2026-11-10 08:24]   2017: saved
+[2026-11-10 08:24]   2018: saved
+[2026-11-10 08:24]   2019: saved
+[2026-11-10 08:24]   2020: saved
+[2026-11-10 08:24]   2021: saved
+[2026-11-10 08:24]   2022: saved
+[2026-11-10 08:24]   2023: saved
+[2026-11-10 08:24]   2024: saved
+[2026-11-10 08:24]   2025: saved
+[2026-11-10 08:24]   2026: saved
+[2026-11-10 08:24] DONE   download every pitch 2015-2026  (0 min)
+[2026-11-10 08:24] START  train SAxwOBA (shift era + shift ban)
+[2026-11-10 08:35] DONE   train SAxwOBA (shift era + shift ban)  (11 min)
+[2026-11-10 08:35] START  train IQ Swing Decisions (2015-2022 + 2023+) and switch on
+[2026-11-10 08:58] DONE   train IQ Swing Decisions (2015-2022 + 2023+) and switch on  (23 min)
+[2026-11-10 08:58] START  commit + push the models

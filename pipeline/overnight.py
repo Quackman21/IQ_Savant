@@ -23,6 +23,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 LOG = ROOT / "data" / "overnight_log.txt"
+LOCK = ROOT / "data" / "overnight.lock"
 FIRST = 2015
 
 
@@ -52,13 +53,42 @@ def step(name: str, fn, results: list) -> None:
             f.write(traceback.format_exc() + "\n")
 
 
+def _running(pid: int) -> bool:
+    import os
+    try:
+        os.kill(pid, 0)
+        return True
+    except (OSError, ValueError):
+        return False
+
+
 def main(argv: list[str]) -> None:
+    import os
+    if LOCK.exists():
+        try:
+            other = int(LOCK.read_text().strip())
+        except ValueError:
+            other = -1
+        if _running(other):
+            print(f"Another overnight job is already running (process {other}). Not starting a second one -- two "
+                  "jobs at once fight over the same files. Wait for it to finish (or stop it), then run again.")
+            return
+    LOCK.parent.mkdir(parents=True, exist_ok=True)
+    LOCK.write_text(str(os.getpid()))
+    try:
+        _run(argv)
+    finally:
+        LOCK.unlink(missing_ok=True)
+
+
+def _run(argv: list[str]) -> None:
     from pipeline import build_league_reference as bl
     from pipeline import train_decisions, train_saxwoba, update
     last = train_decisions.latest_full_season()
     results: list = []
     log(f"===== OVERNIGHT JOB: {FIRST}-{last} =====")
 
+    git("config", "http.postBuffer", "524288000")       # big data pushes (default limit fails with HTTP 400)
     step("git pull", lambda: git("pull"), results)
 
     def download():

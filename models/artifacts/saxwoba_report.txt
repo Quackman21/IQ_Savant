@@ -1,0 +1,64 @@
+===== SHIFT ERA (2015-2022) -- its own model, trained only on these seasons =====
+SAxwOBA -- exit velo + launch angle + spray angle. No sprint speed, side, park or calibration.
+Each season scored by a model trained WITHOUT that season.
+
+Per season: log loss (lower = better, no-skill in brackets) | per-ball error vs Savant's
+  2015: 0.5296 (0.9761) | 0.4043 vs 0.4376
+  2016: 0.5205 (0.9922) | 0.4043 vs 0.4400
+  2017: 0.5088 (0.9937) | 0.4051 vs 0.4406
+  2018: 0.5068 (0.9808) | 0.4053 vs 0.4433
+  2019: 0.5157 (1.0086) | 0.4087 vs 0.4479
+  2020: 0.4846 (0.9539) | 0.3975 vs 0.4317
+  2021: 0.4857 (0.9467) | 0.3963 vs 0.4327
+  2022: 0.4829 (0.9263) | 0.3946 vs 0.4299
+
+League average on contact: actual wOBACON vs SAxwOBACON vs Savant xwOBACON
+  2015: 0.403  vs  0.374  vs  0.389
+  2016: 0.415  vs  0.389  vs  0.398
+  2017: 0.417  vs  0.391  vs  0.397
+  2018: 0.407  vs  0.395  vs  0.392
+  2019: 0.429  vs  0.403  vs  0.405
+  2020: 0.396  vs  0.390  vs  0.380
+  2021: 0.387  vs  0.399  vs  0.373
+  2022: 0.372  vs  0.391  vs  0.365
+
+Per-ball error, all seasons (typical gap between a ball's number and what it produced; lower = closer):
+  SAxwOBA 0.4023   Savant xwOBA 0.4384
+
+Predicting the future (hitters with 100+ batted balls each half): 1st-half number vs ACTUAL 2nd-half wOBACON
+  all seasons:
+    SAxwOBACON        r = 0.488   (1435 hitter-seasons)
+    Savant xwOBACON   r = 0.564   (1435 hitter-seasons)
+    Actual wOBACON    r = 0.496   (1435 hitter-seasons)
+    per-ball error: SAxwOBA 0.4023   Savant 0.4384
+
+===== SHIFT BAN (2023+) -- its own model, trained only on these seasons =====
+SAxwOBA -- exit velo + launch angle + spray angle. No sprint speed, side, park or calibration.
+Each season scored by a model trained WITHOUT that season.
+
+Per season: log loss (lower = better, no-skill in brackets) | per-ball error vs Savant's
+  2023: 0.4687 (0.9505) | 0.3892 vs 0.4305
+  2024: 0.4599 (0.9313) | 0.3853 vs 0.4293
+  2025: 0.4612 (0.9319) | 0.3882 vs 0.4328
+  2026: 0.4567 (0.9287) | 0.3857 vs 0.4306
+
+League average on contact: actual wOBACON vs SAxwOBACON vs Savant xwOBACON
+  2023: 0.387  vs  0.367  vs  0.375
+  2024: 0.375  vs  0.364  vs  0.371
+  2025: 0.377  vs  0.379  vs  0.369
+  2026: 0.375  vs  0.362  vs  0.362
+
+Per-ball error, all seasons (typical gap between a ball's number and what it produced; lower = closer):
+  SAxwOBA 0.3871   Savant xwOBA 0.4308
+
+Predicting the future (hitters with 100+ batted balls each half): 1st-half number vs ACTUAL 2nd-half wOBACON
+  all seasons:
+    SAxwOBACON        r = 0.498   (881 hitter-seasons)
+    Savant xwOBACON   r = 0.538   (881 hitter-seasons)
+    Actual wOBACON    r = 0.424   (881 hitter-seasons)
+    per-ball error: SAxwOBA 0.3871   Savant 0.4308
+  2023+ only (shift ban -- today's game):
+    SAxwOBACON        r = 0.498   (881 hitter-seasons)
+    Savant xwOBACON   r = 0.538   (881 hitter-seasons)
+    Actual wOBACON    r = 0.424   (881 hitter-seasons)
+    per-ball error: SAxwOBA 0.3871   Savant 0.4308

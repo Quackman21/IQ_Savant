@@ -1,5 +1,11 @@
 # IQ Savant – version history
 
+## v16.9.1 – 2026-11-10
+- Fix: two overnight jobs ran at once and fought over the same temp download file (FileNotFoundError on
+  rename), so SAxwOBA / decision training never finished. Now: a lock stops a second overnight job from
+  starting; each job writes its own temp file; a season another job already saved is reused.
+- Overnight job raises git's upload limit (http.postBuffer 500 MB) -- the data push failed with HTTP 400.
+
 ## v16.9 – 2026-11-10  (includes v16.8)
 - IQ framing (models/framing.py iq_v1, now active): every taken pitch a catcher received, strike chance from
   the IQ Swing Decisions called-strike model (league-average umpire; location vs the hitter's zone, count,

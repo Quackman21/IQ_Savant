@@ -91,11 +91,15 @@ def pull_season(season: int) -> pd.DataFrame:
     df = pd.concat(parts, ignore_index=True)
     if "game_type" in df:
         df = df[df["game_type"].astype(str).eq("R")]
-    if season_complete(season):                       # keep finished seasons; the live season changes daily
+    if season_complete(season) and not raw_path(season).exists():   # keep finished seasons
+        import os
         RAW_DIR.mkdir(parents=True, exist_ok=True)
-        tmp = raw_path(season).with_suffix(".tmp")
+        tmp = RAW_DIR / f"statcast_{season}.{os.getpid()}.tmp"       # this job's own temp file
         df.to_csv(tmp, index=False, compression="gzip")
-        tmp.replace(raw_path(season))                 # only a complete file ever gets the real name
+        if raw_path(season).exists():                 # another job saved it first -- keep theirs
+            tmp.unlink(missing_ok=True)
+        else:
+            tmp.replace(raw_path(season))             # only a complete file ever gets the real name
     return df
 
 
