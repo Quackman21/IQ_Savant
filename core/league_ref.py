@@ -171,12 +171,18 @@ def load_fielding(season: int) -> pd.DataFrame:
 
 
 def _fielding_hash() -> str:
+    """Retraining fielding / catching -- or new play-by-play events -- changes the fielding files."""
     import hashlib
-    from models import fielding
-    try:
-        return hashlib.sha1(fielding.ARTIFACT.read_bytes()).hexdigest()[:12]
-    except OSError:
-        return ""
+    from models import catching, fielding
+    h = hashlib.sha1()
+    for f in (fielding.ARTIFACT, catching.ARTIFACT):
+        try:
+            h.update(f.read_bytes())
+        except OSError:
+            pass
+    raw = DATA.parent / "raw"
+    h.update(",".join(sorted(p.name for p in raw.glob("events_*.csv.gz"))).encode() if raw.exists() else b"")
+    return h.hexdigest()[:12]
 
 
 def load_catching(season: int) -> pd.DataFrame:

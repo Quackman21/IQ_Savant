@@ -12,6 +12,7 @@ import streamlit as st
 
 from core import hit_metrics as hm
 from core import savant
+from models import catching as catching_model
 from models import fielding as fielding_model
 from models import framing as framing_model
 from core import hitting, league_ref, mlb_api, pitching
@@ -845,19 +846,25 @@ if main == "Summary":
                         if len(board_rates) and vals["DRS/S"] == vals["DRS/S"]:
                             vals["PCT_MLB"] = vals["PCT_LVL"] = 100 * (board_rates < vals["DRS/S"]).mean()
                 if grp == "Catching":
-                    bz = fielding_model.summarize(fielding_daily(per.season), start_d.isoformat(),
-                                                  end_d.isoformat(), [2]).get(pid, {})
-                    vals["B_OPPS"] = bz.get("B_OPPS", math.nan)
+                    fd = fielding_daily(per.season)
+                    throws = p.get("pitchHand", {}).get("code", "R")
+                    cz = catching_model.summarize(fd, start_d.isoformat(), end_d.isoformat(), throws).get(pid, {})
+                    iq_catch = {k_: v_ for k_, v_ in cz.items() if not k_.startswith("_")}
+                    if cz:                                         # bucket percentiles vs MLB catchers
+                        pct.update(catching_model.bucket_percentiles(fd, cz, throws))
                 if sb and grp == "Catching":
                     pop, frv = sb.get("pop"), sb.get("frv")
-                    vals["B_RS"] = dfn.col(frv, "block")
+                    vals["B_RS"] = dfn.col(frv, "block")             # Statcast, used only if ours is missing
                     vals["T_RS"] = dfn.col(frv, "throw")
                     vals["POP"] = dfn.col(pop, "pop_2b", exclude=("count", "cs", "sb_", "rank"))
                     vals["XFER"] = dfn.col(pop, "exchange")
                     vals["ARM"] = dfn.col(pop, "arm")
                 if grp == "Catching":
+                    for k_, v_ in iq_catch.items():                 # ours (any period) over Statcast's seasons
+                        if v_ == v_:
+                            vals[k_] = v_
                     f_rs, b_rs, t_rs = vals.get("F_RS", math.nan), vals.get("B_RS", math.nan), vals.get("T_RS", math.nan)
-                    if all(x == x for x in (f_rs, b_rs, t_rs)):     # blocking / throwing: full seasons only
+                    if all(x == x for x in (f_rs, b_rs, t_rs)):
                         vals["DRS"] = f_rs + b_rs + t_rs
                         vals["DRS/S"] = per_season(vals["DRS"])
                     vals["F_RS/S"], vals["B_RS/S"], vals["T_RS/S"] = per_season(f_rs), per_season(b_rs), per_season(t_rs)

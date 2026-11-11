@@ -102,6 +102,10 @@ def _run(argv: list[str]) -> None:
     step("train IQ Swing Decisions (2015-2022 + 2023+) and switch on",
          lambda: train_decisions.main(["--since", str(FIRST), "--activate"]), results)
 
+    step("download play-by-play runner events (wild pitches, steals)",
+         lambda: __import__("pipeline.fetch_events", fromlist=["main"]).main([]), results)
+    step("train IQ catcher blocking / throwing", lambda: __import__("pipeline.train_catching", fromlist=["main"]).main(
+        ["--since", str(FIRST)]), results)
     step("train IQ fielding (DRS parts)", lambda: __import__("pipeline.train_fielding", fromlist=["main"]).main(
         ["--since", str(FIRST)]), results)
     step("train IQ Stuff+ / Location+", lambda: __import__("pipeline.train_pitch_quality", fromlist=["main"]).main(

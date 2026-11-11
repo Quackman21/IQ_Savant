@@ -1,0 +1,35 @@
+IQ DRS vs public fielding numbers -- 2026
+r = do the player orders agree (1 = perfectly); SLOPE = our runs per 1 of theirs (1.00 = same scale).
+
+Savant (by position, players with 400+ of our innings):
+  POS    vs OAA r  vs FRV r  SLOPE vs FRV     N
+  1B         0.73      0.79          0.64    38
+  2B         0.43      0.47          0.51    36
+  3B         0.50      0.59          0.92    37
+  SS         0.14      0.14          0.12    38
+  LF         0.41      0.35          0.40    28
+  CF         0.79      0.71          0.53    39
+  RF         0.73      0.58          0.46    33
+  C           nan      0.89          0.91    48
+
+Catcher blocking vs Savant (Blocks Above Average; Statcast method):
+  Blocks Above Average:  r = 0.88  slope = 0.89  (74 catchers)
+  Blocking runs (our Statcast-way runs):  r = 0.86  slope = 0.89  (74)
+  Blocking runs (our SITUATIONAL runs, into DRS):  r = 0.73  slope = 1.01
+
+  CATCHER                    SAVANT BAA   OURS
+  Alejandro Kirk                    +15    +17
+  Carlos Narváez                    +13    +15
+  Tyler Stephenson                  +12    +11
+  Cal Raleigh                       +11     +8
+  Dillon Dingler                    +11    +14
+  Freddy Fermin                     +10    +14
+  Austin Wells                       +9    +17
+  Danny Jansen                       +8    +11
+  Patrick Bailey                     -8     -2
+  Jonah Heim                         -9     -9
+  Carter Jensen                      -9     -5
+  Logan O'Hoppe                     -10     -4
+  Francisco Alvarez                 -13     -8
+
+SIS DRS: no file yet. Save the Fielding Bible leaderboard as data/compare/drs_2026.csv (player name, position, DRS) and run this again.

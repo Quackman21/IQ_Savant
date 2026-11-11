@@ -28,6 +28,11 @@ def fielding_run_value(year: int, pos: int, min_inn: int = 1) -> pd.DataFrame:
 
 
 # Statcast search, limited to balls in play (about 1/5 of all pitches) -- used to train xwOBA
+def catcher_blocking(year: int) -> pd.DataFrame:
+    """Savant catcher blocking leaderboard (Blocks Above Average, blocking runs) for one season."""
+    return _csv(f"{BASE}/catcher-blocking?type=Cat&year={year}&minPitches=1&csv=true")
+
+
 _BIP_URL = ("https://baseballsavant.mlb.com/statcast_search/csv?all=true&hfPT=&hfAB=&hfBBT="
             "&hfPR=hit%5C.%5C.into%5C.%5C.play%7C&hfZ=&stadium=&hfBBL=&hfNewZones=&hfGT=R%7C&hfSea=&hfSit="
             "&player_type=batter&hfOuts=&opponent=&pitcher_throws=&batter_stands=&hfSA="

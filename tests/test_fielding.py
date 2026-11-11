@@ -23,3 +23,18 @@ def test_innings_from_outs_and_drs_parts():
 def test_player_at_position():
     d = pd.DataFrame({f"fielder_{k}": [10 * k, 20 * k] for k in range(2, 10)})
     assert fm.player_at(d, pd.Series([6, 9])).tolist() == [60, 180]
+
+
+def test_compare_name_matching_and_stats():
+    from pipeline import compare_fielding as cf
+    assert cf.norm("Ceddanne Rafaela") == cf.norm("ceddanne  rafaela")
+    assert cf.norm("Ronald Acuña Jr.") == "ronald acuna"
+    a = pd.Series(np.arange(20.0)); b = a * 2
+    r, slope, n = cf._stats(a, b)
+    assert round(r, 6) == 1 and round(slope, 6) == 0.5 and n == 20
+
+
+def test_distance_only_for_balls_in_the_air():
+    f = fm.features(pd.DataFrame({"launch_speed": [100, 100], "launch_angle": [5, 25], "hit_distance_sc": [120, 380],
+                                  "hc_x": [125, 125], "hc_y": [100, 50], "events": ["single", "field_out"]}))
+    assert f.loc[0, "dist"] == -1 and f.loc[1, "dist"] == 380

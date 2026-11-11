@@ -2,8 +2,9 @@
 
 Per ball in play (fielders known from Statcast's fielder_2..fielder_9 columns):
   out chance   how often an average defense turns a ball like this into an out (exit velo, launch angle,
-               field direction, distance from home, batter side). Where the ball went is a FAIR input here --
-               it's exactly what the fielder is judged on (not like xwOBA, where it leaked luck to the hitter).
+               field direction, Statcast's projected distance for balls in the air, batter side). Direction is a fair
+               input -- it's what the fielder is judged on. Distance comes from the ball's flight, NOT the hit
+               coordinates (those mark where a hit was picked up after rolling, which leaks the result).
   responsible  outs: the fielder who made the play. Hits / errors: shared among positions by WHO USUALLY
                MAKES THE OUT on balls like this (a grounder through the 5.5 hole is on the SS / 3B, not the LF
                who picked it up).
@@ -54,9 +55,14 @@ def _c(df, n):
 def features(df: pd.DataFrame) -> pd.DataFrame:
     x, y = _c(df, "hc_x") - 125.42, 198.27 - _c(df, "hc_y")
     ev = df["events"].astype(str) if "events" in df else pd.Series("", index=df.index)
+    la = _c(df, "launch_angle")
+    # distance: Statcast's PROJECTED distance from the ball's flight, balls in the air only. The hit coordinates
+    # mark where a ball was caught -- or where a hit was picked up after rolling -- so their distance partly
+    # records the result (it made the model near-certain and shrank every fielder's credit).
+    dist = _c(df, "hit_distance_sc").where(la >= 10, -1.0)          # ground balls: -1 (no flight distance)
     return pd.DataFrame({
-        "ev": _c(df, "launch_speed"), "la": _c(df, "launch_angle"),
-        "spray": np.degrees(np.arctan2(x, y)) * 0.75, "dist": np.hypot(x, y) * FT_PER_UNIT,
+        "ev": _c(df, "launch_speed"), "la": la,
+        "spray": np.degrees(np.arctan2(x, y)) * 0.75, "dist": dist,
         "is_left": (df["stand"].astype(str) == "L").astype(float) if "stand" in df else 0.0,
         "fielder": _c(df, "hit_location"), "ev_type": ev.map(EV_TYPE).astype(float),
         "on1": df["on_1b"].notna().astype(float) if "on_1b" in df else 0.0,
@@ -198,16 +204,22 @@ def blocking_opps(df: pd.DataFrame) -> pd.DataFrame:
             .dropna(subset=["player"]).groupby(["game_date", "game_pk", "player", "pos"], as_index=False).sum())
 
 
+from models.catching import CATCH_COLS  # noqa: E402
+
 SUM_COLS = ["outs", "n", "opa", "runs", "fpa", "dp_opps", "dp_runs", "arm_opps", "arm_runs", "b_opps"] + \
-           [f"s{k}_{x}" for k in range(1, 6) for x in ("n", "opa", "out")]
+           [f"s{k}_{x}" for k in range(1, 6) for x in ("n", "opa", "out")] + CATCH_COLS
 
 
-def daily_table(df: pd.DataFrame, bundle: dict | None = None) -> pd.DataFrame:
+def daily_table(df: pd.DataFrame, bundle: dict | None = None, events: pd.DataFrame | None = None) -> pd.DataFrame:
     """Small file saved per season: game x player x position -> innings (outs), plays, OPA, runs, FPA, DP, arm,
-    stars, blocking opps. Pages add it up for any period."""
+    stars, blocking opps, and (catchers, with play-by-play events) blocking / throwing. Pages add it up for any
+    period."""
     b = bundle or load()
     keys = ["game_date", "game_pk", "player", "pos"]
     parts = [innings(df), blocking_opps(df)]
+    if events is not None and not events.empty:
+        from models import catching
+        parts.append(catching.daily_rows(df, events))
     if b is not None:
         pc = play_credits(df, b)
         if not pc.empty:

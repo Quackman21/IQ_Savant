@@ -1,0 +1,77 @@
+===== SHIFT ERA (2015-2022) =====
+IQ catcher blocking / throwing -- test report
+Each half of the games scored by models trained on the OTHER half. Runs from the fielding team's side.
+
+BLOCKING (Statcast method: every pitch with a runner on, not in play / HBP; WP + PB chance per pitch)
+  Opportunities: 1,814,676  |  expected WP+PB 15,024 vs actual 15,104 (should match)
+  Tiers (Statcast lines): Easy 95.5%  Medium 3.6%  Tough 0.9%   (Statcast says 95%+ of chances are easy)
+  Genuine opportunities (Medium + Tough): 81,199 | blocked 88.7% (expected 88.6%)
+  Tough: 16,324 | blocked 77.6%
+
+  What a WP / PB costs by situation (runners move up a base; from this era's run expectancy):
+    RUNNERS     0 OUT   1 OUT   2 OUT
+    1st           0.23    0.17    0.10
+    2nd           0.25    0.28    0.05
+    1st+2nd       0.50    0.49    0.15
+    3rd           0.13    0.29    0.72
+    1st+3rd       0.38    0.50    0.82
+    2nd+3rd       0.38    0.56    0.78
+    loaded        0.67    0.83    0.82
+  (Statcast uses 0.25 runs everywhere; DRS uses these)
+
+THROWING: 23,995 steal attempts | expected caught 5,693 vs actual 5,725
+
+Repeatable? catcher's 1st half vs 2nd half:
+  blocks above avg per opportunity r = 0.283  (444)
+  throwing runs per attempt        r = 0.317  (248)
+
+2022 Blocks Above Average (1500+ opportunities) -- eye test:
+  Jose Trevino +23.8 | J.T. Realmuto +21.6 | Tomás Nido +17.5 | Austin Hedges +14.7 | Tucker Barnhart +14.1   ...   Jorge Alfaro -5.9 | Yasmani Grandal -8.1 | MJ Melendez -21.6
+
+2022 Blocking runs (situational) (1500+ opportunities) -- eye test:
+  Jose Trevino +8.1 | Tucker Barnhart +6.7 | Tomás Nido +6.5 | Austin Hedges +5.8 | Alejandro Kirk +4.9   ...   Yasmani Grandal -1.3 | Ryan Jeffers -1.8 | MJ Melendez -5.4
+
+2022 Big Stop runs (1500+ opportunities) -- eye test:
+  Jose Trevino +4.3 | Kyle Higashioka +3.4 | J.T. Realmuto +3.3 | Martín Maldonado +3.2 | Brian Serven +2.9   ...   Ryan Jeffers +0.5 | Jose Herrera +0.4 | Luis Torrens +0.4
+
+2022 Throwing runs (1500+ opportunities) -- eye test:
+  J.T. Realmuto +5.3 | Jose Herrera +3.8 | Kyle Higashioka +2.8 | Eric Haase +2.8 | Martín Maldonado +2.8   ...   Will Smith -4.5 | Michael Papierski -4.9 | Kevin Plawecki -5.1
+
+===== 2023+ =====
+IQ catcher blocking / throwing -- test report
+Each half of the games scored by models trained on the OTHER half. Runs from the fielding team's side.
+
+BLOCKING (Statcast method: every pitch with a runner on, not in play / HBP; WP + PB chance per pitch)
+  Opportunities: 1,001,831  |  expected WP+PB 6,600 vs actual 6,685 (should match)
+  Tiers (Statcast lines): Easy 96.9%  Medium 2.3%  Tough 0.9%   (Statcast says 95%+ of chances are easy)
+  Genuine opportunities (Medium + Tough): 31,552 | blocked 87.2% (expected 86.9%)
+  Tough: 8,658 | blocked 76.4%
+
+  What a WP / PB costs by situation (runners move up a base; from this era's run expectancy):
+    RUNNERS     0 OUT   1 OUT   2 OUT
+    1st           0.23    0.15    0.10
+    2nd           0.28    0.27    0.03
+    1st+2nd       0.47    0.46    0.12
+    3rd           0.10    0.32    0.74
+    1st+3rd       0.29    0.48    0.82
+    2nd+3rd       0.41    0.56    0.78
+    loaded        0.63    0.79    0.81
+  (Statcast uses 0.25 runs everywhere; DRS uses these)
+
+THROWING: 17,285 steal attempts | expected caught 3,223 vs actual 3,242
+
+Repeatable? catcher's 1st half vs 2nd half:
+  blocks above avg per opportunity r = 0.225  (248)
+  throwing runs per attempt        r = 0.223  (183)
+
+2026 Blocks Above Average (1500+ opportunities) -- eye test:
+  Alejandro Kirk +17.8 | Austin Wells +15.8 | Carlos Narváez +14.5 | Freddy Fermin +14.5 | Dillon Dingler +14.4   ...   Kyle Teel -6.3 | Jonah Heim -7.3 | Francisco Alvarez -7.5
+
+2026 Blocking runs (situational) (1500+ opportunities) -- eye test:
+  Austin Wells +6.9 | Carlos Narváez +5.6 | Alejandro Kirk +5.3 | Freddy Fermin +5.2 | Danny Jansen +4.4   ...   Dalton Rushing -2.1 | Rafael Flores Jr. -2.3 | Francisco Alvarez -3.0
+
+2026 Big Stop runs (1500+ opportunities) -- eye test:
+  Keibert Ruiz +4.0 | Dillon Dingler +4.0 | Austin Wells +4.0 | Carter Jensen +3.9 | Gabriel Moreno +3.5   ...   James McCann +0.5 | Salvador Perez +0.3 | Joey Bart +0.2
+
+2026 Throwing runs (1500+ opportunities) -- eye test:
+  Joe Mack +7.1 | Brandon Valenzuela +6.7 | Pedro Pagés +5.4 | Freddy Fermin +5.0 | Adley Rutschman +4.9   ...   Austin Hedges -3.1 | Iván Herrera -4.2 | Ryan Jeffers -4.4

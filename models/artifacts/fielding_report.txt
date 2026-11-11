@@ -4,37 +4,37 @@ Each half of the games credited by models trained on the OTHER half. Runs from t
 
 Out-chance check (balls in play, grouped by the model's out chance):
   MODEL SAID     ACTUALLY OUT     PLAYS
-    0%-10%       2% ->    1%     156,048
-   10%-20%      15% ->   14%      22,789
-   20%-30%      25% ->   25%      16,069
-   30%-40%      35% ->   35%      14,461
-   40%-50%      45% ->   45%      13,873
-   50%-60%      55% ->   55%      15,626
-   60%-70%      65% ->   65%      20,848
-   70%-80%      76% ->   75%      34,610
-   80%-90%      86% ->   86%      99,257
-   90%-100%     96% ->   96%     415,480
+    0%-10%       3% ->    2%      79,667
+   10%-20%      15% ->   13%      30,680
+   20%-30%      25% ->   24%      34,012
+   30%-40%      35% ->   35%      36,649
+   40%-50%      45% ->   46%      37,770
+   50%-60%      55% ->   56%      42,498
+   60%-70%      65% ->   66%      50,185
+   70%-80%      75% ->   76%      67,267
+   80%-90%      86% ->   86%     114,247
+   90%-100%     96% ->   97%     325,544
 
   run value of an out vs a hit by ball type: GB 0.73, LD 0.80, FB 0.84, PU 0.78 | double play vs not: 0.16 runs
 
 Repeatable? player's 1st half vs 2nd half at a position (80+ responsible plays each half):
   POS    OPA / play r  DRS / inning r  PLAYERS
-  1B            0.197           0.223      141
-  2B            0.234           0.251      205
-  3B            0.335           0.318      173
-  SS            0.426           0.448      211
-  LF            0.358           0.351      126
-  CF            0.414           0.418      183
-  RF            0.275           0.284      154
+  1B            0.238           0.262      160
+  2B            0.230           0.214      219
+  3B            0.314           0.330      184
+  SS            0.572           0.581      216
+  LF            0.352           0.305      110
+  CF            0.366           0.347      170
+  RF            0.265           0.220      140
 
 2022 DRS leaders by position (400+ innings) -- eye test (models trained on the other half):
-  1B:  Ty France +5 | Lewin Díaz +4 | Josh Naylor +3 | Christian Walker +3   ...   C.J. Cron -3 | Anthony Rizzo -4
-  2B:  Andrés Giménez +13 | Santiago Espinal +12 | Marcus Semien +9 | Jose Altuve +8   ...   Ozzie Albies -8 | Jonathan India -8
-  3B:  Ke'Bryan Hayes +17 | Austin Riley +10 | Nolan Arenado +9 | Alex Bregman +9   ...   Maikel Franco -5 | Eduardo Escobar -10
-  SS:  Nico Hoerner +15 | Trea Turner +11 | Andrew Velazquez +8 | Corey Seager +7   ...   Bo Bichette -7 | Luis García Jr. -11
-  LF:  Steven Kwan +10 | Brandon Marsh +8 | Ian Happ +4 | Andrew Benintendi +3   ...   Tommy Pham -14 | Jurickson Profar -15
-  CF:  Jose Siri +6 | Cristian Pache +3 | Jake Meyers +2 | Adolis García +2   ...   Christopher Morel -13 | Bryan Reynolds -18
-  RF:  Jackie Bradley Jr. +5 | Mookie Betts +4 | Kyle Tucker +2 | Kole Calhoun +0   ...   Nick Castellanos -11 | Juan Soto -14
+  1B:  Christian Walker +15 | Lewin Díaz +5 | Josh Naylor +4 | Rhys Hoskins +4   ...   Jose F Miranda -4 | Ryan Mountcastle -4
+  2B:  Andrés Giménez +24 | Brendan Rodgers +21 | Marcus Semien +15 | Trevor Story +14   ...   Luis Guillorme -6 | Jonathan India -18
+  3B:  Ke'Bryan Hayes +21 | Nolan Arenado +17 | Ryan McMahon +12 | Jace Peterson +11   ...   Alec Bohm -10 | Yandy Díaz -11
+  SS:  Nico Hoerner +22 | Dansby Swanson +21 | Trea Turner +20 | Willy Adames +16   ...   Bobby Witt Jr. -9 | Luis García Jr. -9
+  LF:  Steven Kwan +14 | Brandon Marsh +12 | Andrew Benintendi +10 | Ian Happ +9   ...   Tommy Pham -6 | Kyle Schwarber -7
+  CF:  Jose Siri +10 | Trent Grisham +9 | Myles Straw +8 | Michael A. Taylor +7   ...   Bryan Reynolds -7 | Christopher Morel -8
+  RF:  Jackie Bradley Jr. +10 | Mookie Betts +9 | Kyle Tucker +8 | Max Kepler +5   ...   Gavin Sheets -6 | Charlie Blackmon -6
 
 ===== SHIFT BAN (2023+) -- its own models =====
 IQ fielding -- test report
@@ -42,34 +42,34 @@ Each half of the games credited by models trained on the OTHER half. Runs from t
 
 Out-chance check (balls in play, grouped by the model's out chance):
   MODEL SAID     ACTUALLY OUT     PLAYS
-    0%-10%       2% ->    1%      88,870
-   10%-20%      15% ->   13%      10,048
-   20%-30%      25% ->   24%       7,182
-   30%-40%      35% ->   35%       6,630
-   40%-50%      45% ->   45%       6,881
-   50%-60%      55% ->   55%       8,009
-   60%-70%      65% ->   65%      11,040
-   70%-80%      76% ->   76%      18,613
-   80%-90%      86% ->   86%      51,750
-   90%-100%     96% ->   96%     242,496
+    0%-10%       2% ->    1%      46,107
+   10%-20%      15% ->   11%      16,244
+   20%-30%      25% ->   23%      18,373
+   30%-40%      35% ->   35%      18,147
+   40%-50%      45% ->   46%      18,887
+   50%-60%      55% ->   56%      21,696
+   60%-70%      65% ->   66%      26,120
+   70%-80%      75% ->   76%      35,224
+   80%-90%      86% ->   87%      61,776
+   90%-100%     97% ->   97%     192,298
 
   run value of an out vs a hit by ball type: GB 0.71, LD 0.78, FB 0.82, PU 0.77 | double play vs not: 0.16 runs
 
 Repeatable? player's 1st half vs 2nd half at a position (80+ responsible plays each half):
   POS    OPA / play r  DRS / inning r  PLAYERS
-  1B            0.269           0.264       76
-  2B            0.180           0.203      104
-  3B            0.253           0.280       88
-  SS            0.137           0.144      113
-  LF            0.115           0.120       93
-  CF            0.272           0.268      124
-  RF            0.266           0.227       92
+  1B            0.232           0.180       86
+  2B            0.292           0.308      115
+  3B            0.178           0.241       96
+  SS            0.170           0.185      121
+  LF            0.244           0.243       84
+  CF            0.283           0.251      112
+  RF            0.357           0.350       76
 
 2026 DRS leaders by position (400+ innings) -- eye test (models trained on the other half):
-  1B:  Matt Olson +8 | Willson Contreras +5 | Josh Naylor +5 | Ty France +4   ...   Andrew Vaughn -4 | Mark Vientos -5
-  2B:  Brice Turang +8 | Ketel Marte +6 | Nasim Nuñez +5 | JJ Wetherholt +4   ...   Luke Keaschall -6 | Jazz Chisholm Jr. -6
-  3B:  Caleb Durbin +6 | Javier Sanoja +6 | Zack Gelof +5 | Nolan Arenado +4   ...   Alec Bohm -9 | Nick Gonzales -12
-  SS:  Taylor Walls +14 | Masyn Winn +7 | Colson Montgomery +5 | Bobby Witt Jr. +4   ...   Francisco Lindor -8 | Trea Turner -16
-  LF:  Cody Bellinger +11 | Chandler Simpson +8 | Jackson Chourio +8 | Heriberto Hernández +6   ...   JJ Bleday -4 | Jarren Duran -12
-  CF:  Pete Crow-Armstrong +14 | Evan Carter +11 | Michael Harris II +9 | Cedric Mullins +9   ...   Dane Myers -6 | Oneil Cruz -8
-  RF:  Corbin Carroll +15 | Wilyer Abreu +10 | Seiya Suzuki +8 | Victor Mesa Jr. +6   ...   Luke Keaschall -7 | Carson Benge -7
+  1B:  Matt Olson +12 | Vinnie Pasquantino +8 | Ty France +7 | Jared Young +6   ...   Bryce Harper -7 | Rhys Hoskins -7
+  2B:  Nasim Nuñez +16 | Brice Turang +15 | Brandon Lowe +14 | Richie Palacios +13   ...   Jose Altuve -12 | Bryson Stott -15
+  3B:  Matt Chapman +7 | Maikel Garcia +7 | Javier Sanoja +7 | Kevin McGonigle +6   ...   Isaac Paredes -16 | Nick Gonzales -17
+  SS:  Taylor Walls +19 | Zach Neto +11 | Gunnar Henderson +8 | Dansby Swanson +8   ...   Ezequiel Tovar -10 | Trea Turner -17
+  LF:  Cody Bellinger +12 | Jackson Chourio +9 | Chandler Simpson +9 | Isaac Collins +6   ...   Angel Martínez -5 | Jarren Duran -12
+  CF:  Pete Crow-Armstrong +13 | Evan Carter +11 | Michael Harris II +9 | Cedric Mullins +9   ...   Trent Grisham -7 | Oneil Cruz -7
+  RF:  Corbin Carroll +14 | Wilyer Abreu +8 | Cam Smith +8 | Seiya Suzuki +7   ...   Luke Keaschall -4 | Ronald Acuña Jr. -6

@@ -121,19 +121,21 @@ OF_STAR_TAB = [("N", "#", "Chances", "int"), "|", *_DRS,
 
 C_OVERVIEW = [("OPPS", "Opps Total", "# of framing, blocking, and throwing opportunities", "int"),
               ("F_OPPS", "Framing Opps", "# of framing opportunities (taken pitches he received)", "int"),
-              ("B_OPPS", "Blocking Opps", "# of blocking opportunities: pitches in the dirt with runners on", "int"),
+              ("B_OPPS", "Blocking Opps", "Genuine blocking opportunities: pitches with a runner on and a 5%+ wild "
+               "pitch / passed ball chance", "int"),
               ("T_OPPS", "Throwing Opps", "# of throwing opportunities (stolen base attempts)", "int"), "|",
-              ("DRS", "DRS", "Catching DRS: Framing + Blocking + Throwing runs (blocking / throwing are Statcast "
-                             "full seasons, so this shows on season rows)", "num1s"),
+              ("DRS", "DRS", "Catching DRS: Framing + Blocking + Throwing runs (any period)", "num1s"),
               ("F_RS", "Framing Runs", "Framing runs saved (our framing model, any period): each extra strike x what "
                "a strike instead of a ball is worth in that count", "num1s"),
-              ("B_RS", "Blocking RS", "Blocking runs (Statcast, full seasons)", "num1"),
-              ("T_RS", "Throwing RS", "Throwing runs (Statcast, full seasons)", "num1"), "|",
+              ("B_RS", "Blocking RS", "Blocking runs, situational (IQ, any period): every pitch with a runner on, "
+               "(WP/PB chance - what happened) x what a WP / PB costs in that base / out situation", "num1s"),
+              ("T_RS", "Throwing RS", "Throwing runs (IQ model, any period): (caught - caught-stealing chance) x run "
+               "swing of an out vs a stolen base, on every steal attempt", "num1s"), "|",
               ("DRS/S", "DRS / Season", "Catching DRS per 1,200 innings", "num1s"),
               ("F_RS/S", "Framing RS / Season", "Framing runs per 1,200 innings", "num1s"),
               ("B_RS/S", "Blocking RS / Season", "Blocking runs per 1,200 innings", "num1s"),
               ("T_RS/S", "Throwing RS / Season", "Throwing runs per 1,200 innings", "num1s")]
-C_FRAMING = [("DRS", "DRS", "Catching DRS: Framing + Blocking + Throwing (season rows)", "num1s"), ("DRS/S", "DRS / Season", "Catching DRS per 1,200 innings", "num1s"), "|",
+C_FRAMING = [("DRS", "DRS", "Catching DRS: Framing + Blocking + Throwing runs (any period)", "num1s"), ("DRS/S", "DRS / Season", "Catching DRS per 1,200 innings", "num1s"), "|",
              ("F_OPPS", "Framing Opps", "# of framing opportunities: every taken pitch (called strike or ball) he "
               "received", "int"),
              ("F_RS", "Framing Runs", "Framing runs saved: each extra strike x what a strike instead of a ball is worth "
@@ -154,17 +156,41 @@ C_FRAMING = [("DRS", "DRS", "Catching DRS: Framing + Blocking + Throwing (season
              ("F_BOZ", "Framing BOZ", "Strike rate on edge pitches, bottom of zone — percentile vs MLB catchers",
               "pctile"), "|",
              _g("Frame Speed Grade", "20-80 grade for glove speed towards middle of zone (our SAM 3 glove model)")]
-C_BLOCKING = [("DRS", "DRS", "Catching DRS: Framing + Blocking + Throwing (season rows)", "num1s"), ("DRS/S", "DRS / Season", "Catching DRS per 1,200 innings", "num1s"), "|",
-              ("B_OPPS", "Blocking Opps", "# of blocking opportunities: pitches in the dirt with runners on", "int"),
-              ("B_RS", "Blocking RS", "Blocking DRS (Statcast blocking runs, full seasons)", "num1"),
-              ("B_RS/S", "Blocking RS / Season", "Blocking runs per 1,200 innings", "num1s"), "|",
-              ("B_AIR", "Blocking Air", "Blocking on pitches not in the dirt — percentile", B),
-              ("B_DAS", "Blocking Dirt AS", "Blocking on pitches in the dirt, arm side — percentile", B),
-              ("B_DMID", "Blocking Dirt Mid", "Blocking on pitches in the dirt, middle — percentile", B),
-              ("B_DGS", "Blocking Dirt GS", "Blocking on pitches in the dirt, glove side — percentile", B)]
-C_THROWING = [("DRS", "DRS", "Catching DRS: Framing + Blocking + Throwing (season rows)", "num1s"), ("DRS/S", "DRS / Season", "Catching DRS per 1,200 innings", "num1s"), "|",
+C_BLOCKING = [("DRS", "DRS", "Catching DRS: Framing + Blocking + Throwing runs (any period)", "num1s"),
+              ("DRS/S", "DRS / Season", "Catching DRS per 1,200 innings", "num1s"), "|",
+              ("B_OPPS", "Blocking Opps", "Genuine blocking opportunities: pitches with a runner on whose wild pitch / "
+               "passed ball chance was 5%+ (Statcast's Medium + Tough). Totals below use EVERY pitch with a runner on",
+               "int"),
+              ("B_BLOCKS", "Blocks", "Genuine opportunities he kept in front", "int"),
+              ("B_BLK%", "Block %", "Blocks / genuine opportunities", "pct"),
+              ("B_XBLK%", "xBlock %", "Block % an average catcher would have on the same pitches", "pct"),
+              ("B_BAA", "Blocks Above Avg", "Statcast's Blocks Above Average: sum over every pitch with a runner on of "
+               "(WP/PB chance - what happened). A 10% pitch blocked = +0.10; a 2% pitch that gets by = -0.98",
+               "num1s"), "|",
+              ("B_RS", "Blocking RS", "Blocking runs, SITUATIONAL (goes into DRS): each pitch's (chance - what happened) "
+               "x what a WP / PB would cost in that base / out situation", "num1s"),
+              ("B_RS_SC", "Blocking RS (Statcast)", "Statcast's way: Blocks Above Average x 0.25 runs (no situation)",
+               "num1s"),
+              ("B_RS/S", "Blocking RS / Season", "Situational blocking runs per 1,200 innings", "num1s"),
+              ("B_BIG", "Big Stop Runs", "Situational runs saved on TOUGH pitches (15%+ WP/PB chance) he kept in front",
+               "num1s"), "|",
+              ("B_TOUGH_N", "Tough Opps", "Pitches with a 15%+ WP/PB chance (Statcast: under 85% block probability)",
+               "int"),
+              ("B_TOUGH%", "Tough Block %", "Share of tough pitches he kept in front", "pct"),
+              ("B_MED_N", "Medium Opps", "Pitches with a 5-15% WP/PB chance (Statcast: 85-95% block probability)", "int"),
+              ("B_MED%", "Medium Block %", "Share of medium pitches he kept in front", "pct"), "|",
+              ("B_AIR", "Blocking Air", "Blocks above average per pitch, pitches not in the dirt -- percentile vs MLB "
+               "catchers", "pctile"),
+              ("B_DGS", "Dirt Glove Side", "... in the dirt, glove side (catcher's left, left of the plate) -- percentile",
+               "pctile"),
+              ("B_DMID", "Dirt Middle", "... in the dirt, over the plate -- percentile", "pctile"),
+              ("B_DAS", "Dirt Arm Side", "... in the dirt, arm side (catcher's right, right of the plate) -- percentile",
+               "pctile")]
+C_THROWING = [("DRS", "DRS", "Catching DRS: Framing + Blocking + Throwing runs (any period)", "num1s"), ("DRS/S", "DRS / Season", "Catching DRS per 1,200 innings", "num1s"), "|",
               ("T_OPPS", "Throwing Opps", "# of throwing opportunities (stolen base attempts)", "int"),
-              ("T_RS", "Throwing RS", "Throwing DRS (Statcast throwing runs, full seasons)", "num1"),
+              ("T_RS", "Throwing RS", "Throwing runs (IQ model, any period): on every steal attempt, (caught - "
+               "caught-stealing chance for an average catcher: base, pitch type, velo, location, pitcher hand, "
+               "count, batter side; no runner speed) x run swing of an out vs a stolen base", "num1s"),
               ("T_RS/S", "Throwing RS / Season", "Throwing runs per 1,200 innings", "num1s"), "|",
               ("POP", "Pop Time", "Time elapsed between catcher receiving pitch and throw landing at base "
                                   "(to 2B, Statcast, full seasons)", "time"),

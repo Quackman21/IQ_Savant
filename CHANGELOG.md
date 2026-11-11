@@ -1,5 +1,42 @@
 # IQ Savant – version history
 
+## v18.3 – 2026-11-10  (includes v18.1 + v18.2)
+- Catcher blocking rebuilt the way Statcast does it:
+  - Opportunity = every pitch with a runner on that isn't put in play / HBP / pitchout / intentional / automatic.
+  - WP + PB chance per pitch for an average catcher (location, height, pitch type, velo, movement, swing, pitcher
+    AND batter hand, count). Blocks Above Average = sum of (chance - what happened). Dropped third strikes that
+    go to the backstop now count as wild pitches / passed balls.
+  - Tiers on Statcast's lines: Easy < 5%, Medium 5-15%, Tough 15%+. Genuine opportunities = Medium + Tough.
+    Easy catches still earn their tiny credit (as Statcast does).
+  - Blocking RS (into DRS) is SITUATIONAL: each pitch's credit x what a wild pitch costs in that base / out state
+    (from run expectancy, by era). Statcast's flat 0.25-run version shown next to it (Blocking RS (Statcast)).
+  - Big Stop runs: the value of every Tough pitch that was blocked.
+  - Zones by location only, catcher's view, every catcher right-handed: glove side = catcher's left, arm side =
+    catcher's right, middle, and air.
+- python -m pipeline.blocking_videos: clickable video check around the 5% line, or any tier / result / chance range.
+- compare_fielding now also compares our Blocks Above Average and blocking runs with Savant's catcher blocking board.
+
+## v18.2 – 2026-11-10  (includes v18.1)
+- Fielding fix: distance now comes from Statcast's PROJECTED distance (hit_distance_sc, balls in the air) instead
+  of the hit coordinates. The coordinates mark where a hit was picked up after rolling, which leaked the result
+  and made the out chance near-certain -- shrinking every fielder's credit (our DRS ran about half of SIS DRS).
+- python -m pipeline.compare_fielding [--season 2026]: our full-season DRS vs Savant Outs Above Average and
+  Fielding Run Value by position (correlation + scale), and vs SIS DRS if you save their leaderboard as
+  data/compare/drs_<season>.csv (player, position, DRS).
+
+## v18.1 – 2026-11-10
+- Catcher blocking + throwing for ANY period (models/catching.py), era models:
+  - Blocking: every pitch with runners on gets a wild pitch / passed ball chance for an average catcher
+    (location vs the zone, pitch type, velo, movement, swing, pitcher hand, count). Blocking runs =
+    (chance - actual) x 0.28. Location percentiles: Air, Dirt arm side / middle / glove side.
+  - Throwing: every steal attempt gets a caught-stealing chance (base, pitch type, velo, location, pitcher hand,
+    batter side, outs, count; no runner speed). Throwing runs = (caught - chance) x out-vs-SB run swing.
+  - Catching DRS = framing + blocking + throwing on every row (month, last 30 days...), plus all RS / Season rates.
+- Play-by-play runner events (MLB stats API, free): python -m pipeline.fetch_events -> data/raw/events_<year>.csv.gz
+- python -m pipeline.train_catching ; fielding files now include catcher blocking / throwing.
+- Overnight job also downloads events and trains catching.
+- Still Statcast full seasons: pop time, exchange, arm strength. Still blank: Accuracy Grade (throw location not public).
+
 ## v18.0 – 2026-11-10
 - IQ fielding (models/fielding.py): DRS and its parts from public pitch data, any period, era models.
   Out chance per ball (EV, LA, direction, distance, side); responsibility = who makes the out on balls like it;

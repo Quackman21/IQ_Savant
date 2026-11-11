@@ -130,7 +130,9 @@ def main(argv: list[str]) -> None:
         from models import framing
         league_ref.save_catching(framing.daily_table(framing.framing_pitches(hm.clean(raw))), season)
         from models import fielding                     # DRS parts per game / player / position
-        league_ref.save_fielding(fielding.daily_table(hm.clean(raw)), season)
+        ev_path = RAW_DIR / f"events_{season}.csv.gz"           # wild pitches / steals (pipeline.fetch_events)
+        events = pd.read_csv(ev_path) if ev_path.exists() else None
+        league_ref.save_fielding(fielding.daily_table(hm.clean(raw), events=events), season)
         last_game = str(pd.to_datetime(raw["game_date"]).max().date()) if "game_date" in raw else None
         path = league_ref.save(ref, season, last_game)
         print(f"[{season}] saved {path} ({len(ref):,} rows) in {time.time() - t:.0f}s", flush=True)

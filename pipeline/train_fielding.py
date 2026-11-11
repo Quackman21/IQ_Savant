@@ -19,7 +19,7 @@ import pandas as pd
 warnings.filterwarnings("ignore")
 
 COLS = ["game_date", "game_pk", "at_bat_number", "inning", "inning_topbot", "outs_when_up", "events", "des",
-        "type", "description", "hit_location", "launch_speed", "launch_angle", "hc_x", "hc_y", "stand",
+        "type", "description", "hit_location", "launch_speed", "launch_angle", "hit_distance_sc", "hc_x", "hc_y", "stand",
         "on_1b", "on_2b", "on_3b", "delta_run_exp", "plate_z", "sz_bot", "game_type"] + \
        [f"fielder_{k}" for k in range(2, 10)]
 MIN_HALF = 80             # responsible plays per half for the repeatability test

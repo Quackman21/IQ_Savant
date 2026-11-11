@@ -116,6 +116,13 @@ def get_game_feed(game_pk: int) -> dict:
     return r.json()
 
 
+def get_play_by_play(game_pk: int) -> dict:
+    """Every play of a game with runner movements (wild pitches, passed balls, steals...). Lighter than the feed."""
+    r = requests.get(f"{BASE}/game/{game_pk}/playByPlay", timeout=TIMEOUT)
+    r.raise_for_status()
+    return r.json()
+
+
 def get_day_games(date_str: str) -> list[dict]:
     """One day's games with live linescore (inning, outs) for the ticker."""
     data = _get("schedule", sportId=1, date=date_str, hydrate="linescore")
