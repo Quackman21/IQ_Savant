@@ -1,5 +1,11 @@
 # IQ Savant – version history
 
+## v18.6.1 – 2026-11-11
+- Savant framing download fixed and CHECKED: Savant moved the board (new columns id / pitches / rv_tot) and some
+  addresses ignore the year and send the current season. Every season is now verified against who actually caught
+  that year (same catchers + matching pitch counts) before it is used, saved in data/compare/, and real errors are
+  shown. Slows down and retries if Savant throttles.
+
 ## v18.6 – 2026-11-11
 - ABS (2026+): framing now uses the umpire's ORIGINAL call. Challenges are a different skill and are kept out.
   core/abs_calls.py reads which pitches were challenged / overturned from MLB's play-by-play (only new games are

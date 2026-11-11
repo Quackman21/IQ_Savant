@@ -30,3 +30,23 @@ def test_sis_framing_file_matched_by_name(tmp_path, monkeypatch):
                   "Strike Zone Runs Saved": [12, 7]}).to_csv(tmp_path / "sis_framing.csv", index=False)
     s = fs.sis_framing([1, 2], [2025])
     assert s[2025].to_dict() == {1: 12, 2: 7}
+
+
+def test_savant_framing_rejects_wrong_season(tmp_path, monkeypatch):
+    from core import savant
+    monkeypatch.setattr(savant, "COMPARE", tmp_path)
+    monkeypatch.setattr("time.sleep", lambda s: None)
+    ours = pd.Series(np.arange(1000, 7000, 200, dtype=float), index=range(100, 130))       # who caught that year
+    right = pd.DataFrame({"id": range(100, 130), "name": "x", "pitches": ours.values / 2, "rv_tot": 1.0})
+    wrong = pd.DataFrame({"id": range(500, 530), "name": "x", "pitches": ours.values, "rv_tot": 1.0})  # this season
+    calls = []
+
+    def fake(url, tries=3):
+        calls.append(url)
+        return (wrong, "30 rows") if "season=" not in url else (right, "30 rows")
+    monkeypatch.setattr(savant, "_get", fake)
+    f = savant.catcher_framing(2019, ours, log=lambda m: None)
+    assert f["id"].min() == 100                                          # the ignored-year boards were thrown out
+    assert (tmp_path / "savant_framing_2019.csv").exists() and "season=" in (tmp_path / "savant_framing_url.txt").read_text()
+    calls.clear()
+    assert len(savant.catcher_framing(2019, ours, log=lambda m: None)) == 30 and not calls        # cached

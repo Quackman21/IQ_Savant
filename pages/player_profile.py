@@ -149,7 +149,8 @@ def board(kind: str, year: int) -> pd.DataFrame:
     else:
         fn = {"percentiles": lambda: pb.statcast_batter_percentile_ranks(year),
               "p_percentiles": lambda: pb.statcast_pitcher_percentile_ranks(year),
-              "framing": lambda: pb.statcast_catcher_framing(year),
+              "framing": lambda: savant.catcher_framing(           # checked against who caught that season
+                  year, league_ref.load_catching(year).groupby("catcher")["n"].sum(), log=lambda m: None),
               "poptime": lambda: pb.statcast_catcher_poptime(year),
               "sprint": lambda: pb.statcast_sprint_speed(year, 10),
               "oaa_if": lambda: pb.statcast_outs_above_average(year, "IF", 1),

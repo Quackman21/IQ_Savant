@@ -1,4 +1,4 @@
-erIQ FRAMING STUDY -- which framing number is most accurate, and which zones matter most
+IQ FRAMING STUDY -- which framing number is most accurate, and which zones matter most
 Seasons 2015-2026, regular season, every taken pitch. Strike chance = league-average umpire (IQ Swing Decisions called-strike model).
 Season tests use catchers with 3,000+ takes; split-half tests 1,500+ takes in each half.
 
@@ -16,18 +16,18 @@ HOW TO READ
 ==============================================================================================================
 WHICH METRIC IS MOST ACCURATE -- 2015-2022  (237 catcher season-pairs)
   METRIC                             SPLIT r TAKES FOR .70 1H->2H own 1H->2H runs NEXT YR own NEXT YR runs SAVANT r  SIS r
-  Extra Strikes (shadow only)           0.75         2,107       0.69        0.65        0.63         0.59     0.88    nan
-  Adjusted, count value (a=2000)        0.76         2,057       0.69        0.68        0.58         0.57     0.92    nan
-  Framing Runs (count value)            0.75         2,173       0.68        0.68        0.57         0.57     0.91    nan
-  Adjusted (a=500)                      0.81         1,552       0.71        0.67        0.58         0.56     0.93    nan
-  Adjusted (a=2000)                     0.82         1,450       0.72        0.68        0.58         0.56     0.93    nan
-  SLAA+                                 0.79         1,715       0.70        0.67        0.57         0.56     0.92    nan
-  SLAA, regressed                       0.80         1,609       0.71        0.68        0.57         0.56     0.93    nan
-  Extra Strikes (all takes)             0.79         1,690       0.70        0.67        0.57         0.56     0.92    nan
-  Framing Runs (flat 0.125)             0.79         1,690       0.70        0.67        0.57         0.56     0.92    nan
-  Adjusted (a=5000)                     0.82         1,440       0.71        0.67        0.58         0.56     0.93    nan
-  Adjusted, no umpire (a=2000)          0.80         1,570       0.71        0.67        0.58         0.56     0.93    nan
-  Extra Strikes / Game                  0.80         1,644       0.70        0.67        0.57         0.55     0.92    nan
+  Extra Strikes (shadow only)           0.75         2,107       0.69        0.65        0.63         0.59     0.93    nan
+  Adjusted, count value (a=2000)        0.76         2,057       0.69        0.68        0.58         0.57     0.94    nan
+  Framing Runs (count value)            0.75         2,173       0.68        0.68        0.57         0.57     0.94    nan
+  Adjusted (a=500)                      0.81         1,552       0.71        0.67        0.58         0.56     0.96    nan
+  Adjusted (a=2000)                     0.82         1,450       0.72        0.68        0.58         0.56     0.96    nan
+  SLAA+                                 0.79         1,715       0.70        0.67        0.57         0.56     0.96    nan
+  SLAA, regressed                       0.80         1,609       0.71        0.68        0.57         0.56     0.96    nan
+  Extra Strikes (all takes)             0.79         1,690       0.70        0.67        0.57         0.56     0.96    nan
+  Framing Runs (flat 0.125)             0.79         1,690       0.70        0.67        0.57         0.56     0.96    nan
+  Adjusted (a=5000)                     0.82         1,440       0.71        0.67        0.58         0.56     0.96    nan
+  Adjusted, no umpire (a=2000)          0.80         1,570       0.71        0.67        0.58         0.56     0.96    nan
+  Extra Strikes / Game                  0.80         1,644       0.70        0.67        0.57         0.55     0.96    nan
   -> Best at predicting next season's framing runs: Extra Strikes (shadow only)
 
   Split-half r by season (2015-2022):
@@ -121,18 +121,18 @@ WHICH ZONES MATTER MOST -- 2015-2022
 ==============================================================================================================
 WHICH METRIC IS MOST ACCURATE -- 2023+  (112 catcher season-pairs)
   METRIC                             SPLIT r TAKES FOR .70 1H->2H own 1H->2H runs NEXT YR own NEXT YR runs SAVANT r  SIS r
-  SLAA, regressed                       0.73         2,502       0.56        0.54        0.63         0.62      nan    nan
-  Extra Strikes (all takes)             0.73         2,535       0.54        0.53        0.63         0.62      nan    nan
-  Framing Runs (flat 0.125)             0.73         2,535       0.54        0.53        0.63         0.62      nan    nan
-  SLAA+                                 0.73         2,548       0.54        0.53        0.63         0.62      nan    nan
-  Extra Strikes (shadow only)           0.70         2,918       0.52        0.52        0.65         0.62      nan    nan
-  Adjusted (a=5000)                     0.74         2,396       0.58        0.54        0.63         0.62      nan    nan
-  Framing Runs (count value)            0.68         3,268       0.52        0.52        0.62         0.62      nan    nan
-  Adjusted, no umpire (a=2000)          0.73         2,533       0.56        0.53        0.62         0.61      nan    nan
-  Adjusted (a=2000)                     0.75         2,347       0.58        0.54        0.63         0.61      nan    nan
-  Extra Strikes / Game                  0.73         2,491       0.55        0.53        0.62         0.61      nan    nan
-  Adjusted, count value (a=2000)        0.69         3,119       0.54        0.53        0.61         0.60      nan    nan
-  Adjusted (a=500)                      0.74         2,396       0.56        0.54        0.61         0.60      nan    nan
+  SLAA, regressed                       0.73         2,502       0.56        0.54        0.63         0.62     0.98    nan
+  Extra Strikes (all takes)             0.73         2,535       0.54        0.53        0.63         0.62     0.99    nan
+  Framing Runs (flat 0.125)             0.73         2,535       0.54        0.53        0.63         0.62     0.99    nan
+  SLAA+                                 0.73         2,548       0.54        0.53        0.63         0.62     0.99    nan
+  Extra Strikes (shadow only)           0.70         2,918       0.52        0.52        0.65         0.62     0.96    nan
+  Adjusted (a=5000)                     0.74         2,396       0.58        0.54        0.63         0.62     0.97    nan
+  Framing Runs (count value)            0.68         3,268       0.52        0.52        0.62         0.62     0.96    nan
+  Adjusted, no umpire (a=2000)          0.73         2,533       0.56        0.53        0.62         0.61     0.98    nan
+  Adjusted (a=2000)                     0.75         2,347       0.58        0.54        0.63         0.61     0.98    nan
+  Extra Strikes / Game                  0.73         2,491       0.55        0.53        0.62         0.61     0.98    nan
+  Adjusted, count value (a=2000)        0.69         3,119       0.54        0.53        0.61         0.60     0.95    nan
+  Adjusted (a=500)                      0.74         2,396       0.56        0.54        0.61         0.60     0.97    nan
   -> Best at predicting next season's framing runs: SLAA, regressed
 
   Split-half r by season (2023+):

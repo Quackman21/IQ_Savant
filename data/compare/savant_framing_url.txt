@@ -1,0 +1,1 @@
+https://baseballsavant.mlb.com/leaderboard/catcher-framing?seasonStart={y}&seasonEnd={y}&min=1&csv=true

@@ -239,30 +239,13 @@ def _r(a: pd.Series, b: pd.Series) -> tuple[float, int]:
     return (float(a[ok].corr(b[ok])) if ok.sum() >= 10 else np.nan), int(ok.sum())
 
 
-def savant_framing(year: int) -> pd.Series:
-    """Savant catcher framing runs PER CALLED PITCH (player id -> value); empty if it can't be downloaded."""
-    f = None
-    for get in (lambda: __import__("pybaseball").statcast_catcher_framing(year, min_called_p=1),
-                lambda: __import__("pybaseball").statcast_catcher_framing(year),
-                lambda: __import__("core.savant", fromlist=["x"]).catcher_framing(year)):
-        try:
-            f = get()
-            if f is not None and len(f):
-                break
-        except Exception:
-            f = None
-    if f is None or not len(f):
-        print(f"  Savant framing {year}: couldn't download", flush=True)
+def savant_framing(year: int, our_takes: pd.Series | None = None) -> pd.Series:
+    """Savant catcher framing runs PER CALLED PITCH (player id -> value), verified to be the right season."""
+    from core import savant
+    f = savant.catcher_framing(year, our_takes, log=lambda m: print(m, flush=True))
+    if f.empty:
         return pd.Series(dtype=float)
-    cols = {c.lower(): c for c in f.columns}
-    idc = cols.get("player_id") or cols.get("id") or cols.get("catcher_id")
-    rc = (cols.get("runs_extra_strikes") or cols.get("rv_tot") or
-          next((c for lc, c in cols.items() if "run" in lc or lc.startswith("rv")), None))
-    nc = (cols.get("n_called_pitches") or cols.get("pitches") or cols.get("n_pitches") or
-          next((c for lc, c in cols.items() if "called" in lc or lc.startswith("n_")), None))
-    if not (idc and rc and nc):
-        print(f"  Savant framing {year}: columns not recognised {list(f.columns)[:15]}", flush=True)
-        return pd.Series(dtype=float)
+    idc, rc, nc = savant.framing_cols(f)
     f = f[pd.to_numeric(f[idc], errors="coerce").notna()]
     n = pd.to_numeric(f[nc], errors="coerce")
     return pd.Series((pd.to_numeric(f[rc], errors="coerce") / n).values,
@@ -521,7 +504,7 @@ def main(argv: list[str]) -> None:
             abs_fin[y] = (t["y_final"] - t["p"]).groupby(t["catcher"]).sum()
         print(f"[{y}] metrics + adjusted models…", flush=True)
         tabs[y] = season_tables(t)
-        sav[y] = savant_framing(y)
+        sav[y] = savant_framing(y, tabs[y]["all"]["n"])
         ztab[y] = zone_tables(t, "zone")
         t["zh"] = np.where(t["zone"].isin(["heart", "waste"]), t["zone"], t["zone"] + " vs " + t["stand"] + "HB")
         zhtab[y] = zone_tables(t, "zh")
