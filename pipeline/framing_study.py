@@ -107,9 +107,13 @@ def zone(xn: pd.Series, zn: pd.Series) -> np.ndarray:
 
 
 def season_takes(year: int) -> pd.DataFrame:
+    from core import abs_calls
     path = STUDY_DIR / f"takes_{year}.csv.gz"
     if path.exists():
-        return pd.read_csv(path)
+        t = pd.read_csv(path)
+        if year < abs_calls.ABS_FIRST or "abs_overturned" in t:
+            return t
+        print(f"[{year}] rebuilding takes with the umpire's ORIGINAL calls (ABS)…", flush=True)
     from models import decisions_iq as dq
     from pipeline import build_league_reference as bl
     if dq.load() is None:
@@ -117,6 +121,10 @@ def season_takes(year: int) -> pd.DataFrame:
     raw = bl.pull_season(year)
     if "game_type" in raw:
         raw = raw[raw["game_type"].astype(str).eq("R")]
+    final = raw["description"].copy()
+    raw = abs_calls.original_calls(raw.reset_index(drop=True))     # 2026+: original call, not the ABS result
+    raw["final_desc"] = final.values
+    print(f"[{year}] {abs_calls.check(raw)}", flush=True)
     d = raw[raw["description"].isin(TAKEN)].dropna(
         subset=["plate_x", "plate_z", "sz_top", "sz_bot", "fielder_2", "pitcher", "batter"])
     del raw
@@ -131,6 +139,9 @@ def season_takes(year: int) -> pd.DataFrame:
                       "catcher": d["fielder_2"].astype(int), "pitcher": d["pitcher"].astype(int),
                       "batter": d["batter"].astype(int), "ump": d["game_pk"].map(umps),
                       "stand": d["stand"], "y": d["description"].eq("called_strike").astype(np.int8),
+                      "y_final": d["final_desc"].eq("called_strike").astype(np.int8),
+                      "abs_challenged": d.get("abs_challenged", False), "abs_overturned": d.get("abs_overturned", False),
+                      "abs_challenger": d.get("abs_challenger", np.nan),
                       "p": p.astype(np.float32), "val": val.fillna(FLAT).astype(np.float32),
                       "zone": zone(xn, zn), "shadow": ((np.maximum(xn.abs(), zn.abs()) >= EDGE_IN)
                                                        & (np.maximum(xn.abs(), zn.abs()) < EDGE_OUT)).astype(np.int8)})
@@ -173,6 +184,7 @@ METRICS = {   # name -> (how to make a per-take rate from the stats table, is it
     "Extra Strikes (shadow only)": "xs_sh / n_sh",
     "Extra Strikes / Game": "xs / games",
     "SLAA+": "100 * strikes / exp",
+    "SLAA, regressed": "rslaa",
     "Framing Runs (count value)": "runs_c / n",
     "Framing Runs (flat 0.125)": "xs * 0.125 / n",
     "Adjusted (a=500)": "adj500",
@@ -190,6 +202,8 @@ def catcher_table(t: pd.DataFrame, with_adj: bool = True) -> pd.DataFrame:
                       "xs": g["xs"].sum(), "runs_c": g["runs_c"].sum()})
     sh = t[t["shadow"] == 1].groupby("catcher")
     s["n_sh"], s["xs_sh"] = sh.size(), sh["xs"].sum()
+    k = 1080 if int(t["year"].iloc[0]) >= SPLIT else 720          # league-average takes added (split-half based)
+    s["rslaa"] = s["xs"] / (s["n"] + k)
     if with_adj:
         for a in ALPHAS:
             s[f"adj{a}"] = adjusted(t, a)
@@ -227,20 +241,27 @@ def _r(a: pd.Series, b: pd.Series) -> tuple[float, int]:
 
 def savant_framing(year: int) -> pd.Series:
     """Savant catcher framing runs PER CALLED PITCH (player id -> value); empty if it can't be downloaded."""
-    try:
-        import pybaseball as pb
-        f = pb.statcast_catcher_framing(year, min_called_p=1)
-    except Exception:
+    f = None
+    for get in (lambda: __import__("pybaseball").statcast_catcher_framing(year, min_called_p=1),
+                lambda: __import__("pybaseball").statcast_catcher_framing(year),
+                lambda: __import__("core.savant", fromlist=["x"]).catcher_framing(year)):
         try:
-            import pybaseball as pb
-            f = pb.statcast_catcher_framing(year)
+            f = get()
+            if f is not None and len(f):
+                break
         except Exception:
-            return pd.Series(dtype=float)
+            f = None
+    if f is None or not len(f):
+        print(f"  Savant framing {year}: couldn't download", flush=True)
+        return pd.Series(dtype=float)
     cols = {c.lower(): c for c in f.columns}
-    idc = cols.get("player_id") or cols.get("id")
-    rc = cols.get("runs_extra_strikes") or next((c for lc, c in cols.items() if "run" in lc), None)
-    nc = cols.get("n_called_pitches") or next((c for lc, c in cols.items() if "called" in lc or lc.startswith("n_")), None)
+    idc = cols.get("player_id") or cols.get("id") or cols.get("catcher_id")
+    rc = (cols.get("runs_extra_strikes") or cols.get("rv_tot") or
+          next((c for lc, c in cols.items() if "run" in lc or lc.startswith("rv")), None))
+    nc = (cols.get("n_called_pitches") or cols.get("pitches") or cols.get("n_pitches") or
+          next((c for lc, c in cols.items() if "called" in lc or lc.startswith("n_")), None))
     if not (idc and rc and nc):
+        print(f"  Savant framing {year}: columns not recognised {list(f.columns)[:15]}", flush=True)
         return pd.Series(dtype=float)
     f = f[pd.to_numeric(f[idc], errors="coerce").notna()]
     n = pd.to_numeric(f[nc], errors="coerce")
@@ -279,8 +300,8 @@ def sis_framing(catcher_ids: list[int], years: list[int]) -> dict:
                      _id=d[nc].map(lambda x: by_name.get(norm(x))), _r=pd.to_numeric(d[rc], errors="coerce"))
         d = d.dropna(subset=["_y", "_id", "_r"])
         for y, g in d.groupby("_y"):
-            out[int(y)] = pd.concat([out.get(int(y), pd.Series(dtype=float)),
-                                     g.groupby("_id")["_r"].sum().rename(None)])
+            add = g.groupby("_id")["_r"].sum().rename(None)
+            out[int(y)] = pd.concat([out[int(y)], add]) if int(y) in out else add
         print(f"  SIS framing: {f.name} -> {len(d)} catcher-seasons matched", flush=True)
     return out
 
@@ -442,15 +463,62 @@ def value_section(takes: dict, eras) -> list[str]:
     return L
 
 
+def abs_section(rows: dict, fin: dict, tabs: dict) -> list[str]:
+    """ABS challenges (kept OUT of framing): how many, who challenged, what it did to the framing numbers."""
+    if not rows:
+        return ["", "ABS CHALLENGES: none found (framing uses the calls as recorded)."]
+    L = ["", "ABS CHALLENGES -- a different skill, kept OUT of framing (framing = the umpire's original call)"]
+    for y, c in rows.items():
+        c = c.copy()
+        ch = pd.to_numeric(c["abs_challenger"], errors="coerce")
+        role = np.select([ch == c["catcher"], ch == c["pitcher"], ch == c["batter"]], ["catcher", "pitcher", "batter"],
+                         "unknown")
+        c["role"], c["over"] = role, c["abs_overturned"].astype(bool)
+        L.append(f"  {y}: {len(c):,} challenged takes, {c['over'].mean():.0%} overturned")
+        for r_, g in c.groupby("role"):
+            L.append(f"    challenged by {r_:<8} {len(g):>5,}  overturned {g['over'].mean():.0%}")
+        stolen = c[(c["y"] == 1) & c["over"]]
+        lost = c[(c["y"] == 0) & c["over"]]
+        L.append(f"    original STRIKE turned into a ball: {len(stolen):,} (strikes the catcher earned, ABS took away)")
+        L.append(f"    original BALL turned into a strike: {len(lost):,}")
+        a = tabs[y]["all"]
+        a = a[a["n"] >= MIN_SEASON]
+        f = fin[y].reindex(a.index)
+        L.append(f"    catchers' extra strikes on original calls vs after ABS: r = {a['xs'].corr(f):.2f}  "
+                 f"(how much ABS reshuffles the framing order)")
+        cc = c[c["role"] == "catcher"].groupby("catcher").agg(n=("over", "size"), won=("over", "sum"),
+                                                              runs=("val", lambda v: 0.0))
+        won_runs = c[(c["role"] == "catcher") & c["over"]].groupby("catcher")["val"].sum()
+        cc["runs"] = won_runs.reindex(cc.index).fillna(0)
+        cc = cc[cc["n"] >= 8].sort_values("runs", ascending=False)
+        if len(cc):
+            try:
+                from core import mlb_api
+                names = mlb_api.get_people(cc.index.astype(int).tolist())
+            except Exception:
+                names = {}
+            L.append("    catchers' own challenges (8+), runs gained by overturned calls -- top / bottom:")
+            L.append("      " + " | ".join(f"{names.get(int(i), i)} {int(r.won)}/{int(r.n)} +{r.runs:.1f}"
+                                         for i, r in (cc if len(cc) <= 9 else pd.concat([cc.head(6), cc.tail(3)])).iterrows()))
+    return L
+
+
 def main(argv: list[str]) -> None:
     from pipeline.train_decisions import latest_full_season
     t0 = time.time()
     since = int(argv[argv.index("--since") + 1]) if "--since" in argv else 2015
     years = list(range(since, latest_full_season() + 1))
-    takes, tabs, sav, ztab, zhtab = {}, {}, {}, {}, {}
+    takes, tabs, sav, ztab, zhtab, abs_rows, abs_fin = {}, {}, {}, {}, {}, {}, {}
     for y in years:
         t = season_takes(y)
         t["stand"] = t["stand"].astype(str)
+        from models import framing
+        before = float((t["y"] - t["p"]).sum())
+        t["p"] = framing.center(t["p"], t["y"], t["year"]).astype(np.float32)     # league = 0 extra strikes
+        print(f"[{y}] centered: league extra strikes {before:+,.0f} -> {(t['y'] - t['p']).sum():+,.0f}", flush=True)
+        if "abs_challenged" in t and t["abs_challenged"].astype(bool).any():
+            abs_rows[y] = t[t["abs_challenged"].astype(bool)].copy()
+            abs_fin[y] = (t["y_final"] - t["p"]).groupby(t["catcher"]).sum()
         print(f"[{y}] metrics + adjusted models…", flush=True)
         tabs[y] = season_tables(t)
         sav[y] = savant_framing(y)
@@ -515,6 +583,7 @@ def main(argv: list[str]) -> None:
                                 "  By zone and batter hand (glove side = inside to a righty, away to a lefty)",
                                 zh_order)
     L += value_section(takes, eras)
+    L += abs_section(abs_rows, abs_fin, tabs)
 
     # names for a last-season eye test
     last = years[-1]
@@ -530,9 +599,6 @@ def main(argv: list[str]) -> None:
         top = s.sort_values(col, ascending=False)
         L.append(f"  {title:>8}: " + " | ".join(f"{names.get(int(i), i)} {r[col]:+.1f}" for i, r in top.head(6).iterrows())
                  + "  ...  " + " | ".join(f"{names.get(int(i), i)} {r[col]:+.1f}" for i, r in top.tail(3).iterrows()))
-    if last >= 2026:
-        L += ["", "NOTE: 2026 has ABS challenges -- an overturned call shows as the final call, so a stolen strike that",
-              "gets challenged away counts as a ball. Watch whether 2026 split-half r drops vs earlier seasons."]
 
     out = "\n".join(L)
     ART.mkdir(parents=True, exist_ok=True)

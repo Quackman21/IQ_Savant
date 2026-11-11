@@ -149,7 +149,10 @@ C_FRAMING = [("DRS", "DRS", "Catching DRS: Framing + Blocking + Throwing runs (a
              ("F_SLAA", "SLAA", "Strikes Looking Above Average per framing opportunity\n[Extra Strikes / Framing Opps]",
               "pcts"),
              ("F_SLAA+", "SLAA+", "Called strikes vs expected, 100 = average\n[100 x called strikes / expected called "
-              "strikes; 105 = 5% more strikes than an average catcher]", "int"), "|",
+              "strikes; 105 = 5% more strikes than an average catcher]", "int"),
+             ("F_rSLAA", "SLAA (regressed)", "Best read of his framing SKILL: SLAA with league-average pitches added so "
+              "small samples don't swing\n[Extra Strikes / (Framing Opps + 720 before 2023, + 1,080 from 2023)]", "pcts"),
+             "|",
              ("F_AS", "Framing AS", "Strike rate on edge pitches, arm side — percentile vs MLB catchers", "pctile"),
              ("F_GS", "Framing GS", "Strike rate on edge pitches, glove side — percentile vs MLB catchers", "pctile"),
              ("F_TOZ", "Framing TOZ", "Strike rate on edge pitches, top of zone — percentile vs MLB catchers", "pctile"),

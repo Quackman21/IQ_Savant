@@ -1,5 +1,17 @@
 # IQ Savant – version history
 
+## v18.6 – 2026-11-11
+- ABS (2026+): framing now uses the umpire's ORIGINAL call. Challenges are a different skill and are kept out.
+  core/abs_calls.py reads which pitches were challenged / overturned from MLB's play-by-play (only new games are
+  fetched), works out the call that stood from the next pitch's count, and flips overturned calls back.
+  python -m core.abs_calls --inspect 2026 shows how MLB marks a challenge (to double-check the fields).
+- Framing strike chances are centered each season (league = 0 extra strikes). 2025 was -5,263 and 2026 +3,120,
+  which made catchers' numbers not comparable across seasons.
+- New: SLAA (regressed) -- best read of framing skill: Extra Strikes / (Framing Opps + 720 before 2023, 1,080 after).
+- Framing study: original calls, centering, regressed SLAA, an ABS section (challenges by catcher / pitcher /
+  batter, strikes ABS took away, catchers' own challenge results), Savant 2023+ columns fixed.
+- data/framing_study/ no longer pushed to GitHub. FutureWarning fixed.
+
 ## v18.5 – 2026-11-10
 - Framing study: SIS Strike Zone Runs Saved column (data/compare/sis_framing.csv, matched by name) next to Savant.
 

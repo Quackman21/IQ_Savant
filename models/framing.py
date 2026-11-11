@@ -63,10 +63,16 @@ def iq_v1(df: pd.DataFrame) -> pd.DataFrame:
     need = {"description", "plate_x", "plate_z", "sz_top", "sz_bot", "fielder_2", "game_date"}
     if not need <= set(df.columns):
         return pd.DataFrame(columns=["game_date", "game_pk", "catcher", "region", "strike", "exp", "runs"])
+    from core import abs_calls
+    try:
+        df = abs_calls.original_calls(df)               # 2026+: the umpire's ORIGINAL call, not the ABS result
+    except Exception as e:
+        print(f"  (ABS challenges not loaded: {e} -- using the calls as recorded)", flush=True)
     d = df[df["description"].isin(TAKEN)].dropna(subset=["plate_x", "plate_z", "sz_top", "sz_bot", "fielder_2"])
     if d.empty:
         return pd.DataFrame(columns=["game_date", "game_pk", "catcher", "region", "strike", "exp", "runs"])
-    exp = dq.called_strike_chance(d)
+    exp = center(dq.called_strike_chance(d), d["description"].eq("called_strike"),
+                 pd.to_datetime(d["game_date"]).dt.year)
     val = dq.strike_value(d)
     d = d.assign(exp=exp, val=val).dropna(subset=["exp"])
     xn, zn = _norm(d)
@@ -79,6 +85,29 @@ def iq_v1(df: pd.DataFrame) -> pd.DataFrame:
                          "game_pk": d["game_pk"] if "game_pk" in d else 0,
                          "catcher": d["fielder_2"].astype(int), "region": region, "strike": strike,
                          "exp": d["exp"], "runs": (strike - d["exp"]) * d["val"].fillna(RUNS_PER_STRIKE)})
+
+
+REG_TAKES = {"pre": 720, "post": 1080}      # regressed SLAA: league-average takes added (framing study split-half)
+
+
+def center(p: pd.Series, strike: pd.Series, year: pd.Series) -> pd.Series:
+    """Shift each season's strike chances (on the log-odds scale) so the league adds to 0 extra strikes.
+    Only for whole seasons (the league files) -- never on one catcher's pitches."""
+    p = p.astype(float).clip(1e-6, 1 - 1e-6)
+    out = p.copy()
+    for y in year.unique():
+        m = (year == y) & p.notna()
+        if m.sum() < 1000:
+            continue
+        lo, hi, x, target = -2.0, 2.0, np.log(p[m] / (1 - p[m])), strike[m].sum()
+        for _ in range(50):
+            mid = (lo + hi) / 2
+            if (1 / (1 + np.exp(-(x + mid)))).sum() < target:
+                lo = mid
+            else:
+                hi = mid
+        out[m] = 1 / (1 + np.exp(-(x + (lo + hi) / 2)))
+    return out
 
 
 MODELS = {"placeholder_v0": placeholder_v0, "iq_v1": iq_v1}
@@ -118,6 +147,7 @@ def summarize(daily: pd.DataFrame, start: str, end: str, throws: str = "R", min_
         xs = r.strikes - r.exp
         out[c] = {"F_OPPS": r.n, "F_XS": xs, "F_XS/G": xs / games[c] if games[c] else np.nan,
                   "F_SLAA": xs / r.n if r.n else np.nan, "F_SLAA+": 100 * r.strikes / r.exp if r.exp else np.nan,
+                  "F_rSLAA": xs / (r.n + REG_TAKES["post" if str(start)[:4] >= "2023" else "pre"]),
                   "F_RS": r.runs if "runs" in r and pd.notna(r.runs) else xs * RUNS_PER_STRIKE}
     side = {"F_TOZ": "TOZ", "F_BOZ": "BOZ",
             "F_GS": "SIDE-" if throws == "R" else "SIDE+", "F_AS": "SIDE+" if throws == "R" else "SIDE-"}

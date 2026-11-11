@@ -97,7 +97,9 @@ def signature() -> str:
     import inspect
 
     from models import decisions, framing, xwoba
-    parts = [inspect.getsource(framing.MODELS[framing.ACTIVE]), str(framing.RUNS_PER_STRIKE),repr(sorted((k, s.kind, s.a, s.b) for k, s in hm.CATALOG.items())),
+    from core import abs_calls
+    parts = [inspect.getsource(framing.MODELS[framing.ACTIVE]), str(framing.RUNS_PER_STRIKE),
+             inspect.getsource(framing.center), inspect.getsource(abs_calls.original_calls),repr(sorted((k, s.kind, s.a, s.b) for k, s in hm.CATALOG.items())),
              inspect.getsource(hm.prep), inspect.getsource(build), str(hm.SD_MIN_PA), str(hm.SPRAY_SCALE),
              xwoba.ACTIVE, inspect.getsource(xwoba.MODELS[xwoba.ACTIVE]), _artifact_hash(xwoba.ACTIVE),
              decisions.ACTIVE, inspect.getsource(decisions.MODELS[decisions.ACTIVE]),
