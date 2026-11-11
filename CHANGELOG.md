@@ -1,5 +1,19 @@
 # IQ Savant – version history
 
+## v18.5 – 2026-11-10
+- Framing study: SIS Strike Zone Runs Saved column (data/compare/sis_framing.csv, matched by name) next to Savant.
+
+## v18.4.1 – 2026-11-10
+- Fix: blocking_videos crashed on a single-era season (tried to score the empty 2015-2022 half).
+
+## v18.4 – 2026-11-10
+- python -m pipeline.framing_study (analysis only, nothing on the site changes): which framing number is most
+  accurate (split-half, takes needed, 1st half -> 2nd half, next season, Savant agreement) -- raw extra strikes,
+  shadow only, per game, SLAA+, count-valued vs flat 0.125 runs, and ADJUSTED versions that split each call
+  between catcher, pitcher, umpire and batter. Zone importance (heart, top, bottom, glove, arm, 4 corners, waste;
+  also by batter hand): reliability, true spread, runs at stake, share of real framing differences, next-season
+  weights. Downloads each game's home plate umpire once (data/raw/umps_<year>.csv.gz).
+
 ## v18.3 – 2026-11-10  (includes v18.1 + v18.2)
 - Catcher blocking rebuilt the way Statcast does it:
   - Opportunity = every pitch with a runner on that isn't put in play / HBP / pitchout / intentional / automatic.

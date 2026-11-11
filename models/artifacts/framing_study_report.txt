@@ -1,0 +1,233 @@
+IQ FRAMING STUDY -- which framing number is most accurate, and which zones matter most
+Seasons 2015-2026, regular season, every taken pitch. Strike chance = league-average umpire (IQ Swing Decisions called-strike model).
+Season tests use catchers with 3,000+ takes; split-half tests 1,500+ takes in each half.
+
+HOW TO READ
+  split-half r    odd games vs even games, same season: is it measuring something real? (higher = better)
+  takes for .70   how many taken pitches before the number is 70% signal
+  1H->2H          1st half predicting the 2nd half (own = same metric; runs = actual count-valued runs)
+  next yr         this season predicting next season (same era only)
+  savant r        agreement with Savant's catcher framing runs per called pitch
+  SIS r           agreement with SIS Strike Zone Runs Saved (framing piece of catcher DRS), per take
+                  (Savant / SIS are other estimates, not the truth -- next season is the main test)
+  Adjusted        catcher's share after the pitcher, umpire and batter get theirs (a = how hard it pulls
+                  everyone toward average; bigger = more cautious)
+
+==============================================================================================================
+WHICH METRIC IS MOST ACCURATE -- 2015-2022  (237 catcher season-pairs)
+  METRIC                             SPLIT r TAKES FOR .70 1H->2H own 1H->2H runs NEXT YR own NEXT YR runs SAVANT r  SIS r
+  Extra Strikes (shadow only)           0.75         2,103       0.69        0.65        0.63         0.59     0.88    nan
+  Adjusted, count value (a=2000)        0.76         2,060       0.69        0.68        0.58         0.57     0.92    nan
+  Framing Runs (count value)            0.75         2,176       0.68        0.68        0.57         0.57     0.91    nan
+  Adjusted (a=500)                      0.81         1,546       0.71        0.67        0.58         0.56     0.93    nan
+  Adjusted (a=2000)                     0.82         1,445       0.72        0.68        0.58         0.56     0.93    nan
+  SLAA+                                 0.79         1,709       0.70        0.67        0.57         0.56     0.92    nan
+  Extra Strikes (all takes)             0.79         1,684       0.70        0.67        0.57         0.56     0.92    nan
+  Framing Runs (flat 0.125)             0.79         1,684       0.70        0.67        0.57         0.56     0.92    nan
+  Adjusted (a=5000)                     0.82         1,436       0.71        0.67        0.57         0.56     0.93    nan
+  Extra Strikes / Game                  0.80         1,639       0.71        0.67        0.56         0.55     0.92    nan
+  Adjusted, no umpire (a=2000)          0.80         1,565       0.71        0.67        0.58         0.55     0.93    nan
+  -> Best at predicting next season's framing runs: Extra Strikes (shadow only)
+
+  Split-half r by season (2015-2022):
+    2015: raw extra strikes 0.85   adjusted 0.87   (43 catchers)
+    2016: raw extra strikes 0.78   adjusted 0.84   (46 catchers)
+    2017: raw extra strikes 0.72   adjusted 0.77   (53 catchers)
+    2018: raw extra strikes 0.87   adjusted 0.87   (48 catchers)
+    2019: raw extra strikes 0.87   adjusted 0.89   (47 catchers)
+    2020: raw extra strikes 1.00   adjusted 1.00   (2 catchers)
+    2021: raw extra strikes 0.74   adjusted 0.73   (47 catchers)
+    2022: raw extra strikes 0.72   adjusted 0.75   (53 catchers)
+
+--------------------------------------------------------------------------------------------------------------
+WHICH ZONES MATTER MOST -- 2015-2022
+  TAKES/SZN       taken pitches there for a typical starting catcher
+  RUNS/K          what a stolen strike is worth there (count mix), runs
+  REL r           odd vs even games: is catcher skill there real?
+  SKILL SD        true spread between catchers, extra strikes per 1,000 takes there
+  RUNS AT STAKE   top-10% vs bottom-10% catcher there over a season, runs
+  SKILL SHARE     share of the REAL (repeatable) differences in total framing runs from this zone
+  RAW SHARE       share of the observed differences (includes luck)
+
+  By zone (catcher's view: glove = his left, arm = his right)
+  ZONE                   TAKES/SZN  RUNS/K  REL r SKILL SD RUNS AT STAKE SKILL SHARE RAW SHARE
+  bottom                       355   0.135   0.85     73.6           9.0         29%       27%
+  bottom-arm                   203   0.142   0.78     83.3           6.1         20%       19%
+  arm                          343   0.138   0.72     46.7           5.7         17%       16%
+  waste                      3,336   0.138   0.74      9.0          10.6         10%       12%
+  bottom-glove                 148   0.139   0.59     62.4           3.3          9%        9%
+  top                          193   0.127   0.81     89.4           5.6          7%        7%
+  top-arm                       94   0.135   0.66     87.6           2.8          4%        5%
+  heart                        611   0.130   0.57      5.5           1.1          2%        2%
+  top-glove                    113   0.134   0.54     63.4           2.5          2%        3%
+  glove                        319   0.136   0.60     34.0           3.8         -1%        0%
+
+  Predicting NEXT season's framing runs from this season's zones (196 catcher pairs, R^2 = 0.40):
+  ZONE                   STD WEIGHT  R^2 LOST IF DROPPED
+  bottom-arm                  +0.41                0.041
+  top-arm                     +0.31                0.037
+  waste                       +0.13                0.011
+  glove                       +0.10                0.005
+  top-glove                   -0.09                0.004
+  bottom-glove                +0.09                0.004
+  top                         +0.11                0.004
+  heart                       +0.07                0.003
+  bottom                      +0.06                0.001
+  arm                         -0.03                0.000
+
+  By zone and batter hand (glove side = inside to a righty, away to a lefty)
+  ZONE                   TAKES/SZN  RUNS/K  REL r SKILL SD RUNS AT STAKE SKILL SHARE RAW SHARE
+  bottom vs RHB                204   0.135   0.78     77.4           5.5         17%       17%
+  bottom-arm vs RHB            147   0.139   0.73     87.7           4.6         15%       14%
+  bottom vs LHB                147   0.135   0.74     74.2           3.8         11%       11%
+  arm vs RHB                   251   0.135   0.66     43.7           3.8         11%       11%
+  waste                      3,336   0.138   0.74      9.0          10.6         10%       12%
+  arm vs LHB                    88   0.143   0.53     68.7           2.2          6%        6%
+  bottom-arm vs LHB             52   0.149   0.57     88.1           1.7          5%        5%
+  bottom-glove vs LHB           83   0.137   0.49     67.3           2.0          5%        5%
+  bottom-glove vs RHB           64   0.142   0.47     74.5           1.7          4%        4%
+  top vs RHB                   116   0.124   0.74     94.8           3.5          4%        4%
+  top-arm vs RHB                62   0.131   0.60     99.2           2.1          3%        3%
+  top vs LHB                    75   0.131   0.62     83.6           2.1          3%        3%
+  heart                        611   0.130   0.57      5.5           1.1          2%        2%
+  top-glove vs LHB              60   0.133   0.32     58.9           1.2          1%        1%
+  top-arm vs LHB                30   0.143   0.27     68.7           0.8          1%        1%
+  top-glove vs RHB              53   0.135   0.47     75.2           1.4          1%        1%
+  glove vs RHB                 133   0.137   0.39     37.9           1.8          0%        0%
+  glove vs LHB                 183   0.134   0.54     37.0           2.3         -1%       -0%
+
+  Predicting NEXT season's framing runs from this season's zones (196 catcher pairs, R^2 = 0.44):
+  ZONE                   STD WEIGHT  R^2 LOST IF DROPPED
+  bottom-arm vs LHB           +0.34                0.046
+  top-arm vs LHB              +0.20                0.025
+  top-arm vs RHB              +0.15                0.009
+  waste                       +0.11                0.008
+  glove vs LHB                +0.12                0.008
+  top-glove vs RHB            -0.11                0.008
+  bottom-arm vs RHB           +0.16                0.007
+  heart                       +0.08                0.004
+  bottom-glove vs RHB         +0.08                0.004
+  top vs LHB                  +0.08                0.003
+  bottom-glove vs LHB         +0.06                0.002
+  arm vs LHB                  -0.05                0.001
+  arm vs RHB                  +0.05                0.001
+  top-glove vs LHB            +0.03                0.001
+  bottom vs RHB               +0.02                0.000
+  glove vs RHB                +0.01                0.000
+  top vs RHB                  +0.01                0.000
+  bottom vs LHB               -0.00                0.000
+
+==============================================================================================================
+WHICH METRIC IS MOST ACCURATE -- 2023+  (112 catcher season-pairs)
+  METRIC                             SPLIT r TAKES FOR .70 1H->2H own 1H->2H runs NEXT YR own NEXT YR runs SAVANT r  SIS r
+  Extra Strikes (all takes)             0.73         2,523       0.54        0.53        0.61         0.61      nan    nan
+  Framing Runs (flat 0.125)             0.73         2,523       0.54        0.53        0.61         0.61      nan    nan
+  SLAA+                                 0.73         2,516       0.54        0.53        0.62         0.61      nan    nan
+  Extra Strikes (shadow only)           0.71         2,847       0.53        0.52        0.64         0.61      nan    nan
+  Adjusted (a=5000)                     0.74         2,428       0.57        0.54        0.62         0.60      nan    nan
+  Framing Runs (count value)            0.67         3,371       0.51        0.51        0.60         0.60      nan    nan
+  Adjusted, no umpire (a=2000)          0.73         2,531       0.55        0.53        0.61         0.60      nan    nan
+  Extra Strikes / Game                  0.73         2,512       0.54        0.53        0.58         0.60      nan    nan
+  Adjusted (a=2000)                     0.74         2,359       0.57        0.54        0.61         0.60      nan    nan
+  Adjusted, count value (a=2000)        0.68         3,188       0.52        0.52        0.60         0.59      nan    nan
+  Adjusted (a=500)                      0.74         2,354       0.56        0.54        0.60         0.58      nan    nan
+  -> Best at predicting next season's framing runs: Extra Strikes (all takes)
+
+  Split-half r by season (2023+):
+    2023: raw extra strikes 0.79   adjusted 0.81   (49 catchers)
+    2024: raw extra strikes 0.77   adjusted 0.81   (45 catchers)
+    2025: raw extra strikes 0.81   adjusted 0.80   (46 catchers)
+    2026: raw extra strikes 0.56   adjusted 0.55   (47 catchers)
+
+--------------------------------------------------------------------------------------------------------------
+WHICH ZONES MATTER MOST -- 2023+
+  TAKES/SZN       taken pitches there for a typical starting catcher
+  RUNS/K          what a stolen strike is worth there (count mix), runs
+  REL r           odd vs even games: is catcher skill there real?
+  SKILL SD        true spread between catchers, extra strikes per 1,000 takes there
+  RUNS AT STAKE   top-10% vs bottom-10% catcher there over a season, runs
+  SKILL SHARE     share of the REAL (repeatable) differences in total framing runs from this zone
+  RAW SHARE       share of the observed differences (includes luck)
+
+  By zone (catcher's view: glove = his left, arm = his right)
+  ZONE                   TAKES/SZN  RUNS/K  REL r SKILL SD RUNS AT STAKE SKILL SHARE RAW SHARE
+  bottom                       344   0.136   0.80     58.2           7.0         20%       19%
+  top                          226   0.125   0.79     75.1           5.4         13%       13%
+  bottom-arm                   181   0.141   0.68     65.0           4.3         13%       13%
+  waste                      3,264   0.132   0.72      5.4           5.9         13%       13%
+  arm                          329   0.137   0.61     34.7           4.0         10%       11%
+  bottom-glove                 133   0.140   0.53     57.2           2.7          9%        9%
+  top-glove                    138   0.132   0.65     69.0           3.2          8%        8%
+  top-arm                      101   0.133   0.63     71.3           2.5          7%        7%
+  glove                        324   0.133   0.71     43.3           4.8          7%        8%
+  heart                        621   0.131   0.26      1.6           0.3          1%        1%
+
+  Predicting NEXT season's framing runs from this season's zones (112 catcher pairs, R^2 = 0.22):
+  ZONE                   STD WEIGHT  R^2 LOST IF DROPPED
+  glove                       -0.36                0.061
+  arm                         -0.28                0.032
+  bottom-arm                  +0.21                0.019
+  bottom-glove                +0.21                0.016
+  top-glove                   +0.20                0.015
+  top-arm                     +0.15                0.010
+  waste                       -0.16                0.009
+  bottom                      +0.15                0.008
+  heart                       +0.05                0.002
+  top                         -0.03                0.000
+
+  By zone and batter hand (glove side = inside to a righty, away to a lefty)
+  ZONE                   TAKES/SZN  RUNS/K  REL r SKILL SD RUNS AT STAKE SKILL SHARE RAW SHARE
+  waste                      3,264   0.132   0.72      5.4           5.9         13%       13%
+  bottom vs RHB                185   0.136   0.73     58.8           3.8         10%       10%
+  bottom vs LHB                165   0.136   0.70     61.7           3.6         10%        9%
+  bottom-arm vs RHB            116   0.139   0.66     71.1           2.9          9%        9%
+  arm vs RHB                   229   0.134   0.60     38.6           3.0          8%        8%
+  top vs RHB                   123   0.123   0.71     77.9           3.0          7%        7%
+  top vs LHB                    96   0.127   0.64     72.8           2.3          6%        6%
+  bottom-glove vs LHB           80   0.139   0.52     64.8           1.8          6%        6%
+  glove vs LHB                 202   0.133   0.61     46.3           3.2          5%        6%
+  top-glove vs LHB              80   0.134   0.53     69.9           1.9          5%        5%
+  top-arm vs RHB                67   0.132   0.48     67.0           1.5          4%        4%
+  bottom-arm vs LHB             63   0.146   0.50     69.1           1.6          4%        4%
+  bottom-glove vs RHB           57   0.142   0.30     56.8           1.2          3%        3%
+  top-glove vs RHB              53   0.129   0.51     76.9           1.3          3%        3%
+  top-arm vs LHB                33   0.135   0.38     80.4           0.9          3%        3%
+  arm vs LHB                   100   0.142   0.33     36.8           1.3          3%        3%
+  glove vs RHB                 124   0.133   0.50     41.5           1.8          2%        2%
+  heart                        621   0.131   0.26      1.6           0.3          1%        1%
+
+  Predicting NEXT season's framing runs from this season's zones (112 catcher pairs, R^2 = 0.35):
+  ZONE                   STD WEIGHT  R^2 LOST IF DROPPED
+  bottom-arm vs RHB           +0.41                0.065
+  arm vs RHB                  -0.41                0.054
+  glove vs LHB                -0.29                0.036
+  bottom-arm vs LHB           -0.22                0.028
+  bottom-glove vs LHB         +0.24                0.024
+  top vs RHB                  +0.23                0.021
+  top vs LHB                  -0.23                0.019
+  top-arm vs RHB              +0.20                0.018
+  glove vs RHB                -0.18                0.015
+  bottom vs RHB               +0.18                0.011
+  top-glove vs LHB            +0.16                0.009
+  top-glove vs RHB            +0.13                0.008
+  bottom-glove vs RHB         +0.11                0.008
+  heart                       +0.08                0.006
+  waste                       -0.11                0.004
+  top-arm vs LHB              -0.08                0.004
+  arm vs LHB                  +0.04                0.001
+  bottom vs LHB               +0.02                0.000
+
+WHAT IS A STOLEN STRIKE WORTH? (flat 0.125 vs the count)
+  Runs a strike instead of a ball is worth, from our run expectancy by count. 'Where framing happens' =
+  weighted by p x (1 - p), i.e. the close pitches where a catcher can actually change the call.
+  2015-2022:  every take 0.144  |  where framing happens 0.136  |  flat 0.125
+    share of framing chances by strike value: (0.0, 0.08]: 40%  (0.08, 0.12]: 33%  (0.12, 0.18]: 9%  (0.18, 0.3]: 11%  (0.3, 1.0]: 6%
+  2023+:  every take 0.144  |  where framing happens 0.134  |  flat 0.125
+    share of framing chances by strike value: (0.0, 0.08]: 40%  (0.08, 0.12]: 33%  (0.12, 0.18]: 9%  (0.18, 0.3]: 11%  (0.3, 1.0]: 7%
+
+2026 EYE TEST -- raw framing runs vs adjusted (catcher's share only), count valued
+       raw: Austin Wells +18.6 | Dillon Dingler +17.8 | Brandon Valenzuela +12.8 | Alejandro Kirk +12.6 | Victor Caratini +12.0 | Liam Hicks +11.9  ...  James McCann -2.1 | Danny Jansen -3.0 | Logan O'Hoppe -3.2
+  adjusted: Dillon Dingler +8.1 | Austin Wells +6.6 | Brandon Valenzuela +5.1 | Liam Hicks +4.8 | Alejandro Kirk +4.6 | Hunter Feduccia +4.3  ...  Cal Raleigh -4.5 | Logan O'Hoppe -5.3 | Tyler Stephenson -6.2
+
+NOTE: 2026 has ABS challenges -- an overturned call shows as the final call, so a stolen strike that
+gets challenged away counts as a ball. Watch whether 2026 split-half r drops vs earlier seasons.

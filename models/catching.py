@@ -169,6 +169,8 @@ def _bundles(df: pd.DataFrame, b: dict):
 
 def block_table(d: pd.DataFrame, events: pd.DataFrame, sub: dict) -> pd.DataFrame:
     """Per blocking opportunity: chance, what happened, situation value, credits, tier, zone."""
+    if d.empty:
+        return pd.DataFrame(columns=["p", "y", "val", "credit", "runs", "runs_sc", "tier", "zone"])
     p = pd.Series(sub["block"].predict_proba(features(d)[BLOCK_FEATURES])[:, 1], index=d.index)
     y = wp_pb_flag(d, events)
     state = pd.Series(list(zip(base_code(d), _c(d, "outs_when_up").fillna(0).astype(int))), index=d.index)

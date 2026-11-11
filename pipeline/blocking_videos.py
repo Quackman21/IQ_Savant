@@ -47,7 +47,10 @@ def sample(argv) -> pd.DataFrame:
         raw = raw[raw["game_type"].astype(str).eq("R")]
     df = raw[cm.block_rows(raw)].reset_index(drop=True)
     events = fetch_events.season_events(year)
-    parts = [cm.block_table(df[m], events, sub) for m, sub in cm._bundles(df, b) if sub.get("block") is not None]
+    parts = [cm.block_table(df[m], events, sub) for m, sub in cm._bundles(df, b)
+             if sub.get("block") is not None and m.any()]          # skip the era with no pitches this season
+    if not parts:
+        raise SystemExit(f"No blocking chances scored for {year}.")
     t = pd.concat(parts)
     lo = float(_arg(argv, "--min", 0.03 if not _arg(argv, "--tier") else 0))
     hi = float(_arg(argv, "--max", 0.08 if not _arg(argv, "--tier") else 1))

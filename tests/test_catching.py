@@ -104,3 +104,7 @@ def test_blocking_video_page(tmp_path, monkeypatch):
                       "wp_pb_cost": [0.24], "credit_runs": [0.053], "video": [""]})
     bv.write_page(d, "t")
     assert "22.0%" in (tmp_path / "b.html").read_text()
+
+
+def test_block_table_empty_era_is_skipped():
+    assert cm.block_table(pd.DataFrame(), None, {}).empty
