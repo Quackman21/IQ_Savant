@@ -25,6 +25,8 @@ from models.xwoba import expected_woba
 # Settings
 # ----------------------------------------------------------------------------
 SD_MIN_PA = 100              # hitters with this many PA define the league spread (STDEVS)
+QUALIFIED_PA_PER_GAME = 3.1  # MLB qualified hitter: 3.1 PA per team game (502 in a full season)
+QUALIFIED_AVG = {"AVG BAT SPEED", "TOP 8TH BAT SPEED", "SWING LENGTH"}   # MLB average = qualified hitters (Statcast)
 SPRAY_SCALE = 0.75           # Statcast hit coordinates -> spray angle (degrees)
 
 SWINGS = {"swinging_strike", "swinging_strike_blocked", "foul", "foul_tip", "hit_into_play",
@@ -130,7 +132,9 @@ CATALOG: dict[str, Stat] = {s.key: s for s in [
     S("MAX EV (FLY)", "MAX EV (Fly)", "Max Fly Ball Exit Velocity", "max", "ev_fb", fmt="num1", good=1),
     # bat tracking (Statcast, 2023+)
     S("# BAT SPEEDS", "# Bat Speeds", "Number of swings with a Statcast bat speed reading", "count", "bs_n", fmt="int", good=0),
-    S("AVG BAT SPEED", "Avg Bat Speed", "Average Statcast bat speed", "mean", "bat_speed", fmt="num1", good=1),
+    S("AVG BAT SPEED", "Avg Bat Speed", "Average Statcast bat speed\n[Competitive swings: no bunts, each hitter's "
+      "slowest 10% dropped -- Statcast's definition. MLB average = qualified hitters]", "mean", "bat_speed",
+      fmt="num1", good=1),
     S("TOP 8TH BAT SPEED", "Top 8th Bat Speed", "Average of top 8th Statcast bat speeds", "top8", "bat_speed", fmt="num1", good=1),
     S("SWING LENGTH", "Swing Length", "Average swing length (feet), Statcast bat tracking",
       "mean", "swing_length", fmt="num1", good=0),
@@ -326,9 +330,17 @@ def prep(df: pd.DataFrame, model: str | None = None) -> pd.DataFrame:
     d["k"] = ev_.isin(["strikeout", "strikeout_double_play"])
     d["bb"] = ev_.isin(["walk", "intent_walk"])
 
-    # bat tracking (Statcast 2023+)
+    # bat tracking (Statcast 2023+) -- Statcast's COMPETITIVE swings: no bunts, and each hitter's slowest 10% of
+    # swings dropped (check / defensive swings), except any 60+ mph swing hit 90+ mph
     bs = _col(df, "bat_speed")
-    d["bat_speed"] = bs.where(d["swing"] & bs.notna())
+    bunt = desc.astype(str).str.contains("bunt") | ev_.astype(str).str.contains("bunt") | \
+        _col(df, "des", "").astype(str).str.contains("bunt")
+    tracked = bs.where(d["swing"] & bs.notna() & ~bunt)
+    who = d["batter"] if "batter" in d else pd.Series(0, index=d.index)
+    g = tracked.groupby(who)
+    slow = g.rank(method="first") <= np.floor(g.transform("count") * 0.10)        # exactly the slowest tenth
+    keep = tracked.notna() & (~slow | ((tracked >= 60) & (_col(df, "launch_speed") >= 90)))
+    d["bat_speed"] = tracked.where(keep)
     d["bs_n"] = d["bat_speed"].notna()
     d["swing_length"] = _col(df, "swing_length").where(d["bs_n"])
     d["attack_angle"] = _col(df, "attack_angle").where(d["swing"])

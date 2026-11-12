@@ -1,5 +1,15 @@
 # IQ Savant – version history
 
+## v19.1 – 2026-11-12
+- Bat speed now matches Statcast's method:
+  * Competitive swings only: no bunts, and each hitter's slowest tenth of swings dropped (check / defensive swings),
+    except any 60+ mph swing hit 90+ mph. Applies to players and the league alike.
+  * MLB average for Avg Bat Speed / Top 8th Bat Speed / Swing Length = the average MLB-QUALIFIED hitter
+    (3.1 PA per team game: 502 in a full season, 186 in 2020), each hitter counted once -- not every swing pooled.
+- Bat Speed Grade + SC Bat Speed Grade: the league (50 and the spread) is now MLB-qualified hitters too, which
+  also fixes 2020 (the cutoff scales with the season).
+- Needs a full rebuild of the league files: caffeinate -i python -m pipeline.update
+
 ## v19.0.3 – 2026-11-12
 - FIX: core/hit_metrics.py (SAxwOBA / SAxwOBACON columns) and its test were never in a zip, so GitHub and the Mac
   had the version without them (KeyError: SAxwOBA on Core 4). Whole project checked against GitHub: these were

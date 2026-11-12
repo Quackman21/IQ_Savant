@@ -15,7 +15,7 @@ out -- they belong to Bat-To-Ball.
 
 Exit velocities are adjusted for pitch speed. Each ingredient is regressed toward the league average by its own
 sample (how fast it becomes real skill, from the study), so a 10-game stretch can't grade 80 on noise. Then:
-grade = 50 + 10 x (weighted z / spread of that blend among regulars).
+grade = 50 + 10 x (weighted z / spread of that blend among MLB-qualified hitters: 3.1 PA per team game).
 League references: data/league/power_<year>.json  (python -m pipeline.power_ref)
 """
 from __future__ import annotations
@@ -30,7 +30,8 @@ import pandas as pd
 REF_DIR = Path(__file__).resolve().parent.parent / "data" / "league"
 SWINGS = {"swinging_strike", "swinging_strike_blocked", "foul", "foul_tip", "hit_into_play", "missed_bunt"}
 REGRESS = True
-MIN_REF_BIP = 150                          # regulars who set the league average and spread
+MIN_REF_BIP = 150                          # (power study only) -- the grade's league = MLB-qualified hitters
+QUALIFIED_PA_PER_GAME = 3.1                # MLB qualified: 3.1 PA per team game (502 full season, 186 in 2020)
 
 BAT = ["Avg Bat Speed", "Top 8th Bat Speed"]
 APPLY = ["Squared-Up%", "Smash Factor", "Blast%", "Smash (Top 8th)"]
@@ -71,8 +72,10 @@ def hitter_table(d: pd.DataFrame) -> pd.DataFrame:
     # bat speed: Statcast "competitive" swings -- drop each hitter's slowest 10% (checks / defensive swings)
     bs = sw.dropna(subset=["bat_speed"])
     if len(bs):
-        cut = bs.groupby("batter")["bat_speed"].transform(lambda s: s.quantile(0.10))
-        comp = bs[bs["bat_speed"] >= cut]
+        g = bs.groupby("batter")["bat_speed"]
+        slow = g.rank(method="first") <= np.floor(g.transform("count") * 0.10)    # exactly the slowest tenth
+        fast_hit = (bs["bat_speed"] >= 60) & (bs["launch_speed"] >= 90)
+        comp = bs[~slow | fast_hit]
         g = comp.groupby("batter")
         out["swings_tracked"] = bs.groupby("batter").size()
         out["Avg Bat Speed"] = g["bat_speed"].mean()
@@ -161,14 +164,30 @@ def build_ref(season_df: pd.DataFrame, year: int) -> dict:
     t = hitter_table(d)
     slopes = _max_slopes(t)
     t = _with_max(t, slopes)
-    reg = t[t["BIP"] >= MIN_REF_BIP]
+    q, need = qualified(d)
+    reg = t[t.index.isin(q)]
     stats = {m: (float(reg[m].mean()), float(reg[m].std())) for m in INPUTS if reg[m].notna().sum() >= 30}
-    ref = {"year": year, "lg_pitch": lg_pitch, "slopes": slopes, "stats": stats, "n_regulars": int(len(reg))}
+    ref = {"year": year, "lg_pitch": lg_pitch, "slopes": slopes, "stats": stats, "n_regulars": int(len(reg)),
+           "qualified_pa": float(need)}
     for name, w in (("bat", W_BAT), ("ev", W_EV), ("sc", W_SC)):
-        if all(m in stats for m in w):
+        if all(m in stats for m in w) and len(reg) >= 30:
             comp = sum(v * (reg[m] - stats[m][0]) / stats[m][1] for m, v in w.items())
             ref[f"sd_{name}"] = float(comp.std())
     return ref
+
+
+def qualified(d: pd.DataFrame) -> tuple[pd.Index, float]:
+    """MLB-qualified hitters: 3.1 PA per team game (team games = most games any team played in this data)."""
+    pa = d[d["events"].notna() & d["events"].astype(str).ne("")].groupby("batter").size() if "events" in d else \
+        d.groupby("batter").size() / 3.9
+    if {"home_team", "away_team", "game_pk"} <= set(d):
+        g = pd.concat([d[["home_team", "game_pk"]].rename(columns={"home_team": "t"}),
+                       d[["away_team", "game_pk"]].rename(columns={"away_team": "t"})])
+        team_games = int(g.groupby("t")["game_pk"].nunique().max())
+    else:
+        team_games = int(d["game_pk"].nunique() / 15) if "game_pk" in d else 162
+    need = QUALIFIED_PA_PER_GAME * team_games
+    return pa[pa >= need].index, need
 
 
 def save_ref(ref: dict) -> Path:

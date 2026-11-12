@@ -4,7 +4,7 @@ import pandas as pd
 from models import power
 
 
-def _season(year, n_hitters=120, pitches=900, tracked=True, seed=0):
+def _season(year, n_hitters=120, pitches=2300, tracked=True, seed=0):
     rng = np.random.default_rng(seed)
     bs_true = rng.normal(72, 3, n_hitters)
     bs_true[0] = 80                                            # hitter 1000 = big power

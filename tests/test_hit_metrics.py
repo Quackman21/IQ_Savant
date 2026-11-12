@@ -161,3 +161,26 @@ def test_bat_tracking():
             _pitch("called_strike", 5, bat_speed=None)]
     v = hm.compute(hm.prep(pd.DataFrame(rows))).iloc[0]
     assert v["# BAT SPEEDS"] == 2 and v["AVG BAT SPEED"] == 73 and v["TOP 8TH BAT SPEED"] == 76
+
+
+def test_bat_speed_competitive_swings():
+    # 10 swings: the slowest (a check swing at 40) is dropped -- unless it was hit 90+ at 60+ mph; bunts never count
+    rows = [_pitch("foul", 5, bat_speed=70 + i) for i in range(9)] + [_pitch("swinging_strike", 5, bat_speed=40)]
+    rows += [_pitch("foul_bunt", 5, bat_speed=20)]
+    v = hm.compute(hm.prep(pd.DataFrame(rows))).iloc[0]
+    assert v["# BAT SPEEDS"] == 9 and v["AVG BAT SPEED"] == 74
+
+
+def test_league_bat_speed_average_is_qualified_hitters():
+    from core import league_ref
+    rows = []
+    for g in range(10):                                   # 10 team games -> 31 PA to qualify
+        for i in range(4):                                # regular: 4 PA a game, 75 mph swings
+            rows.append(_pitch("swinging_strike", 5, bat_speed=75.0, batter=1, game_pk=g, inning_topbot="Top",
+                               home_team="H", away_team="A") | {"events": "strikeout"})
+        rows.append(_pitch("swinging_strike", 5, bat_speed=60.0, batter=2, game_pk=g, inning_topbot="Top",
+                           home_team="H", away_team="A") | {"events": "strikeout"})     # bench bat: 1 PA a game
+    d = hm.prep(pd.DataFrame(rows))
+    ref = league_ref.build(d, min_pa=1)
+    row = ref[(ref.dims == "all") & (ref.stat == "AVG BAT SPEED")].iloc[0]
+    assert row["avg"] == 75.0          # only the qualified hitter, not the pooled 72

@@ -29,8 +29,10 @@ def filter_sets() -> list[list[str]]:
 def build(d: pd.DataFrame, min_pa: int = hm.SD_MIN_PA, model: str | None = None) -> pd.DataFrame:
     """d = hm.prep() output for a whole season (all batters).
     Returns long table: dims, vals, stat, avg, sd, n (qualified hitters)."""
-    qualified = d.groupby("batter")["pa"].sum()
-    qualified = set(qualified[qualified >= min_pa].index)
+    pa_by = d.groupby("batter")["pa"].sum()
+    qualified = set(pa_by[pa_by >= min_pa].index)
+    team_games = d.groupby("bat_team")["game_pk"].nunique().max() if {"bat_team", "game_pk"} <= set(d) else 162
+    mlb_q = set(pa_by[pa_by >= hm.QUALIFIED_PA_PER_GAME * team_games].index)     # MLB-qualified hitters
     rows = []
     for dims in filter_sets():
         key = "+".join(dims) or "all"
@@ -48,12 +50,20 @@ def build(d: pd.DataFrame, min_pa: int = hm.SD_MIN_PA, model: str | None = None)
             hitter_avg = per.groupby(level=dims if len(dims) > 1 else dims[0]).mean()
         else:
             hitter_avg = per.mean().to_frame("All").T
+        perq = per[per.index.get_level_values(0).isin(mlb_q)] if mlb_q else per
+        if dims:
+            q_avg = perq.groupby(level=dims if len(dims) > 1 else dims[0]).mean()
+        else:
+            q_avg = perq.mean().to_frame("All").T
         for idx in league.index:
             vals = "|".join(idx) if isinstance(idx, tuple) else str(idx)
             for stat in hm.ALL_KEYS:
                 per_hitter = hm.CATALOG[stat].kind in PER_HITTER
-                avg = (hitter_avg.at[idx, stat] if idx in hitter_avg.index else np.nan) if per_hitter \
-                    else league.at[idx, stat]
+                if stat in hm.QUALIFIED_AVG:            # like Statcast: the average MLB-qualified hitter
+                    avg = q_avg.at[idx, stat] if idx in q_avg.index else np.nan
+                else:
+                    avg = (hitter_avg.at[idx, stat] if idx in hitter_avg.index else np.nan) if per_hitter \
+                        else league.at[idx, stat]
                 rows.append({"dims": key, "vals": vals, "stat": stat,
                              "avg": avg,
                              "sd": spread.at[idx, stat] if idx in spread.index else np.nan,
@@ -101,6 +111,7 @@ def signature() -> str:
     parts = [inspect.getsource(framing.MODELS[framing.ACTIVE]), str(framing.RUNS_PER_STRIKE),
              inspect.getsource(framing.center), inspect.getsource(abs_calls.original_calls),repr(sorted((k, s.kind, s.a, s.b) for k, s in hm.CATALOG.items())),
              inspect.getsource(hm.prep), inspect.getsource(build), str(hm.SD_MIN_PA), str(hm.SPRAY_SCALE),
+             str(hm.QUALIFIED_PA_PER_GAME), str(sorted(hm.QUALIFIED_AVG)),
              xwoba.ACTIVE, inspect.getsource(xwoba.MODELS[xwoba.ACTIVE]), _artifact_hash(xwoba.ACTIVE),
              decisions.ACTIVE, inspect.getsource(decisions.MODELS[decisions.ACTIVE]),
              _artifact_hash(decisions.ACTIVE, "decisions"), _sa_hash(),

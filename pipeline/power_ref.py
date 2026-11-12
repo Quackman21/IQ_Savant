@@ -23,7 +23,8 @@ def build(season: int) -> None:
     ref = power.build_ref(bl.pull_season(season), season)
     p = power.save_ref(ref)
     kind = "bat speed + exit velo" if "sd_bat" in ref else "exit velo only"
-    print(f"[{season}] power reference saved for the Bat Speed Grade ({kind}, {ref['n_regulars']} regulars) -> {p.name} "
+    print(f"[{season}] power reference saved for the Bat Speed Grade ({kind}, {ref['n_regulars']} qualified hitters, "
+          f"{ref.get('qualified_pa', 0):.0f}+ PA) -> {p.name} "
           f"in {time.time() - t0:.0f}s", flush=True)
 
 
@@ -46,7 +47,7 @@ def top(season: int) -> None:
         raw = raw[raw["game_type"].astype(str).eq("R")]
     bip = raw[raw["type"].eq("X")].groupby("batter").size()
     rows = []
-    for b in bip[bip >= power.MIN_REF_BIP].index:
+    for b in power.qualified(raw)[0]:
         g = power.score(raw[raw["batter"] == b], ref)
         rows.append({"batter": int(b), "power": 50 + 10 * g["_POWER_Z"], "sc": 50 + 10 * g["_SCBS_Z"],
                      "bip": int(bip[b])})
@@ -57,7 +58,8 @@ def top(season: int) -> None:
     except Exception:
         names = {}
     f = lambda r: f"{names.get(r.batter, r.batter)} {r.power:.0f}" + (f" (SC {r.sc:.0f})" if r.sc == r.sc else "")
-    print(f"\n{season} Bat Speed Grade, {len(t)} regulars ({power.MIN_REF_BIP}+ BIP):")
+    print(f"\n{season} Bat Speed Grade, {len(t)} MLB-qualified hitters ({ref.get('qualified_pa', 0):.0f}+ PA), "
+          f"league avg bat speed {ref['stats'].get('Avg Bat Speed', (float('nan'),))[0]:.1f}:")
     print("  top:    " + " | ".join(f(r) for r in t.head(10).itertuples()))
     print("  bottom: " + " | ".join(f(r) for r in t.tail(10).itertuples()))
     print(f"  spread check: middle 50% from {t.power.quantile(.25):.0f} to {t.power.quantile(.75):.0f} "
