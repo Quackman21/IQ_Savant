@@ -87,3 +87,26 @@ def test_blur_by_ball_type_widths():
     X = pd.DataFrame({"la": [-5, 15, 30, np.nan]})
     assert xq.blur_widths(X, "by_type").tolist() == [18.0, 12.0, 0.0, 12.0]
     assert xq.blur_widths(X, 0) is None
+
+
+def test_saxwoba_only_ev_la_spray_and_blank_until_trained(tmp_path, monkeypatch):
+    from models import saxwoba as sa
+    from pipeline import train_saxwoba as tsa
+    from core import hit_metrics as hm
+    monkeypatch.setattr(sa, "ARTIFACT", tmp_path / "sa.joblib")
+    sa._cache.clear()
+    rng = np.random.default_rng(4)
+    n = 5000
+    kind = rng.choice(["field_out", "single", "double", "triple", "home_run"], n, p=[.66, .2, .07, .01, .06])
+    df = pd.DataFrame({"game_date": "2025-06-01", "stand": "R", "type": "X", "events": kind,
+                       "launch_speed": rng.normal(90, 12, n), "launch_angle": rng.normal(12, 25, n),
+                       "hc_x": rng.uniform(40, 210, n), "hc_y": rng.uniform(60, 180, n), "woba_denom": 1,
+                       "woba_value": pd.Series(kind).map({"single": .88, "double": 1.25, "triple": 1.59,
+                                                          "home_run": 2.05}).fillna(0).values})
+    assert sa.expected_woba(df).isna().all()                       # not trained -> blank
+    b = tsa.fit(df)
+    assert b["features"] == ["ev", "la", "spray"]
+    sa._cache["m"] = b
+    one = sa.score_batted_balls(df.iloc[[0]])                      # a single ball works
+    assert one.notna().all() and 0 <= one.iloc[0] <= 2.1
+    sa._cache.clear()

@@ -85,10 +85,16 @@ CATALOG: dict[str, Stat] = {s.key: s for s in [
       "ratio", "o_whiff", "o_swing", good=-1),
     S("FOUL%", "FOUL%", "Rate of swings fouled off\n[Fouls / Swings]", "ratio", "foul", "swing", good=0),
     # outcomes
-    S("xwOBA", "xwOBA", "Expected wOBA (active xwOBA model)\n[Expected value on batted balls, actual value on BB / HBP / K]",
+    S("xwOBA", "xwOBA", "Expected wOBA (Savant)\n[Exit velo + launch angle (+ sprint speed on some weak balls) on "
+      "batted balls; actual value on BB / HBP / K. Same xwOBA whatever the direction]",
       "ratio", "xw", "wden", fmt="rate3", good=1),
-    S("xwOBACON", "xwOBACON", "Expected wOBA on contact\n[Expected value per ball in play]",
+    S("xwOBACON", "xwOBACON", "Expected wOBA on contact (Savant)\n[Expected value per ball in play]",
       "ratio", "xw_bip", "bip_w", fmt="rate3", good=1),
+    S("SAxwOBA", "SAxwOBA", "Spray-adjusted expected wOBA (ours)\n[Exit velo + launch angle + spray angle on batted "
+      "balls -- nothing else (no sprint speed, side, park or calibration); actual value on BB / HBP / K]",
+      "ratio", "sxw", "sx_wden", fmt="rate3", good=1),
+    S("SAxwOBACON", "SAxwOBACON", "Spray-adjusted expected wOBA on contact (ours)\n[Exit velo + launch angle + "
+      "spray angle, per ball in play]", "ratio", "sxw_bip", "sx_bip", fmt="rate3", good=1),
     S("wOBACON", "wOBACON", "wOBA on contact\n[Actual wOBA value per ball in play]",
       "ratio", "wv_bip", "bip_w", fmt="rate3", good=1),
     S("wOBA", "wOBA", "Weighted on-base average\n[Actual wOBA value / wOBA denominator]",
@@ -200,7 +206,7 @@ OVERVIEW = [
 TABS = {
     "Rates": ["PIT", "BIP", "SWING%", "WHIFF%", "FOUL%", "PULL%", "MIDDLE%", "OPPO%",
               "AIRPULL%", "FB-PULL%", "PULL-AIR%", "BARREL%"],
-    "Contact": ["PIT", "BIP", "xwOBA", "xwOBACON", "WEAK GB%", "GB%", "FB%", "WEAK FB%"],
+    "Contact": ["PIT", "BIP", "xwOBA", "SAxwOBA", "xwOBACON", "SAxwOBACON", "WEAK GB%", "GB%", "FB%", "WEAK FB%"],
     "Exit": ["PIT", "BIP", "LA", "EV", "90th EV", "MAX EV", "EV<80", "EV>90", "EV>95", "EV>100", "EV>105"],
 }
 SAMPLE = ["PA", "BIP"]          # sample columns in the click-popup
@@ -307,6 +313,13 @@ def prep(df: pd.DataFrame, model: str | None = None) -> pd.DataFrame:
     d["xw"] = xw.fillna(0).where(wden > 0, 0)
     d["bip_w"] = bip & (wden > 0)
     d["xw_bip"] = xw.fillna(0).where(d["bip_w"], 0)
+    from models import saxwoba as _sa                      # ours, shown beside Savant's
+    sxw = _sa.expected_woba(df)
+    on = sxw.notna()                                        # blank (not .000) until SAxwOBA is trained
+    d["sxw"] = sxw.fillna(0).where(wden > 0, 0)
+    d["sxw_bip"] = sxw.fillna(0).where(d["bip_w"], 0)
+    d["sx_wden"] = pd.Series(wden, index=df.index).where(on, 0)
+    d["sx_bip"] = d["bip_w"] & on
     d["wv_bip"] = d["wv"].where(d["bip_w"], 0)
 
     # strikeouts / walks

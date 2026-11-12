@@ -1,5 +1,10 @@
 # IQ Savant – version history
 
+## v19.0.3 – 2026-11-12
+- FIX: core/hit_metrics.py (SAxwOBA / SAxwOBACON columns) and its test were never in a zip, so GitHub and the Mac
+  had the version without them (KeyError: SAxwOBA on Core 4). Whole project checked against GitHub: these were
+  the only two files out of step.
+
 ## v19.0.2 – 2026-11-12
 - FIX: the desktop app installed EVERY IQ_Savant_v*.zip in ~/Dev, including old leftovers, which overwrote newer
   code (SAxwOBA KeyError: model). Now it only installs versions newer than the one installed; older zips are
