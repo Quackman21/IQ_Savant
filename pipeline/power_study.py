@@ -33,6 +33,8 @@ import pandas as pd
 
 warnings.filterwarnings("ignore")
 
+from models.power import SWINGS, _top8, hitter_table  # noqa: E402  (same definitions as the site's grade)
+
 ROOT = Path(__file__).resolve().parent.parent
 ART = ROOT / "models" / "artifacts"
 REPORT = ART / "power_study_report.txt"
@@ -40,7 +42,6 @@ FIRST_BAT = 2023                 # bat tracking (mid-2023 on)
 SPLIT = 2023
 MIN_BIP, MIN_SWINGS = 150, 300   # hitter-seasons used for the season tests
 MIN_HALF_BIP = 70
-SWINGS = {"swinging_strike", "swinging_strike_blocked", "foul", "foul_tip", "hit_into_play", "missed_bunt"}
 COLS = ["game_pk", "game_date", "game_type", "batter", "description", "type", "launch_speed", "launch_angle",
         "release_speed", "bat_speed", "swing_length", "woba_value", "woba_denom", "iso_value", "babip_value",
         "estimated_woba_using_speedangle", "bb_type"]
@@ -51,14 +52,6 @@ EV = ["Avg EV", "90th EV", "HHEV (Top 8th EV)", "Max EV (BIP-adj)", "EV>95%", "E
       "Max EV (Fly, BIP-adj)"]
 OTHER = ["Swing Length"]
 EV_ONLY_ERA = EV
-
-
-def _top8(s: pd.Series) -> float:
-    s = s.dropna()
-    if s.empty:
-        return np.nan
-    k = max(1, int(np.ceil(len(s) / 8)))
-    return float(np.sort(s.values)[-k:].mean())
 
 
 def load(year: int) -> pd.DataFrame:
@@ -79,65 +72,6 @@ def load(year: int) -> pd.DataFrame:
     lg_pitch = d.loc[d["type"].eq("X"), "release_speed"].mean()
     d["ev_adj"] = d["launch_speed"] - 0.2 * (d["release_speed"] - lg_pitch)
     return d
-
-
-def hitter_table(d: pd.DataFrame) -> pd.DataFrame:
-    """Every metric for every hitter in d."""
-    bunt = d["description"].astype(str).str.contains("bunt") | d["bb_type"].astype(str).eq("bunt") \
-        if "bb_type" in d else d["description"].astype(str).str.contains("bunt")
-    sw = d[d["description"].isin(SWINGS) & ~bunt]
-    bip = d[d["type"].eq("X") & d["launch_speed"].notna() & ~bunt]
-    fly = bip[(bip["launch_speed"] > 70) & (bip["launch_angle"] >= 10) & (bip["launch_angle"] < 51)]
-    out = pd.DataFrame(index=pd.Index(sorted(d["batter"].dropna().unique()), name="batter"))
-
-    # bat speed: Statcast "competitive" swings -- drop each hitter's slowest 10% (checks / defensive swings)
-    bs = sw.dropna(subset=["bat_speed"])
-    if len(bs):
-        cut = bs.groupby("batter")["bat_speed"].transform(lambda s: s.quantile(0.10))
-        comp = bs[bs["bat_speed"] >= cut]
-        g = comp.groupby("batter")
-        out["swings_tracked"] = bs.groupby("batter").size()
-        out["Avg Bat Speed"] = g["bat_speed"].mean()
-        out["Top 8th Bat Speed"] = g["bat_speed"].agg(_top8)
-        out["Swing Length"] = g["swing_length"].mean()
-        # application: exit velo vs the most his bat speed + this pitch could produce (Savant's squared-up)
-        b = bip.dropna(subset=["bat_speed", "release_speed"])
-        b = b[b["bat_speed"] > 30]
-        mx = 1.23 * b["bat_speed"] + 0.23 * b["release_speed"]
-        b = b.assign(smash=(b["launch_speed"] / mx).clip(0, 1.2))
-        b = b.assign(sq=(b["smash"] >= 0.8).astype(float),
-                     blast=((b["smash"] * 100 + b["bat_speed"]) >= 164).astype(float))
-        gb = b.groupby("batter")
-        out["bip_tracked"] = gb.size()
-        out["Squared-Up%"] = gb["sq"].mean()
-        out["Smash Factor"] = gb["smash"].mean()
-        out["Blast%"] = gb["blast"].mean()
-        out["Smash (Top 8th)"] = gb["smash"].agg(_top8)
-    else:
-        for c in BAT + APPLY + OTHER + ["swings_tracked", "bip_tracked"]:
-            out[c] = np.nan
-
-    g = bip.groupby("batter")["ev_adj"]
-    out["BIP"] = g.size()
-    out["Avg EV"] = g.mean()
-    out["90th EV"] = g.quantile(0.90)
-    out["HHEV (Top 8th EV)"] = g.agg(_top8)
-    out["EV>95%"] = bip.assign(h=(bip["ev_adj"] > 95).astype(float)).groupby("batter")["h"].mean()
-    out["max_raw"] = g.max()
-    gf = fly.groupby("batter")["ev_adj"]
-    out["EV (Fly)"] = gf.mean()
-    out["90th EV (Fly)"] = gf.quantile(0.90)
-    out["max_fly_raw"], out["fly_n"] = gf.max(), gf.size()
-
-    # outcomes
-    pa = d[d["woba_denom"] > 0]
-    gp = pa.groupby("batter")
-    out["PA"] = gp["woba_denom"].sum()
-    out["wOBA"] = gp["woba_value"].sum() / out["PA"]
-    out["wOBAcon"] = bip.groupby("batter")["woba_value"].mean()
-    out["ISOcon"] = bip.groupby("batter")["iso_value"].mean()
-    out["xwOBAcon"] = bip.groupby("batter")["estimated_woba_using_speedangle"].mean()
-    return out
 
 
 def bip_adjust_max(t: pd.DataFrame) -> pd.DataFrame:

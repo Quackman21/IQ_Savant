@@ -14,7 +14,10 @@ def test_row_order_months_then_season_last():
 
 
 def test_grades_blank_until_models():
-    assert all(g.stat is None for g in c4.GRADES.values())
+    built = {"BAT SPEED GRADE", "SC BAT SPEED GRADE"}
+    assert all(g.stat is None for k, g in c4.GRADES.items() if k not in built)
+    v, z = c4.grade("BAT SPEED GRADE", {"_POWER_Z": 1.5}, {}, "20-80")
+    assert v == 65 and z == 1.5
     v, z = c4.grade("DECISION GRADE", {"GD%": 0.7}, {"GD%": (0.6, 0.05)}, "20-80")
     assert math.isnan(v) and math.isnan(z)
 

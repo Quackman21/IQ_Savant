@@ -58,11 +58,16 @@ def main(argv: list[str]) -> None:
             print("No new games to add.")
             return
     from pipeline import build_league_reference as builder
+    from pipeline import power_ref
     for season, why in todo:
         builder.main([str(season), "--force"])
+        try:
+            power_ref.build(season)                 # Bat Speed (power) Grade reference for that season
+        except Exception as e:
+            print(f"[{season}] power reference skipped: {e}", flush=True)
     if "--no-push" in argv:
         return
-    _git("add", "data/league")
+    _git("add", "data/league")          # includes power_<year>.json
     if _git("diff", "--cached", "--quiet") != 0:
         _git("commit", "-m", f"Data update: {', '.join(str(y) for y, _ in todo)}")
         _git("push")

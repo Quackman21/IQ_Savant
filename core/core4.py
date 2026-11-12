@@ -27,9 +27,12 @@ class Grade:
 
 
 GRADES = {g.key: g for g in [
-    Grade("BAT SPEED GRADE", "Bat Speed Grade", None,
-          "20-80 Grade, Top 8th Exit Velocity\n(bat speed shows up in the hardest-hit balls)"),
-    Grade("SC BAT SPEED GRADE", "SC Bat Speed Grade", None, "20-80 Grade, Top 8th Statcast bat speed"),
+    Grade("BAT SPEED GRADE", "Bat Speed Grade", "_POWER_Z",
+          "20-80 Grade, Power (bat speed + exit velo)\n[Bat speed 50% (avg 25, top 8th 25) | EV on fly balls 30% "
+          "(avg 15, 90th 15) | 90th EV + HHEV 10% | avg EV + EV>95 6% | max EVs 4%]\nNo bat tracking: the bat "
+          "speed half goes to 90th EV + HHEV. Regressed for sample size; hover a grade for each ingredient."),
+    Grade("SC BAT SPEED GRADE", "SC Bat Speed Grade", "_SCBS_Z",
+          "20-80 Grade, Statcast bat speed only\n[avg bat speed 50% + top 8th bat speed 50%, regressed]"),
     Grade("B2B GRADE", "Bat-To-Ball Grade", None, "20-80 Grade, Bat-to-ball\n[from contact rate on swings]"),
     Grade("DECISION GRADE", "Decision Grade", None, "20-80 Grade, Swing Decision\n[from rate of good decisions]"),
     Grade("0-0 DECISION GRADE", "0-0 Decision Grade", None, "20-80 Grade, Swing Decision on first pitch"),
@@ -42,7 +45,7 @@ GRADES = {g.key: g for g in [
 ]}
 
 # Columns every Core 4 tab starts with (after Year / Period / Age / Type / Team / vs)
-SHARED = ["PA", "BIP", "K%", "BB%", "BARREL%", "wOBA", "xwOBA", "xwOBA MLB"]
+SHARED = ["PA", "BIP", "K%", "BB%", "BARREL%", "wOBA", "xwOBA", "xwOBA MLB", "SAxwOBA"]
 TABS = {
     "Core 4": SHARED + ["BAT SPEED GRADE", "B2B GRADE", "DECISION GRADE", "BALL FLIGHT GRADE"],
     "Bat Speed": SHARED + ["# BAT SPEEDS", "BAT SPEED GRADE", "SC BAT SPEED GRADE", "AVG BAT SPEED",
@@ -57,7 +60,7 @@ TABS = {
                                  "GD%", "DEC QUAL", "DEC RUNS", "DEC RUNS/100", "SWING%", "CHASE%", "PRE2K O-SWING%", "2K O-SWING%",
                                  "H-SWING%", "S-SWING%", "C-SWING%", "W-SWING%"],
     "Ball Flight": SHARED + ["BALL FLIGHT GRADE", "BALL FLIGHT 600", "LA", "LAHHB", "ATTACK", "xwOBACON",
-                             "xwOBACON MLB", "WEAK GB%", "GB%", "FB%", "WEAK FB%", "LD%", "LD+FB%", "PULL%",
+                             "xwOBACON MLB", "SAxwOBACON", "WEAK GB%", "GB%", "FB%", "WEAK FB%", "LD%", "LD+FB%", "PULL%",
                              "MIDDLE%", "OPPO%", "AIRPULL%", "FB-PULL%", "PULL-AIR%"],
 }
 
@@ -99,6 +102,10 @@ def grade(key: str, vals, ref_row: dict, scale: str) -> tuple[float, float]:
     g = GRADES[key]
     if not g.stat:                    # model not built yet -> blank
         return math.nan, math.nan
+    if g.stat.startswith("_"):        # model grades: the z comes with the row (models/power.py etc.)
+        z = vals.get(g.stat, math.nan) if hasattr(vals, "get") else math.nan
+        z = math.nan if z is None else float(z)
+        return to_scale(z, scale), z
     z = z_score(vals.get(g.stat), ref_row, g.stat)
     return to_scale(z, scale), z
 

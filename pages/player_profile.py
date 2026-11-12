@@ -102,6 +102,25 @@ def league_ref_for(season: int) -> dict:
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
+def power_ref_for(season: int) -> dict | None:
+    from models import power
+    return power.load_ref(season)
+
+
+def with_power(vals: pd.Series, raw: pd.DataFrame, season: int) -> pd.Series:
+    """Add the Bat Speed (power) Grade + SC Bat Speed Grade to a Core 4 row."""
+    from models import power
+    try:
+        extra = power.score(raw, power_ref_for(season))
+    except Exception:
+        return vals
+    vals = vals.copy()
+    for k, v in extra.items():
+        vals[k] = v
+    return vals
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
 def catching_daily(season: int) -> pd.DataFrame:
     return league_ref.load_catching(season)
 
@@ -648,7 +667,8 @@ if main == "Summary":
                     continue
                 lead = describe(part, per.season, plabel, mid)
                 lead["Team"] = team
-                rows_c4.append({"lead": lead, "vals": hm.compute(g_).iloc[0], "ref": ref_y,
+                rows_c4.append({"lead": lead, "vals": with_power(hm.compute(g_).iloc[0], part.loc[g_.index],
+                                                                 per.season), "ref": ref_y,
                                 "season_row": per.kind == "season"})
         if agg == "Combined" and chunks:
             allp = pd.concat(chunks)
@@ -666,7 +686,8 @@ if main == "Summary":
             for team, g_ in groups:
                 lead = describe(allp, label_year, "Combined", mid)
                 lead["Team"] = team
-                rows_c4.append({"lead": lead, "vals": hm.compute(g_).iloc[0], "ref": ref_y})
+                rows_c4.append({"lead": lead, "vals": with_power(hm.compute(g_).iloc[0], allp.loc[g_.index],
+                                                                 yrs[-1]), "ref": ref_y})
 
         ctx = {"player": f'{b["first"]} {b["last"]}', "season_label": str(TODAY.year)}
         data_note({p_.season for p_ in periods})

@@ -40,6 +40,11 @@ def _cell(key: str, vals, ref: dict, ctx: dict, samples, sep: bool, scale: str, 
         v, z = c4.grade(key, vals, ref, scale)
         if not g.stat:                                   # blank until our model exists
             return f'<td class="{cls.strip()}"></td>'
+        if g.stat.startswith("_"):                       # model grade: ingredients on hover
+            parts = vals.get("_POWER_PARTS", "") if g.stat == "_POWER_Z" else ""
+            kind = vals.get("_POWER_KIND", "") if g.stat == "_POWER_Z" else "Statcast bat speed"
+            tip = escape(f"{kind}: {parts}" if parts else str(kind or ""))
+            return (f'<td class="{cls}c" title="{tip}" style="{color("EV", z)}">{c4.fmt_grade(v)}</td>')
         lg = ((ref or {}).get("PA", (math.nan,))[0], (ref or {}).get("BIP", (math.nan,))[0])
         pop = _popup(g.stat, vals.get(g.stat), (ref or {}).get(g.stat), z, ctx, samples, lg)
         return (f'<td class="{cls}c" tabindex="0" style="{color(g.stat, z)}">'

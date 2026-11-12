@@ -1,5 +1,16 @@
 # IQ Savant – version history
 
+## v19.0 – 2026-11-12
+- Bat Speed Grade (power) and SC Bat Speed Grade are live (Core 4 + Bat Speed tabs), weights from the power study:
+  bat speed 50% (avg 25, top 8th 25) | EV on fly balls 30% (avg 15, 90th 15) | 90th EV + HHEV 10% |
+  avg EV + EV>95% 6% | max EV + max fly EV 4% (BIP-adjusted). No bat tracking -> the bat speed half goes to
+  90th EV + HHEV. Contact-skill metrics (squared-up, smash, blasts) left out (they're Bat-To-Ball).
+  SC Bat Speed Grade = avg + top 8th Statcast bat speed. EVs adjusted for pitch speed; every ingredient regressed
+  for sample size; 50 = MLB regular average, 10 = one spread. Hover a grade to see each ingredient's grade.
+- models/power.py (shared with the power study, identical definitions), data/league/power_<year>.json references
+  (python -m pipeline.power_ref; pipeline.update keeps the current season fresh).
+  Eye test: python -m pipeline.power_ref --top 2026
+
 ## v18.9 – 2026-11-12
 - python -m pipeline.power_study (analysis only): which bat speed / exit velo / application metrics predict next
   season's run value (on contact, ISO, per PA); stability, overlap, step test (bat speed -> application -> exit
