@@ -1,5 +1,11 @@
 # IQ Savant – version history
 
+## v18.8 – 2026-11-12
+- Desktop app syncs on every launch: installs any IQ_Savant_v*.zip in ~/Dev (oldest first, then deletes it),
+  runs the tests, commits local changes, downloads the latest from GitHub (keeping local changes on top) and
+  pushes. Tests fail -> nothing is pushed and a notification says so; the site still starts. Runs from a copy of
+  itself so a new version can safely replace the launcher. Manual: bash tools/iq_app.sh sync
+
 ## v18.7.1 – 2026-11-12
 - App icon: rounded macOS-style IQ icon (tools/IQ_icon.png) -- straight sides, rounded corners, Apple margin, soft
   shadow. make_mac_app.sh uses it by default; give it a new logo path and it rounds that one (tools/make_icon.py).
