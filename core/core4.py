@@ -28,7 +28,7 @@ class Grade:
 
 GRADES = {g.key: g for g in [
     Grade("BAT SPEED GRADE", "Bat Speed Grade", "_POWER_Z",
-          "20-80 Grade, Power (bat speed + exit velo)\n[Bat speed 50% (avg 25, top 8th 25) | EV on fly balls 30% "
+          "20-80 Grade, Bat speed + how hard he hits it\n[Bat speed 50% (avg 25, top 8th 25) | EV on fly balls 30% "
           "(avg 15, 90th 15) | 90th EV + HHEV 10% | avg EV + EV>95 6% | max EVs 4%]\nNo bat tracking: the bat "
           "speed half goes to 90th EV + HHEV. Regressed for sample size; hover a grade for each ingredient."),
     Grade("SC BAT SPEED GRADE", "SC Bat Speed Grade", "_SCBS_Z",

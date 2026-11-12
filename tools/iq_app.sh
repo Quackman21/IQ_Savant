@@ -35,14 +35,28 @@ pull() {         # download the latest, keeping any local changes on top
   fi
 }
 
-install_zips() { # any IQ_Savant_v*.zip in ~/Dev: unzip over the project (oldest version first), then delete it
-  local dev; dev="$(dirname "$REPO")"; local n=0
+ver_of() { basename "$1" .zip | sed 's/^IQ_Savant_v//'; }
+newer() {        # newer A B -> true if version A is newer than B
+  [ "$1" != "$2" ] && [ "$(printf '%s\n%s\n' "$1" "$2" | sort -V | tail -1)" = "$1" ]
+}
+
+install_zips() { # ONLY zips newer than the installed version (oldest first). Older ones go to ~/Dev/old_zips.
+  local dev cur v n=0 skipped=0
+  dev="$(dirname "$REPO")"
   while IFS= read -r z; do
     [ -f "$z" ] || continue
-    if unzip -o -q "$z" -d "$REPO" >> "$LOG" 2>&1; then rm -f "$z"; log "installed $(basename "$z")"; n=$((n + 1))
-    else log "couldn't unzip $(basename "$z")"; fi
+    cur="$(cat "$REPO/VERSION" 2>/dev/null || echo 0)"
+    v="$(ver_of "$z")"
+    if newer "$v" "$cur"; then
+      if unzip -o -q "$z" -d "$REPO" >> "$LOG" 2>&1; then rm -f "$z"; log "installed v$v (was v$cur)"; n=$((n + 1))
+      else log "couldn't unzip $(basename "$z")"; fi
+    else
+      mkdir -p "$dev/old_zips" && mv "$z" "$dev/old_zips/" && skipped=$((skipped + 1))
+      log "skipped $(basename "$z") -- not newer than v$cur (moved to old_zips)"
+    fi
   done < <(ls "$dev"/IQ_Savant_v*.zip 2>/dev/null | sort -V)
-  [ $n -gt 0 ] && notify "Installed $n new version(s): v$(cat "$REPO/VERSION" 2>/dev/null)"
+  [ $n -gt 0 ] && notify "Installed v$(cat "$REPO/VERSION" 2>/dev/null)"
+  [ $skipped -gt 0 ] && notify "Ignored $skipped old version zip(s) -- moved to Dev/old_zips"
   return 0
 }
 

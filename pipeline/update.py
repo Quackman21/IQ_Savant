@@ -62,7 +62,7 @@ def main(argv: list[str]) -> None:
     for season, why in todo:
         builder.main([str(season), "--force"])
         try:
-            power_ref.build(season)                 # Bat Speed (power) Grade reference for that season
+            power_ref.build(season)                 # Bat Speed Grade reference for that season
         except Exception as e:
             print(f"[{season}] power reference skipped: {e}", flush=True)
     if "--no-push" in argv:

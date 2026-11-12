@@ -1,5 +1,13 @@
 # IQ Savant – version history
 
+## v19.0.2 – 2026-11-12
+- FIX: the desktop app installed EVERY IQ_Savant_v*.zip in ~/Dev, including old leftovers, which overwrote newer
+  code (SAxwOBA KeyError: model). Now it only installs versions newer than the one installed; older zips are
+  moved to ~/Dev/old_zips.
+
+## v19.0.1 – 2026-11-12
+- Wording: it is the Bat Speed Grade everywhere (no "power" in anything you see).
+
 ## v19.0 – 2026-11-12
 - Bat Speed Grade (power) and SC Bat Speed Grade are live (Core 4 + Bat Speed tabs), weights from the power study:
   bat speed 50% (avg 25, top 8th 25) | EV on fly balls 30% (avg 15, 90th 15) | 90th EV + HHEV 10% |

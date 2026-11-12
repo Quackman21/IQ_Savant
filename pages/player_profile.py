@@ -108,7 +108,7 @@ def power_ref_for(season: int) -> dict | None:
 
 
 def with_power(vals: pd.Series, raw: pd.DataFrame, season: int) -> pd.Series:
-    """Add the Bat Speed (power) Grade + SC Bat Speed Grade to a Core 4 row."""
+    """Add the Bat Speed Grade + SC Bat Speed Grade to a Core 4 row."""
     from models import power
     try:
         extra = power.score(raw, power_ref_for(season))

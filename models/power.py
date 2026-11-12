@@ -1,10 +1,10 @@
-"""IQ Power -- the Bat Speed Grade (a power grade) and the SC Bat Speed Grade.
+"""IQ Bat Speed Grade and SC Bat Speed Grade.
 
 Weights come from the power study (python -m pipeline.power_study, 2023-2026): every metric scored on how well it
 predicts NEXT season's run value on contact. Contact-skill metrics (squared-up %, smash factor, blasts) are left
 out -- they belong to Bat-To-Ball.
 
-    Bat Speed Grade (power), seasons with bat tracking:
+    Bat Speed Grade, seasons with bat tracking:
         bat speed 50%   avg bat speed 25, top 8th bat speed 25
         force in air 30% EV (fly) 15, 90th EV (fly) 15
         top-end 10%     90th EV 5, HHEV (top 8th EV) 5
