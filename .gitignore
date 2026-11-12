@@ -7,3 +7,5 @@ data/overnight.lock
 data/overnight_log.txt
 data/raw/*.tmp
 data/framing_study/
+data/app_log.txt
+data/app_loop.pid

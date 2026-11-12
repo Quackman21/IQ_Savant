@@ -1,5 +1,12 @@
 # IQ Savant – version history
 
+## v18.7 – 2026-11-12
+- Desktop app: bash tools/make_mac_app.sh builds "IQ Savant" on the Desktop with the IQ logo
+  (~/Dev/images/IQ RB Paisley Logo.png). Double-click: pulls the latest code, starts the site, opens it.
+  While the site is open it checks every 3 hours and adds new games (python -m pipeline.update --light);
+  full rebuilds are never started on their own -- a Mac notification says when one is due.
+  Clicking it again while running: Open / Restart / Stop. Log: data/app_log.txt.
+
 ## v18.6.1 – 2026-11-11
 - Savant framing download fixed and CHECKED: Savant moved the board (new columns id / pitches / rv_tot) and some
   addresses ignore the year and send the current season. Every season is now verified against who actually caught

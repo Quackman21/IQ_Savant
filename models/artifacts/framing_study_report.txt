@@ -1,4 +1,4 @@
-IQ FRAMING STUDY -- which framing number is most accurate, and which zones matter most
+tuIQ FRAMING STUDY -- which framing number is most accurate, and which zones matter most
 Seasons 2015-2026, regular season, every taken pitch. Strike chance = league-average umpire (IQ Swing Decisions called-strike model).
 Season tests use catchers with 3,000+ takes; split-half tests 1,500+ takes in each half.
 

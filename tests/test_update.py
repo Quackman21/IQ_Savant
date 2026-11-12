@@ -38,3 +38,15 @@ def test_in_season_refresh(tmp_path, monkeypatch):
     assert update.plan(date(2026, 7, 1)) == [(2026, "new games")]   # in season: add yesterday's games
     assert update.plan(date(2026, 6, 30)) == []                      # already built today
     assert update.plan(date(2026, 11, 5)) == []                      # offseason: nothing new
+
+
+def test_light_update_only_adds_new_games(monkeypatch, capsys):
+    from pipeline import update
+    monkeypatch.setattr(update, "plan", lambda: [(2026, "new games"), (2019, "stale")])
+    ran = []
+    import pipeline.build_league_reference as b
+    monkeypatch.setattr(b, "main", lambda a: ran.append(a[0]))
+    monkeypatch.setattr(update, "_git", lambda *a: 0)
+    update.main(["--light"])
+    out = capsys.readouterr().out
+    assert ran == ["2026"] and "HEAVY: 1 season(s)" in out and "2019" in out

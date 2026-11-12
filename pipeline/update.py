@@ -3,6 +3,8 @@
     python -m pipeline.update            # rebuild what's needed, then commit + push
     python -m pipeline.update --check    # just list what's out of date (takes a second)
     python -m pipeline.update --no-push  # rebuild but don't commit / push
+    python -m pipeline.update --light    # only add new games (what the desktop app runs every few hours);
+                                         # full rebuilds are listed, not run -- those are step-away jobs
 
 It rebuilds ONLY:
   * seasons that are missing,
@@ -46,6 +48,15 @@ def main(argv: list[str]) -> None:
     print("Out of date:", ", ".join(f"{y} ({why})" for y, why in todo), flush=True)
     if "--check" in argv:
         return
+    if "--light" in argv:
+        heavy = [y for y, why in todo if why != "new games"]
+        todo = [(y, why) for y, why in todo if why == "new games"]
+        if heavy:
+            print(f"HEAVY: {len(heavy)} season(s) need a full rebuild ({', '.join(map(str, heavy))}) -- "
+                  "run  caffeinate -i python -m pipeline.update  when you step away.", flush=True)
+        if not todo:
+            print("No new games to add.")
+            return
     from pipeline import build_league_reference as builder
     for season, why in todo:
         builder.main([str(season), "--force"])
