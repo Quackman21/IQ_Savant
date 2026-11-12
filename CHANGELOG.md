@@ -1,5 +1,9 @@
 # IQ Savant – version history
 
+## v18.7.1 – 2026-11-12
+- App icon: rounded macOS-style IQ icon (tools/IQ_icon.png) -- straight sides, rounded corners, Apple margin, soft
+  shadow. make_mac_app.sh uses it by default; give it a new logo path and it rounds that one (tools/make_icon.py).
+
 ## v18.7 – 2026-11-12
 - Desktop app: bash tools/make_mac_app.sh builds "IQ Savant" on the Desktop with the IQ logo
   (~/Dev/images/IQ RB Paisley Logo.png). Double-click: pulls the latest code, starts the site, opens it.

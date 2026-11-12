@@ -1,10 +1,14 @@
 #!/bin/bash
-# Builds "IQ Savant" on your Desktop with your logo. Run once (and again if you move the folder or change the logo):
-#     bash tools/make_mac_app.sh                        # logo: ~/Dev/images/IQ RB Paisley Logo.png
-#     bash tools/make_mac_app.sh "/path/to/other.png"
+# Builds "IQ Savant" on your Desktop with the IQ icon. Run once (and again if you move the folder):
+#     bash tools/make_mac_app.sh                        # uses tools/IQ_icon.png (rounded IQ logo)
+#     bash tools/make_mac_app.sh "/path/to/new logo.png"  # new logo: rounds the corners + shadow, then builds
 set -e
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
-LOGO="${1:-$HOME/Dev/images/IQ RB Paisley Logo.png}"
+LOGO="$REPO/tools/IQ_icon.png"
+if [ -n "$1" ]; then
+  [ -f "$1" ] || { echo "Logo not found: $1"; exit 1; }
+  "$REPO/.venv/bin/python" "$REPO/tools/make_icon.py" "$1" "$REPO/tools/IQ_icon.png"
+fi
 APP="$HOME/Desktop/IQ Savant.app"
 [ -f "$LOGO" ] || { echo "Logo not found: $LOGO"; exit 1; }
 chmod +x "$REPO/tools/iq_app.sh"
