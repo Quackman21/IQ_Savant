@@ -1,5 +1,12 @@
 # IQ Savant – version history
 
+## v18.9 – 2026-11-12
+- python -m pipeline.power_study (analysis only): which bat speed / exit velo / application metrics predict next
+  season's run value (on contact, ISO, per PA); stability, overlap, step test (bat speed -> application -> exit
+  velo, and reverse), ridge weights (positive, cross-validated by hitter), two-part bat speed + application
+  version, weight stability by season pair, eye test, and an exit-velo-only version by era. EVs adjusted for
+  pitch speed; max EVs adjusted for number of balls in play.
+
 ## v18.8 – 2026-11-12
 - Desktop app syncs on every launch: installs any IQ_Savant_v*.zip in ~/Dev (oldest first, then deletes it),
   runs the tests, commits local changes, downloads the latest from GitHub (keeping local changes on top) and

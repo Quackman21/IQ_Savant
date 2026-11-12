@@ -1,0 +1,117 @@
+IQ POWER STUDY -- which bat speed / exit velocity metrics predict run value, and how much weight each gets
+Regular season. Hitter-seasons with 150+ balls in play (both seasons for next-season tests). Exit velocities adjusted for pitch speed; max EVs adjusted for number of balls in play.
+Bat tracking seasons: 2023, 2024, 2025, 2026
+
+HOW TO READ
+  SPLIT r        odd vs even games, same season: is it a real, stable skill? (higher = better)
+  BIP FOR .70    balls in play before the number is 70% skill
+  NEXT CON r     relation to NEXT season's run value on contact (wOBA on contact) -- the power target
+  NEXT ISO r     relation to next season's ISO on contact (extra-base damage)
+  NEXT PA r      relation to next season's wOBA per plate appearance (includes strikeouts / walks)
+  SAME xCON r    same season vs xwOBA on contact -- shown only to prove the trap: EV metrics look great
+                 here because xwOBA is built from EV. Don't use this column to pick weights.
+  WEIGHT         share of the grade from ridge regression (each metric credited only for what it ADDS)
+
+================================================================================================================
+1. EVERY METRIC ON ITS OWN -- bat tracking seasons (749 hitter season-pairs: 2023->2024, 2024->2025, 2025->2026)
+  METRIC                  GROUP         SPLIT r BIP FOR .70 NEXT CON r NEXT ISO r NEXT PA r SAME xCON r
+  90th EV (Fly)           exit velo        0.83          75       0.60       0.62      0.36        0.82
+  EV (Fly)                exit velo        0.75         125       0.60       0.63      0.38        0.85
+  Blast%                  application      0.78         106       0.59       0.58      0.38        0.80
+  90th EV                 exit velo        0.89          46       0.58       0.58      0.36        0.79
+  HHEV (Top 8th EV)       exit velo        0.92          34       0.58       0.58      0.36        0.77
+  Avg Bat Speed           bat speed        0.98           6       0.56       0.58      0.31        0.66
+  EV>95%                  exit velo        0.75         120       0.56       0.56      0.37        0.82
+  Top 8th Bat Speed       bat speed        0.96          15       0.54       0.55      0.32        0.63
+  Avg EV                  exit velo        0.80          90       0.53       0.54      0.39        0.78
+  Max EV (Fly, BIP-adj)   exit velo        0.74         127       0.52       0.52      0.29        0.64
+  Max EV (BIP-adj)        exit velo        0.74         127       0.52       0.51      0.31        0.63
+  Swing Length            other            0.98           6       0.31       0.40      0.12        0.36
+  Smash (Top 8th)         application      0.57         284      -0.11      -0.15     -0.00       -0.08
+  Squared-Up%             application      0.56         287      -0.14      -0.13      0.04       -0.05
+  Smash Factor            application      0.65         202      -0.15      -0.17      0.04       -0.06
+
+2. HOW THE METRICS OVERLAP (correlation between them; 1.00 = the same information)
+           AvgBS   T8BS    SQ%  Smash  Blast  AvgEV   90EV   HHEV   EV95  EVfly  90fly
+  AvgBS     1.00   0.96  -0.51  -0.56   0.84   0.69   0.89   0.90   0.75   0.77   0.86
+  T8BS      0.96   1.00  -0.51  -0.55   0.80   0.66   0.87   0.88   0.71   0.74   0.84
+  SQ%      -0.51  -0.51   1.00   0.93  -0.15   0.09  -0.30  -0.32  -0.03  -0.06  -0.28
+  Smash    -0.56  -0.55   0.93   1.00  -0.15   0.10  -0.30  -0.32  -0.04  -0.10  -0.29
+  Blast     0.84   0.80  -0.15  -0.15   1.00   0.85   0.93   0.92   0.90   0.89   0.90
+  AvgEV     0.69   0.66   0.09   0.10   0.85   1.00   0.84   0.82   0.93   0.85   0.80
+  90EV      0.89   0.87  -0.30  -0.30   0.93   0.84   1.00   0.99   0.89   0.88   0.96
+  HHEV      0.90   0.88  -0.32  -0.32   0.92   0.82   0.99   1.00   0.87   0.87   0.96
+  EV95      0.75   0.71  -0.03  -0.04   0.90   0.93   0.89   0.87   1.00   0.90   0.85
+  EVfly     0.77   0.74  -0.06  -0.10   0.89   0.85   0.88   0.87   0.90   1.00   0.91
+  90fly     0.86   0.84  -0.28  -0.29   0.90   0.80   0.96   0.96   0.85   0.91   1.00
+
+3. STEP TEST -- how much of next season's run value on contact each layer explains (cross-validated R^2, folds by hitter)
+  Bat speed first (your order):
+    bat speed only           R^2 = 0.302   (adds +0.302)
+    + application            R^2 = 0.344   (adds +0.042)
+    + exit velo metrics      R^2 = 0.375   (adds +0.031)
+  Exit velo first (reverse order):
+    exit velo only           R^2 = 0.370   (adds +0.370)
+    + bat speed              R^2 = 0.375   (adds +0.005)
+    + application            R^2 = 0.375   (adds -0.000)
+  Same steps for next season's ISO on contact and wOBA per PA:
+    ISOcon     bat speed 0.329 | + application 0.366 | + exit velo 0.409
+    wOBA       bat speed 0.089 | + application 0.146 | + exit velo 0.141
+
+4. WEIGHTS (ridge, all positive, each metric credited only for what it adds)
+  METRIC                  GROUP          NEXT CON  NEXT ISO   NEXT PA
+  EV (Fly)                exit velo           36%       49%        7%
+  90th EV (Fly)           exit velo           22%        8%        3%
+  Avg Bat Speed           bat speed           17%       37%        5%
+  Blast%                  application         13%        0%        7%
+  Top 8th Bat Speed       bat speed            7%        0%       24%
+  Squared-Up%             application          3%        7%       13%
+  Max EV (BIP-adj)        exit velo            2%        0%        5%
+  Smash Factor            application          0%        0%       14%
+  Smash (Top 8th)         application          0%        0%        0%
+  Avg EV                  exit velo            0%        0%       17%
+  HHEV (Top 8th EV)       exit velo            0%        0%        3%
+  90th EV                 exit velo            0%        0%        1%
+  EV>95%                  exit velo            0%        0%        2%
+  Max EV (Fly, BIP-adj)   exit velo            0%        0%        0%
+  ------------------------------------------------------------
+  TOTAL bat speed                             23%       37%       29%
+  TOTAL application                           16%        7%       34%
+  TOTAL exit velo                             60%       56%       37%
+
+  Composite with the data's weights:          cross-validated R^2 = 0.375  (r = 0.61)
+  Your prior (bat speed 60%, the rest 40%):  r = 0.60 with next season's run value on contact
+
+  4b. TWO-PART VERSION -- bat speed + application only (exit velo IS bat speed x application, so this
+      asks whether the clean two-part grade loses anything vs using every metric):
+      cross-validated R^2 = 0.344 vs 0.375 with every metric   weights: Blast% 44%, Avg Bat Speed 40%, Squared-Up% 8%, Top 8th Bat Speed 5%, Smash Factor 3%, Smash (Top 8th) 0%
+
+5. ARE THE WEIGHTS STABLE? (fitted on each season pair alone, NEXT CON target; by group)
+    2023->2024 (260 hitters): bat speed 36% | application 21% | exit velo 44%   top: EV (Fly) 29%, Avg Bat Speed 21%, Top 8th Bat Speed 15%
+    2024->2025 (242 hitters): bat speed 18% | application 35% | exit velo 48%   top: Blast% 29%, EV (Fly) 27%, 90th EV (Fly) 18%
+    2025->2026 (247 hitters): bat speed 5% | application 0% | exit velo 95%   top: EV (Fly) 44%, 90th EV (Fly) 32%, Max EV (BIP-adj) 10%
+
+6. 2026 EYE TEST -- composite power grade with the data's weights (20-80, 150+ BIP)
+  top:    James Wood 78 | Nick Kurtz 77 | Oneil Cruz 75 | Aaron Judge 74 | Munetaka Murakami 73 | Junior Caminero 73 | Jac Caglianone 72 | Elly De La Cruz 72 | Garrett Mitchell 71 | Fernando Tatis Jr. 71
+  bottom: Nicky Lopez 28 | Christian Vázquez 27 | Luis Arraez 25 | Steven Kwan 20 | Tyler Heineman 18 | Chandler Simpson 15
+
+================================================================================================================
+7. EXIT-VELO-ONLY VERSION (seasons / levels without bat tracking), by era, NEXT CON target
+  2015-2022 (1372 pairs, cross-validated R^2 = 0.300):
+    EV (Fly)                 on its own r = 0.53   weight  32%
+    90th EV (Fly)            on its own r = 0.54   weight  31%
+    Avg EV                   on its own r = 0.50   weight  19%
+    Max EV (Fly, BIP-adj)    on its own r = 0.47   weight   7%
+    90th EV                  on its own r = 0.52   weight   6%
+    EV>95%                   on its own r = 0.50   weight   3%
+    HHEV (Top 8th EV)        on its own r = 0.51   weight   2%
+    Max EV (BIP-adj)         on its own r = 0.45   weight   0%
+  2023+ (749 pairs, cross-validated R^2 = 0.370):
+    EV (Fly)                 on its own r = 0.60   weight  49%
+    90th EV (Fly)            on its own r = 0.60   weight  35%
+    Max EV (BIP-adj)         on its own r = 0.52   weight  11%
+    HHEV (Top 8th EV)        on its own r = 0.58   weight   3%
+    90th EV                  on its own r = 0.58   weight   1%
+    Avg EV                   on its own r = 0.53   weight   1%
+    EV>95%                   on its own r = 0.56   weight   0%
+    Max EV (Fly, BIP-adj)    on its own r = 0.52   weight   0%
