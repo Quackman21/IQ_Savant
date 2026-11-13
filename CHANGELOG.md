@@ -1,5 +1,23 @@
 # IQ Savant – version history
 
+## v19.7 – 2026-11-13
+- Ball Flight study keeps the other grades OUT of ball flight:
+  * FLIGHT PERCENTILE (new core candidate): each ball's angle + direction ranked among all balls hit exactly that
+    hard, so power can't magnify it (in the simulation: far steadier than flight runs, ~120 vs ~520 BIP to trust).
+  * Angle-only versions of FB% / GB% / pop-up% / AirPull% / Pull-Air% (no exit-velo cut-offs, which let power
+    back in), Sweet Spot% (8-32 deg), LA consistency.
+  * Leak checks vs the other grades' ingredients (90th EV, bat speed, contact, chase) for every metric.
+  * Every test now holds power, contact and chase equal, so a metric only gets credit for what the other three
+    grades can't explain.
+
+## v19.6 – 2026-11-13
+- python -m pipeline.flight_study (analysis only): how much of a hitter's run value comes from his BALL FLIGHT
+  with bat speed / exit velo taken out. FLIGHT RUNS = each ball's SAxwOBA minus an average ball hit exactly that
+  hard. Where flight runs come from (batted-ball type x direction), every metric on its own (flight runs + the
+  app's 11: GB%, FB%, WEAK FB%, LD%, LD+FB%, PULL%, MIDDLE%, OPPO%, AIRPULL%, FB-PULL%, PULL-AIR%, + LA on hard-hit
+  balls) vs next season's actual flight value and runs with tools held equal, whether the 11 add anything, the
+  data's weights, eye test. Pushes its results to GitHub when done.
+
 ## v19.5 – 2026-11-12
 - Decision Grade + 0-0 / <2k / 2k / FB / BB / OS Decision Grades are live (Core 4 + Swing Decisions tabs), built on
   the RUN VALUE of decisions (decision study): DEC RUNS/100 55% | chase + waste swing% before 2 strikes 15% (low) |
