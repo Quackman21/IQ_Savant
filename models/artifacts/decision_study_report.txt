@@ -1,0 +1,166 @@
+IQ DECISION STUDY -- the run value of swing / take decisions: where it comes from and how to grade it
+Regular season. Hitter-seasons with 1,000+ graded decisions. DEC RUNS = runs of his choice vs what an average hitter does on that same pitch.
+
+HOW TO READ
+  RUNS/SZN        typical hitter's decision runs from that piece over a season (league average is ~0 overall)
+  REL r           odd vs even games: do hitters really differ there?
+  AT STAKE        top-10% vs bottom-10% hitter there, runs per season
+  SKILL SHARE     share of the REAL (repeatable) differences in total decision runs from that piece
+  PITCHES .70     graded decisions before the number is 70% skill
+  NEXT RUNS|TOOLS NEXT season's wOBA with power + contact held equal: do better decisions mean more runs
+                  for the same tools? (the main target)
+  NEXT BB / -K    next season's walk rate / strikeouts avoided;  NEXT SELF  next season's same number
+
+======================================================================================================================
+2015-2022
+
+1. WHERE DECISION RUNS COME FROM
+  Total DEC RUNS/100: odd vs even r = 0.85;  top-10% vs bottom-10% hitter = 24.0 runs a season
+
+  By zone and swing / take (adds up to the total)
+  PIECE                              RUNS/SZN  REL r  AT STAKE  SKILL SHARE
+  Heart swings                           +2.2   0.31       0.6           0%
+  Heart takes                            -1.9   0.39       1.9          -2%
+  Shadow swings                          -3.3   0.51       2.7           8%
+  Shadow takes                           +3.4   0.43       3.1           9%
+  Chase swings                          -13.1   0.75       8.7          34%
+  Chase takes                           +12.9   0.72       7.2          27%
+  Waste swings                           -4.4   0.66       5.4          20%
+  Waste takes                            +4.3   0.44       1.9           4%
+
+  By count (adds up to the total)
+  PIECE                              RUNS/SZN  REL r  AT STAKE  SKILL SHARE
+  0-0                                    +0.1   0.68       3.1          10%
+  Hitter's counts                        -0.1   0.73       6.7          24%
+  Other counts <2k                       +0.1   0.77       5.8          23%
+  Two strikes                            +0.1   0.66      11.4          43%
+
+  By pitch type (adds up to the total)
+  PIECE                              RUNS/SZN  REL r  AT STAKE  SKILL SHARE
+  Fastballs                              +0.1   0.78      12.9          48%
+  Breaking                               +0.1   0.73       9.8          36%
+  Offspeed                               -0.0   0.61       4.6          16%
+
+  Specific pieces you asked about
+  PIECE                              RUNS/SZN  REL r  AT STAKE  SKILL SHARE
+  Heart takes in hitter's counts         -0.0   0.11       0.1          -0%
+  Chase+waste swings <2k                 -8.4   0.79       7.5          28%
+  Chase+waste swings 2k                  -9.0   0.66       7.1          26%
+
+2. EVERY METRIC ON ITS OWN  (1163 hitter season-pairs)
+  METRIC                    REL r PITCHES .70 NEXT RUNS|TOOLS  NEXT BB  NEXT -K NEXT SELF
+  Heart-minus-chase gap      0.72         779            0.10     0.43    -0.19          
+  DEC QUAL                   0.80         478            0.08     0.63     0.02      0.81
+  DEC RUNS/100               0.84         380            0.08     0.58    -0.05      0.84
+  GD%                        0.78         562            0.08     0.61    -0.02      0.81
+  Pre2k O-Swing% (low)       0.81         454            0.06     0.57     0.06          
+  H-Swing%                   0.74         679            0.06    -0.08    -0.17          
+  C-Swing% (low)             0.80         477            0.06     0.61    -0.07          
+  W-Swing% (low)             0.66         999            0.05     0.56    -0.03          
+  2k O-Swing% (low)          0.75         651            0.04     0.56    -0.30          
+  S-Swing%                   0.81         469           -0.01    -0.43    -0.01          
+  SWING% (not used)          0.87         280           -0.04    -0.58     0.01          
+
+3. GRADE MIXES HEAD TO HEAD (each metric standardized; higher = better)
+  MIX                                                        RUNS|TOOLS     BB     -K  SELF DR  2015>16  2016>17  2017>18  2018>19  2019>20  2020>21  2021>22
+  A  GD% core: GD 50 | H 20 | chase 20 | waste 10                 0.088  0.613 -0.082    0.798    0.114    0.062    0.194    0.163   -0.140   -0.108    0.079
+  B  RUNS core: DR/100 50 | H 20 | chase 20 | waste 10            0.088  0.591 -0.098    0.817    0.133    0.063    0.198    0.163   -0.101   -0.190    0.106
+  C  RUNS core, chase by count EQUAL (pre2k 10 / 2k 10)           0.090  0.593 -0.114    0.810    0.141    0.067    0.199    0.167   -0.097   -0.184    0.108
+  D  RUNS core, 2k chase HEAVIER (pre2k 5 / 2k 15)                0.088  0.589 -0.137    0.801    0.140    0.071    0.199    0.163   -0.097   -0.192    0.103
+  E  RUNS core, pre2k chase HEAVIER (pre2k 15 / 2k 5)             0.091  0.595 -0.091    0.817    0.140    0.062    0.198    0.171   -0.098   -0.176    0.113
+  F  RUNS core + gap: DR/100 60 | gap 40                          0.095  0.581 -0.116    0.789    0.146    0.089    0.204    0.176   -0.077   -0.177    0.112
+  G  DEC RUNS/100 only                                            0.078  0.581 -0.048    0.843    0.118    0.013    0.182    0.147   -0.111   -0.253    0.103
+  H  GD% only                                                     0.078  0.611 -0.022    0.809    0.090    0.011    0.175    0.146   -0.169   -0.139    0.061
+  I  DEC QUAL only                                                0.085  0.629  0.022    0.789    0.070    0.011    0.178    0.139   -0.172   -0.168    0.088
+  J  the data's own weights (runs | tools)                        0.116  0.465 -0.132    0.550    0.148    0.170    0.201    0.200    0.060    0.052    0.133
+  data's weights: H-Swing% 45%, DEC QUAL 32%, Heart-minus-chase gap 7%, Pre2k O-Swing% (low) 7%, DEC RUNS/100 5%, GD% 4%
+
+4. COUNT / PITCH-TYPE SPLITS -- how fast each split becomes real skill (sets their regression)
+  SPLIT      PITCHES/SZN  DR/100 REL r  DR/100 PITCHES .70  GD% REL r  GD% PITCHES .70
+  0-0                470          0.68                 239       0.39              767
+  <2k              1,302          0.85                 244       0.72              526
+  2k                 533          0.65                 306       0.59              394
+  FB               1,090          0.77                 350       0.67              567
+  BB                 500          0.71                 220       0.64              303
+  OS                 219          0.56                 194       0.50              252
+
+5. 2022 EYE TEST -- mix B (decision runs core), 1,000+ graded decisions
+  top:    Cavan Biggio 75 (+13 runs) | Brandon Nimmo 70 (+26 runs) | Alex Bregman 69 (+20 runs) | Chris Taylor 69 (+15 runs) | Kyle Tucker 68 (+12 runs) | Andrew McCutchen 68 (+18 runs) | Yandy Díaz 68 (+19 runs) | Juan Soto 67 (+25 runs)
+  bottom: Jorge Alfaro 27 (-11 runs) | Jose Trevino 27 (-9 runs) | Jose Iglesias 25 (-14 runs) | Oscar Gonzalez 24 (-15 runs) | Javier Báez 14 (-30 runs) | Francisco Mejía 10 (-18 runs)
+
+======================================================================================================================
+2023+
+
+1. WHERE DECISION RUNS COME FROM
+  Total DEC RUNS/100: odd vs even r = 0.86;  top-10% vs bottom-10% hitter = 23.7 runs a season
+
+  By zone and swing / take (adds up to the total)
+  PIECE                              RUNS/SZN  REL r  AT STAKE  SKILL SHARE
+  Heart swings                           +2.5   0.32       0.6           1%
+  Heart takes                            -2.3   0.40       2.0          -2%
+  Shadow swings                          -2.7   0.53       2.7           9%
+  Shadow takes                           +2.9   0.39       2.9           8%
+  Chase swings                          -13.0   0.73       8.4          34%
+  Chase takes                           +13.1   0.71       7.1          27%
+  Waste swings                           -4.4   0.71       5.6          21%
+  Waste takes                            +4.4   0.43       1.8           3%
+
+  By count (adds up to the total)
+  PIECE                              RUNS/SZN  REL r  AT STAKE  SKILL SHARE
+  0-0                                    +0.1   0.73       3.2          11%
+  Hitter's counts                        +0.1   0.69       6.1          22%
+  Other counts <2k                       +0.1   0.77       5.6          22%
+  Two strikes                            +0.1   0.70      11.7          45%
+
+  By pitch type (adds up to the total)
+  PIECE                              RUNS/SZN  REL r  AT STAKE  SKILL SHARE
+  Fastballs                              +0.2   0.78      12.5          45%
+  Breaking                               +0.2   0.76      10.3          38%
+  Offspeed                               +0.0   0.61       4.8          17%
+
+  Specific pieces you asked about
+  PIECE                              RUNS/SZN  REL r  AT STAKE  SKILL SHARE
+  Heart takes in hitter's counts         -0.1   0.12       0.1          -0%
+  Chase+waste swings <2k                 -8.2   0.81       7.3          28%
+  Chase+waste swings 2k                  -9.2   0.69       7.3          27%
+
+2. EVERY METRIC ON ITS OWN  (682 hitter season-pairs)
+  METRIC                    REL r PITCHES .70 NEXT RUNS|TOOLS  NEXT BB  NEXT -K NEXT SELF
+  Heart-minus-chase gap      0.73         755            0.10     0.37    -0.15          
+  2k O-Swing% (low)          0.74         751            0.07     0.53    -0.27          
+  H-Swing%                   0.76         648            0.07    -0.14    -0.14          
+  GD%                        0.79         550            0.06     0.58    -0.01      0.78
+  DEC QUAL                   0.83         440            0.06     0.60     0.03      0.82
+  DEC RUNS/100               0.84         388            0.05     0.58    -0.01      0.73
+  C-Swing% (low)             0.81         482            0.04     0.60    -0.05          
+  W-Swing% (low)             0.69         928            0.04     0.51     0.02          
+  S-Swing%                   0.83         436            0.03    -0.46    -0.00          
+  Pre2k O-Swing% (low)       0.84         394            0.03     0.56     0.07          
+  SWING% (not used)          0.89         255           -0.02    -0.56     0.01          
+
+3. GRADE MIXES HEAD TO HEAD (each metric standardized; higher = better)
+  MIX                                                        RUNS|TOOLS     BB     -K  SELF DR  2023>24  2024>25  2025>26
+  A  GD% core: GD 50 | H 20 | chase 20 | waste 10                 0.075  0.574 -0.053    0.721    0.090    0.149   -0.034
+  B  RUNS core: DR/100 50 | H 20 | chase 20 | waste 10            0.070  0.573 -0.055    0.717    0.099    0.133   -0.039
+  C  RUNS core, chase by count EQUAL (pre2k 10 / 2k 10)           0.073  0.578 -0.071    0.717    0.104    0.136   -0.039
+  D  RUNS core, 2k chase HEAVIER (pre2k 5 / 2k 15)                0.075  0.574 -0.094    0.707    0.108    0.142   -0.043
+  E  RUNS core, pre2k chase HEAVIER (pre2k 15 / 2k 5)             0.070  0.579 -0.048    0.724    0.100    0.130   -0.036
+  F  RUNS core + gap: DR/100 60 | gap 40                          0.079  0.556 -0.076    0.694    0.112    0.146   -0.041
+  G  DEC RUNS/100 only                                            0.053  0.578 -0.011    0.725    0.082    0.104   -0.033
+  H  GD% only                                                     0.062  0.584 -0.009    0.736    0.068    0.130   -0.025
+  I  DEC QUAL only                                                0.058  0.600  0.032    0.737    0.081    0.100   -0.024
+  J  the data's own weights (runs | tools)                        0.102  0.380 -0.177    0.463    0.140    0.178   -0.046
+  data's weights: H-Swing% 35%, Heart-minus-chase gap 26%, 2k O-Swing% (low) 15%, DEC QUAL 14%, GD% 10%, DEC RUNS/100 1%
+
+4. COUNT / PITCH-TYPE SPLITS -- how fast each split becomes real skill (sets their regression)
+  SPLIT      PITCHES/SZN  DR/100 REL r  DR/100 PITCHES .70  GD% REL r  GD% PITCHES .70
+  0-0                466          0.71                 214       0.42              726
+  <2k              1,260          0.85                 261       0.74              509
+  2k                 550          0.68                 296       0.61              401
+  FB               1,014          0.76                 366       0.69              510
+  BB                 557          0.74                 223       0.69              293
+  OS                 245          0.57                 217       0.49              305
+
+5. 2026 EYE TEST -- mix B (decision runs core), 1,000+ graded decisions
+  top:    Austin Martin 72 (+8 runs) | Taylor Ward 71 (+23 runs) | Gleyber Torres 71 (+10 runs) | Kevin McGonigle 70 (+17 runs) | Juan Soto 69 (+12 runs) | Miguel Vargas 69 (+13 runs) | Kyle Tucker 69 (+10 runs) | George Springer 68 (+10 runs)
+  bottom: Ernie Clement 27 (-22 runs) | Ceddanne Rafaela 27 (-23 runs) | Angel Martínez 25 (-17 runs) | Jake Mangum 25 (-20 runs) | Salvador Perez 23 (-29 runs) | Michael Harris II 20 (-29 runs)
