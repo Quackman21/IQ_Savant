@@ -1,5 +1,10 @@
 # IQ Savant – version history
 
+## v20.0.1 – 2026-11-13
+- Fix: defense study crashed scoring framing on the PC ("operation 'sub' not supported for dtype 'str'"). A
+  2015-2022 season has no 2023+ rows, and that empty slice came back as text on some pandas 3 builds. Empty eras are
+  now skipped and every count value is cast to a number before subtracting.
+
 ## v20.0 – 2026-11-13
 - Fielding tool grades (20-80, regressed for sample size, hover for the why) -- only what public data MEASURES:
   * Infield Range / Conversion / Ball Security (our fielding model, any period). Range + Conversion = OPA:

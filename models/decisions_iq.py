@@ -141,7 +141,7 @@ def load() -> dict | None:
 
 
 def _look(table: dict, keys: pd.Series, fallback: pd.Series | float) -> pd.Series:
-    v = keys.map(table).astype(float)
+    v = pd.to_numeric(keys.map(table), errors="coerce").astype(float)
     return v.fillna(fallback) if isinstance(fallback, pd.Series) else v.fillna(fallback)
 
 
@@ -231,7 +231,8 @@ def _by_era(df: pd.DataFrame, b: dict):
     if "eras" not in b:
         return [(pd.Series(True, index=df.index), b)]
     yr = pd.to_datetime(df["game_date"]).dt.year if "game_date" in df else pd.Series(9999, index=df.index)
-    return [(m, b["eras"][e]) for e, m in (("pre", yr < b["split"]), ("post", yr >= b["split"])) if b["eras"].get(e)]
+    return [(m, b["eras"][e]) for e, m in (("pre", yr < b["split"]), ("post", yr >= b["split"]))
+            if b["eras"].get(e) and m.any()]
 
 
 def called_strike_chance(df: pd.DataFrame, bundle: dict | None = None) -> pd.Series:
@@ -276,6 +277,7 @@ def strike_value(df: pd.DataFrame, bundle: dict | None = None) -> pd.Series:
     cnt = state(df)["count"]
     for m, sub in _by_era(df, b):
         t = sub["tables"]["count"]
-        out[m] = (cnt[m].map(t["ball"]) - cnt[m].map(t["strike"])).astype(float)
+        # cast each side first: some pandas 3 builds hand back a 'str' dtype from .map, and str - str fails
+        out[m] = cnt[m].map(t["ball"]).astype(float) - cnt[m].map(t["strike"]).astype(float)
     return out
 
