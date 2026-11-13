@@ -958,7 +958,9 @@ if main == "Summary":
         for tab, name in zip(tabs, dfn.TABS[grp]):
             with tab:
                 show(defense_table(dfn.TABS[grp][name], rows_d))
-        st.caption("DRS, RS, OPA / FPA / CPA, stars and the Range / Conversion / Ball Security grades come from our "
+        st.caption("*DRS\\* is IQ's own estimate, built the way DRS is from public Statcast -- it doesn't know where the "
+                   "fielder was standing or SIS's video-charted good plays / misplays, so it won't match published DRS.* "
+                   "DRS, RS, OPA / FPA / CPA, stars and the Range / Conversion / Ball Security grades come from our "
                    "fielding model (any period; needs python -m pipeline.train_fielding + the data update). Arm and "
                    "jump grades and the Statcast columns (OAA, FRV, jump, pop time) are full seasons only. Grades left "
                    "blank need tracking data that isn't public -- we don't use stand-ins. Hover a grade for why.")

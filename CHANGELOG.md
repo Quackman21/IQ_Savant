@@ -1,5 +1,16 @@
 # IQ Savant – version history
 
+## v20.1 – 2026-11-13
+- DRS is now labeled DRS* everywhere (with a disclaimer on hover + the page note): it's IQ's estimate, built the
+  way DRS is from public Statcast, without fielder positioning or SIS's video-charted good plays / misplays.
+- Fielding grade scale fix: v20.0 divided by the spread of RAW season rates, which still includes the noise the
+  regression already removed, so grades got squeezed twice (one infield season topped out ~57). Grades now use the
+  spread of TRUE talent ('talent' scale). The comparison study prints raw / talent / rank so you can pick.
+- python -m pipeline.fielding_compare_study: ours vs Statcast OAA (downloaded + cached) vs SIS DRS (any
+  data/compare/drs_<year>.csv you save) -- same-season agreement, which predicts next season best (each judged on
+  the others, not itself), the best ours/OAA Range blend, the three grade scales with names, and the biggest
+  disagreements. Pushes results to GitHub and opens the report.
+
 ## v20.0.1 – 2026-11-13
 - Fix: defense study crashed scoring framing on the PC ("operation 'sub' not supported for dtype 'str'"). A
   2015-2022 season has no 2023+ rows, and that empty slice came back as text on some pandas 3 builds. Empty eras are

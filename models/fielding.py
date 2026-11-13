@@ -317,6 +317,7 @@ GRADE_FILE = Path(__file__).resolve().parent.parent / "data" / "league" / "field
 # (it writes data/league/fielding_grades.json, which overrides these).
 FOR_70 = {"range": 250, "conv": 300, "sec": 600}
 MIN_GRADE_N = {"range": 25, "conv": 20, "sec": 20}
+GRADE_SCALE = "talent"         # see scale_factor; the fielding comparison study prints all three to choose from
 # (stat, numerator, denominator) -- Range per responsible play, Conversion / Ball Security per ball he fielded
 GRADE_STATS = {"range": ("_RNG", "_N"), "conv": ("_CONV", "_CONV_N"), "sec": ("_SEC", "_CONV_N")}
 GRADE_KEYS = {"IF": {"range": "RANGE_GRADE", "conv": "CONVERSION_GRADE", "sec": "BALL_SECURITY_GRADE"},
@@ -344,22 +345,35 @@ def grade_spread(daily: pd.DataFrame, positions: list[int], min_inn: float = 300
     for stat in GRADE_STATS:
         xs = [_rate(v, stat)[0] for v in s.values() if v["IQ_INN"] >= min_inn]
         xs = pd.Series(xs, dtype=float).dropna()
+        ns = pd.Series([_rate(v, stat)[1] for v in s.values() if v["IQ_INN"] >= min_inn], dtype=float)
         if len(xs) >= 15 and xs.std() > 0:
-            out[stat] = (float(xs.mean()), float(xs.std()))
+            out[stat] = (float(xs.mean()), float(xs.std()), float(ns.median()))
     return out
 
 
-def grades(v: dict, spread: dict, group: str) -> dict:
+def scale_factor(n_typical: float, k: float, scale: str) -> float:
+    """What one grade spread (10 points) means. 'raw' (v20.0): the spread of raw season rates -- includes the noise
+    the regression already removed, so grades get squeezed twice (one infield season barely leaves 41-59).
+    'talent': the spread of TRUE talent (raw spread x sqrt(reliability of a regular's season)) -- a real +2-spread
+    defender grades 70 once his sample earns it. 'rank': the spread of a regular's regressed season -- regulars land
+    on the same 20-80 spread as the hitting grades; part-timers are still pulled toward 50."""
+    rel = n_typical / (n_typical + k) if n_typical else 1.0
+    return {"raw": 1.0, "talent": rel ** 0.5, "rank": rel}.get(scale, 1.0)
+
+
+def grades(v: dict, spread: dict, group: str, scale: str | None = None) -> dict:
     """Range / Conversion / Ball Security grades (infield) or Range (outfield) for one player's summary row,
     regressed by his own sample: 50 = average MLB regular at the position, 10 = one spread."""
     out, k70 = {}, _for70()
+    scale = scale or GRADE_SCALE
     for stat, key in GRADE_KEYS[group].items():
         x, n = _rate(v, stat)
         if stat not in spread or x != x or n < MIN_GRADE_N[stat]:
             continue
-        mean, sd = spread[stat]
-        shrink = n / (n + k70.get(f"{stat}_{group}", k70[stat]) * 0.3 / 0.7)
-        out[key] = 50 + 10 * (x - mean) * shrink / sd
+        mean, sd, *rest = spread[stat]
+        k = k70.get(f"{stat}_{group}", k70[stat]) * 0.3 / 0.7
+        shrink = n / (n + k)
+        out[key] = 50 + 10 * (x - mean) * shrink / (sd * scale_factor(rest[0] if rest else n, k, scale))
         unit = "plays" if stat == "range" else "balls fielded"
         out[key + "_PARTS"] = f"{100 * x:+.1f} outs per 100 {unit} vs average | {int(n)} {unit}, " \
                               f"{100 * shrink:.0f}% trusted"
