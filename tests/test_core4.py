@@ -13,9 +13,10 @@ def test_row_order_months_then_season_last():
     assert order == ["2026-post", "2026-wk", "2026-30", "2026-09", "2026-04", "2026", "2025-08", "2025"]
 
 
-def test_grades_blank_until_models():
+def test_all_core4_grades_built():
     built = {"BAT SPEED GRADE", "SC BAT SPEED GRADE", "B2B GRADE", "DECISION GRADE", "0-0 DECISION GRADE",
-             "<2K DECISION GRADE", "2K DECISION GRADE", "FB DECISION GRADE", "BB DECISION GRADE", "OS DECISION GRADE"}
+             "<2K DECISION GRADE", "2K DECISION GRADE", "FB DECISION GRADE", "BB DECISION GRADE", "OS DECISION GRADE",
+             "BALL FLIGHT GRADE"}
     assert all(g.stat is None for k, g in c4.GRADES.items() if k not in built)
     v, z = c4.grade("BAT SPEED GRADE", {"_POWER_Z": 1.5}, {}, "20-80")
     assert v == 65 and z == 1.5

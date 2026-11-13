@@ -1,5 +1,14 @@
 # IQ Savant – version history
 
+## v19.8 – 2026-11-13
+- BALL FLIGHT GRADE is live -- the Core 4 is complete. How well he steers the ball, with exit velo kept OUT:
+  AirPull% 40% | Air% (10-50 deg) 25% | Pull-Air% 15% | launch-angle consistency 20%. Angle + direction only (no
+  exit-velo cut-offs, no xwOBA), so bat speed and contact can't leak in. Weights = the study's AirPull-heavy mix
+  (within ~.01 of the data's best fit). Each piece regressed by its own BIP-for-.70 (210 / 310 / 390 / 410), graded
+  vs MLB-qualified hitters; hover shows each ingredient's grade + his actual rate.
+- python -m pipeline.flight_ref (refs for every season, --top 2025 2026 eye test with Raleigh + PCA called out);
+  pipeline.update rebuilds it with the other grades.
+
 ## v19.7 – 2026-11-13
 - Ball Flight study keeps the other grades OUT of ball flight:
   * FLIGHT PERCENTILE (new core candidate): each ball's angle + direction ranked among all balls hit exactly that

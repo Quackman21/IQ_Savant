@@ -75,6 +75,11 @@ def main(argv: list[str]) -> None:
             decision_ref.build(season)              # Decision Grade references for that season
         except Exception as e:
             print(f"[{season}] Decision Grade reference skipped: {e}", flush=True)
+        try:
+            from pipeline import flight_ref
+            flight_ref.build(season)                # Ball Flight Grade reference for that season
+        except Exception as e:
+            print(f"[{season}] Ball Flight Grade reference skipped: {e}", flush=True)
     if "--no-push" in argv:
         return
     _git("add", "data/league")          # includes power_<year>.json

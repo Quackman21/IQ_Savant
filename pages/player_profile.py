@@ -119,10 +119,20 @@ def contact_ref_for(season: int) -> dict | None:
     return contact.load_ref(season)
 
 
+@st.cache_data(ttl=3600, show_spinner=False)
+def flight_ref_for(season: int) -> dict | None:
+    from models import flight_grade
+    return flight_grade.load_ref(season)
+
+
 def with_power(vals: pd.Series, raw: pd.DataFrame, season: int, prepped: pd.DataFrame | None = None) -> pd.Series:
-    """Add the model grades (Bat Speed, SC Bat Speed, Bat-To-Ball) to a Core 4 row."""
-    from models import contact, power
+    """Add the model grades (Bat Speed, SC Bat Speed, Bat-To-Ball, Decision, Ball Flight) to a Core 4 row."""
+    from models import contact, flight_grade, power
     extra = {}
+    try:
+        extra.update(flight_grade.score(raw, flight_ref_for(season)))
+    except Exception:
+        pass
     try:
         extra.update(power.score(raw, power_ref_for(season)))
     except Exception:
