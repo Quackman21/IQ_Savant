@@ -108,12 +108,18 @@ def power_ref_for(season: int) -> dict | None:
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
+def decision_ref_for(season: int) -> dict | None:
+    from models import decision_grade
+    return decision_grade.load_ref(season)
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
 def contact_ref_for(season: int) -> dict | None:
     from models import contact
     return contact.load_ref(season)
 
 
-def with_power(vals: pd.Series, raw: pd.DataFrame, season: int) -> pd.Series:
+def with_power(vals: pd.Series, raw: pd.DataFrame, season: int, prepped: pd.DataFrame | None = None) -> pd.Series:
     """Add the model grades (Bat Speed, SC Bat Speed, Bat-To-Ball) to a Core 4 row."""
     from models import contact, power
     extra = {}
@@ -125,6 +131,13 @@ def with_power(vals: pd.Series, raw: pd.DataFrame, season: int) -> pd.Series:
         extra.update(contact.score(raw, contact_ref_for(season)))
     except Exception:
         pass
+    if prepped is not None and "druns" in prepped:          # decision runs come from IQ Swing Decisions (prep)
+        try:
+            from models import decision_grade
+            extra.update(decision_grade.score(raw, prepped["druns"], prepped["dq_n"].astype(bool),
+                                              decision_ref_for(season)))
+        except Exception:
+            pass
     if not extra:
         return vals
     vals = vals.copy()
@@ -681,7 +694,7 @@ if main == "Summary":
                 lead = describe(part, per.season, plabel, mid)
                 lead["Team"] = team
                 rows_c4.append({"lead": lead, "vals": with_power(hm.compute(g_).iloc[0], part.loc[g_.index],
-                                                                 per.season), "ref": ref_y,
+                                                                 per.season, g_), "ref": ref_y,
                                 "season_row": per.kind == "season"})
         if agg == "Combined" and chunks:
             allp = pd.concat(chunks)
@@ -700,7 +713,7 @@ if main == "Summary":
                 lead = describe(allp, label_year, "Combined", mid)
                 lead["Team"] = team
                 rows_c4.append({"lead": lead, "vals": with_power(hm.compute(g_).iloc[0], allp.loc[g_.index],
-                                                                 yrs[-1]), "ref": ref_y})
+                                                                 yrs[-1], g_), "ref": ref_y})
 
         ctx = {"player": f'{b["first"]} {b["last"]}', "season_label": str(TODAY.year)}
         data_note({p_.season for p_ in periods})

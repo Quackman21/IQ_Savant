@@ -38,13 +38,13 @@ GRADES = {g.key: g for g in [
           "Z-Cont% over expected 20% | Cont% 15% | Heart Cont% 10% | Chase Cont% 10%]\nOver expected = each swing vs "
           "how often an average hitter makes contact on that pitch, so a whiff over the heart costs the most. "
           "Regressed for sample size; hover a grade for each ingredient."),
-    Grade("DECISION GRADE", "Decision Grade", None, "20-80 Grade, Swing Decision\n[from rate of good decisions]"),
-    Grade("0-0 DECISION GRADE", "0-0 Decision Grade", None, "20-80 Grade, Swing Decision on first pitch"),
-    Grade("<2K DECISION GRADE", "<2k Decision Grade", None, "20-80 Grade, Swing Decision with less than two strikes"),
-    Grade("2K DECISION GRADE", "2k Decision Grade", None, "20-80 Grade, Swing Decision with two strikes"),
-    Grade("FB DECISION GRADE", "FB Decision Grade", None, "20-80 Grade, Swing Decision on fastballs"),
-    Grade("BB DECISION GRADE", "BB Decision Grade", None, "20-80 Grade, Swing Decision on breaking balls"),
-    Grade("OS DECISION GRADE", "OS Decision Grade", None, "20-80 Grade, Swing Decision on offspeed"),
+    Grade("DECISION GRADE", "Decision Grade", "_DEC_Z", "20-80 Grade, Swing Decisions, built on their RUN VALUE\n[DEC RUNS/100 55% | chase + waste swing% before 2 strikes 15% (low) | with 2 strikes 15% (low) | heart-minus-chase gap 15%]\nSwing rate itself never counts. Regressed for sample size; hover a grade for each ingredient."),
+    Grade("0-0 DECISION GRADE", "0-0 Decision Grade", "_DEC00_Z", "20-80 Grade, Swing Decisions on the first pitch\n[same mix, first pitches only; no 2-strike piece]"),
+    Grade("<2K DECISION GRADE", "<2k Decision Grade", "_DECLT2_Z", "20-80 Grade, Swing Decisions with less than two strikes\n[same mix; no 2-strike piece]"),
+    Grade("2K DECISION GRADE", "2k Decision Grade", "_DEC2K_Z", "20-80 Grade, Swing Decisions with two strikes\n[same mix; no early-count piece]"),
+    Grade("FB DECISION GRADE", "FB Decision Grade", "_DECFB_Z", "20-80 Grade, Swing Decisions on fastballs\n[same mix]"),
+    Grade("BB DECISION GRADE", "BB Decision Grade", "_DECBB_Z", "20-80 Grade, Swing Decisions on breaking balls\n[same mix]"),
+    Grade("OS DECISION GRADE", "OS Decision Grade", "_DECOS_Z", "20-80 Grade, Swing Decisions on offspeed\n[same mix]"),
     Grade("BALL FLIGHT GRADE", "Ball Flight Grade", None, "20-80 Grade, Ball Flight\n[from xwOBA on contact]"),
 ]}
 

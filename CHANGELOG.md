@@ -1,5 +1,14 @@
 # IQ Savant – version history
 
+## v19.5 – 2026-11-12
+- Decision Grade + 0-0 / <2k / 2k / FB / BB / OS Decision Grades are live (Core 4 + Swing Decisions tabs), built on
+  the RUN VALUE of decisions (decision study): DEC RUNS/100 55% | chase + waste swing% before 2 strikes 15% (low) |
+  with 2 strikes 15% (low) | heart-minus-chase gap 15%. Swing rate never counts. Splits use the same mix inside the
+  situation (no 2-strike piece for 0-0 / <2k, no early piece for 2k). Regressed by each split's sample (from the
+  study); graded vs MLB-qualified hitters in that same split; blank under a minimum. Hover for each ingredient.
+- python -m pipeline.decision_ref builds data/league/decision_<year>.json (--top <year> = eye test);
+  pipeline.update keeps the current season fresh.
+
 ## v19.4 – 2026-11-12
 - python -m pipeline.decision_study (analysis only), built around the RUN VALUE of swing / take decisions:
   where each hitter's decision runs come from (zone x swing / take, heart takes in hitter's counts, chase + waste
