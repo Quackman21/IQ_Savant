@@ -1,5 +1,10 @@
 # IQ Savant – version history
 
+## v20.1.1 – 2026-11-13
+- python -m pipeline.fetch_drs: saves SIS DRS (as published on FanGraphs, with rPM range/positioning and rGFP good
+  plays/misplays) to data/compare/drs_<year>.csv for 2016-now, for the fielding comparison study. Fieldingbible.com
+  has no download; if FanGraphs blocks the script it prints the copy-paste fallback.
+
 ## v20.1 – 2026-11-13
 - DRS is now labeled DRS* everywhere (with a disclaimer on hover + the page note): it's IQ's estimate, built the
   way DRS is from public Statcast, without fielder positioning or SIS's video-charted good plays / misplays.

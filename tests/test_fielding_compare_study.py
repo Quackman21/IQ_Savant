@@ -38,3 +38,20 @@ def test_scale_factor_orders():
     v = {"_N": 450, "_RNG": 9, "_CONV_N": 0}
     g = {s: fm.grades(v, spread, "IF", scale=s)["RANGE_GRADE"] for s in ("raw", "talent", "rank")}
     assert g["raw"] < g["talent"] < g["rank"]
+
+
+def test_fetch_drs_saves_fangraphs_format(monkeypatch, tmp_path):
+    import sys
+    import types
+    from pipeline import fetch_drs
+    pb = types.ModuleType("pybaseball")
+    monkeypatch.setitem(sys.modules, "pybaseball", pb)
+    fake = pd.DataFrame({"Name": ["Nico Hoerner", "Bryson Stott"], "Team": ["CHC", "PHI"], "Pos": ["2B", "2B"],
+                         "Inn": [1300.0, 1200.0], "DRS": [15, -8], "rPM": [10, -6], "rGFP": [2, -1], "Junk": [1, 2]})
+    pb.fielding_stats = lambda *a, **k: fake
+    monkeypatch.setattr(fetch_drs, "OUT", tmp_path)
+    monkeypatch.setattr(fc, "COMPARE", tmp_path)
+    fetch_drs.main(["--season", "2026"])
+    s = fc.sis(2026)
+    assert list(s["pos"]) == ["2B", "2B"] and s["sis"].tolist() == [15, -8]
+    assert s["sis_range"].tolist() == [10, -6] and "sis_gfp" in s
