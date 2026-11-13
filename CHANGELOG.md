@@ -1,5 +1,14 @@
 # IQ Savant – version history
 
+## v19.4 – 2026-11-12
+- python -m pipeline.decision_study (analysis only), built around the RUN VALUE of swing / take decisions:
+  where each hitter's decision runs come from (zone x swing / take, heart takes in hitter's counts, chase + waste
+  swings before / with 2 strikes, by count, by pitch type -- typical value, real spread, share of the real
+  differences), every metric on its own vs NEXT season's runs with tools held equal (power + contact), walks and
+  strikeouts, GD% vs DEC RUNS/100 as the core, 2-strike chase weighting (equal / heavier / lighter), the
+  heart-minus-chase gap, the data's own weights, split stability (sets their regression), eye test.
+  Pushes its report + hitter file to GitHub when it finishes (--no-push to skip).
+
 ## v19.3 – 2026-11-12
 - Bat-To-Ball Grade is live (Core 4 + Bat-To-Ball tabs). Contact WHEN HE SWINGS -- takes never count:
   Cont% over expected 45% | Z-Cont% over expected 20% | Cont% 15% | Heart Cont% 10% | Chase Cont% 10%.
