@@ -33,7 +33,11 @@ GRADES = {g.key: g for g in [
           "speed half goes to 90th EV + HHEV. Regressed for sample size; hover a grade for each ingredient."),
     Grade("SC BAT SPEED GRADE", "SC Bat Speed Grade", "_SCBS_Z",
           "20-80 Grade, Statcast bat speed only\n[avg bat speed 50% + top 8th bat speed 50%, regressed]"),
-    Grade("B2B GRADE", "Bat-To-Ball Grade", None, "20-80 Grade, Bat-to-ball\n[from contact rate on swings]"),
+    Grade("B2B GRADE", "Bat-To-Ball Grade", "_B2B_Z",
+          "20-80 Grade, Bat-to-ball: contact WHEN HE SWINGS (takes never count)\n[Cont% over expected 45% | "
+          "Z-Cont% over expected 20% | Cont% 15% | Heart Cont% 10% | Chase Cont% 10%]\nOver expected = each swing vs "
+          "how often an average hitter makes contact on that pitch, so a whiff over the heart costs the most. "
+          "Regressed for sample size; hover a grade for each ingredient."),
     Grade("DECISION GRADE", "Decision Grade", None, "20-80 Grade, Swing Decision\n[from rate of good decisions]"),
     Grade("0-0 DECISION GRADE", "0-0 Decision Grade", None, "20-80 Grade, Swing Decision on first pitch"),
     Grade("<2K DECISION GRADE", "<2k Decision Grade", None, "20-80 Grade, Swing Decision with less than two strikes"),

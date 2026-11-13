@@ -65,6 +65,11 @@ def main(argv: list[str]) -> None:
             power_ref.build(season)                 # Bat Speed Grade reference for that season
         except Exception as e:
             print(f"[{season}] power reference skipped: {e}", flush=True)
+        try:
+            from pipeline import train_contact
+            train_contact.build_ref(season)         # Bat-To-Ball Grade reference for that season
+        except Exception as e:
+            print(f"[{season}] Bat-To-Ball reference skipped: {e}", flush=True)
     if "--no-push" in argv:
         return
     _git("add", "data/league")          # includes power_<year>.json

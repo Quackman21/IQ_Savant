@@ -1,5 +1,17 @@
 # IQ Savant – version history
 
+## v19.3 – 2026-11-12
+- Bat-To-Ball Grade is live (Core 4 + Bat-To-Ball tabs). Contact WHEN HE SWINGS -- takes never count:
+  Cont% over expected 45% | Z-Cont% over expected 20% | Cont% 15% | Heart Cont% 10% | Chase Cont% 10%.
+  Over expected = each swing vs how often an average hitter makes contact on that exact pitch (league contact
+  model: location, pitch type, velo, movement, count, hands), so a whiff over the heart (~89% league contact)
+  costs ~4x a whiff on a waste pitch. Regressed for sample size; 50 = average MLB-qualified hitter; hover a grade
+  for each ingredient's score. Chosen from the Bat-to-Ball study: within ~.01 of the best mix the data found,
+  well ahead of zone contact alone.
+- python -m pipeline.train_contact: trains the league contact model (2015-2022 + 2023+, tested on held-out games
+  first) and builds data/league/contact_<year>.json references. --top <year> = eye test. pipeline.update keeps the
+  current season's reference fresh.
+
 ## v19.2 – 2026-11-12
 - python -m pipeline.contact_study (analysis only): which contact metrics measure bat-to-ball skill -- the 8 app
   metrics (Cont%, Z-Cont%, Z-Cont% Hard / Soft, Heart / Shadow / Chase / Waste Cont%) plus Cont% and Z-Cont% over

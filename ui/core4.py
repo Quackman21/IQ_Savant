@@ -41,8 +41,9 @@ def _cell(key: str, vals, ref: dict, ctx: dict, samples, sep: bool, scale: str, 
         if not g.stat:                                   # blank until our model exists
             return f'<td class="{cls.strip()}"></td>'
         if g.stat.startswith("_"):                       # model grade: ingredients on hover
-            parts = vals.get("_POWER_PARTS", "") if g.stat == "_POWER_Z" else ""
-            kind = vals.get("_POWER_KIND", "") if g.stat == "_POWER_Z" else "Statcast bat speed"
+            parts = vals.get(g.stat[:-2] + "_PARTS", "") if g.stat.endswith("_Z") else ""
+            kind = vals.get(g.stat[:-2] + "_KIND", "") if g.stat.endswith("_Z") else ""
+            kind = kind or ("Statcast bat speed" if g.stat == "_SCBS_Z" else "")
             tip = escape(f"{kind}: {parts}" if parts else str(kind or ""))
             return (f'<td class="{cls}c" title="{tip}" style="{color("EV", z)}">{c4.fmt_grade(v)}</td>')
         lg = ((ref or {}).get("PA", (math.nan,))[0], (ref or {}).get("BIP", (math.nan,))[0])

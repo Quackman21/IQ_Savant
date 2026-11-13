@@ -107,12 +107,25 @@ def power_ref_for(season: int) -> dict | None:
     return power.load_ref(season)
 
 
+@st.cache_data(ttl=3600, show_spinner=False)
+def contact_ref_for(season: int) -> dict | None:
+    from models import contact
+    return contact.load_ref(season)
+
+
 def with_power(vals: pd.Series, raw: pd.DataFrame, season: int) -> pd.Series:
-    """Add the Bat Speed Grade + SC Bat Speed Grade to a Core 4 row."""
-    from models import power
+    """Add the model grades (Bat Speed, SC Bat Speed, Bat-To-Ball) to a Core 4 row."""
+    from models import contact, power
+    extra = {}
     try:
-        extra = power.score(raw, power_ref_for(season))
+        extra.update(power.score(raw, power_ref_for(season)))
     except Exception:
+        pass
+    try:
+        extra.update(contact.score(raw, contact_ref_for(season)))
+    except Exception:
+        pass
+    if not extra:
         return vals
     vals = vals.copy()
     for k, v in extra.items():
