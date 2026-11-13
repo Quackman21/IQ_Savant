@@ -1,5 +1,19 @@
 # IQ Savant – version history
 
+## v19.2 – 2026-11-12
+- python -m pipeline.contact_study (analysis only): which contact metrics measure bat-to-ball skill -- the 8 app
+  metrics (Cont%, Z-Cont%, Z-Cont% Hard / Soft, Heart / Shadow / Chase / Waste Cont%) plus Cont% and Z-Cont% over
+  expected (league contact model: location, pitch type, velo, movement, count, hands) and Squared-Up%. Targets:
+  next season's strikeouts avoided, whiffs avoided, and wOBA with power held equal. Stability, overlap, step test,
+  weights, stability of weights, eye test -- by era.
+
+## v19.1.1 – 2026-11-12
+- Windows PC support: tools\windows\setup_pc.ps1 (one time: Python env, installs, tests, Desktop shortcut with the
+  IQ icon) and tools\windows\IQ_Savant.ps1 (the shortcut: sync with GitHub, start the site, add new games every
+  3 hours; Open / Restart / Stop when it's already running). tools/IQ_icon.ico.
+- requirements.txt pins scikit-learn==1.7.2 (the trained models were saved with it; newer versions can't load them).
+- overnight.py: the "already running?" check no longer ends the other job on Windows.
+
 ## v19.1 – 2026-11-12
 - Bat speed now matches Statcast's method:
   * Competitive swings only: no bunts, and each hitter's slowest tenth of swings dropped (check / defensive swings),

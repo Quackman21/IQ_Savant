@@ -56,6 +56,12 @@ def step(name: str, fn, results: list) -> None:
 
 def _running(pid: int) -> bool:
     import os
+    if os.name == "nt":            # Windows: os.kill(pid, 0) would END the process -- ask tasklist instead
+        try:
+            out = subprocess.run(["tasklist", "/FI", f"PID eq {pid}"], capture_output=True, text=True).stdout
+            return str(pid) in out
+        except Exception:
+            return False
     try:
         os.kill(pid, 0)
         return True

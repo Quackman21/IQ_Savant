@@ -1,0 +1,141 @@
+IQ BAT-TO-BALL STUDY -- which contact metrics measure bat-to-ball skill, and how much weight each gets
+Regular season. Hitter-seasons with 250+ swings (both seasons for next-season tests).
+
+HOW TO READ
+  SPLIT r        odd vs even games, same season: is it a real, stable skill? (higher = better)
+  SWINGS FOR .70 swings before the number is 70% skill
+  NEXT -K% r     relation to NEXT season's strikeouts avoided (the main target: contact skill keeps you
+                 out of strikeouts)
+  NEXT -WHIFF r  relation to next season's whiffs avoided
+  NEXT wOBA r    relation to next season's wOBA per PA (raw -- contact hitters often have less power)
+  wOBA|POWER r   same, with POWER HELD EQUAL (90th EV + fly-ball EV): between two hitters with the same
+                 power, does better contact mean more runs?
+  WEIGHT         share of the grade from ridge regression (each metric credited only for what it ADDS)
+
+====================================================================================================================
+2015-2022  (1998 hitter season-pairs)
+
+1. EVERY METRIC ON ITS OWN
+  METRIC               SPLIT r SWINGS FOR .70 NEXT -K% r NEXT -WHIFF r NEXT wOBA r wOBA|POWER r
+  Cont%                   0.84            159       0.73          0.84        0.02         0.27
+  Cont% over exp          0.86            139       0.72          0.76        0.02         0.21
+  S-Cont%                 0.75            271       0.71          0.78        0.03         0.25
+  Z-Cont%                 0.78            236       0.69          0.77        0.01         0.22
+  Z-Cont% over exp        0.78            234       0.68          0.74        0.01         0.20
+  C-Cont%                 0.61            519       0.65          0.69        0.03         0.23
+  Z-Cont% (Hard)          0.75            273       0.61          0.68       -0.01         0.18
+  H-Cont%                 0.61            522       0.58          0.65       -0.02         0.16
+  Z-Cont% (Soft)          0.58            601       0.56          0.62        0.04         0.19
+  W-Cont%                 0.25          2,471       0.40          0.39        0.03         0.14
+
+2. HOW THE METRICS OVERLAP (correlation between them; 1.00 = the same information)
+            Cont  ZCont  ZHard  ZSoft  Heart  Shadw  Chase  Waste  xCont  xZCon
+  Cont      1.00   0.93   0.83   0.74   0.80   0.93   0.81   0.45   0.91   0.89
+  ZCont     0.93   1.00   0.91   0.76   0.90   0.93   0.67   0.36   0.91   0.97
+  ZHard     0.83   0.91   1.00   0.44   0.88   0.80   0.54   0.31   0.79   0.89
+  ZSoft     0.74   0.76   0.44   1.00   0.59   0.78   0.62   0.30   0.77   0.75
+  Heart     0.80   0.90   0.88   0.59   1.00   0.71   0.50   0.26   0.77   0.88
+  Shadw     0.93   0.93   0.80   0.78   0.71   1.00   0.75   0.41   0.92   0.90
+  Chase     0.81   0.67   0.54   0.62   0.50   0.75   1.00   0.52   0.81   0.64
+  Waste     0.45   0.36   0.31   0.30   0.26   0.41   0.52   1.00   0.44   0.33
+  xCont     0.91   0.91   0.79   0.77   0.77   0.92   0.81   0.44   1.00   0.94
+  xZCon     0.89   0.97   0.89   0.75   0.88   0.90   0.64   0.33   0.94   1.00
+
+3. STEP TEST -- how much of next season's strikeouts avoided each layer explains (cross-validated R^2)
+    Z-Cont% only                         R^2 = 0.475   (adds +0.475)
+    + Heart / Shadow / Chase / Waste     R^2 = 0.548   (adds +0.072)
+    + Hard / Soft in zone + Cont%        R^2 = 0.552   (adds +0.004)
+    + over-expected versions             R^2 = 0.558   (adds +0.006)
+    (your 8 app metrics alone: R^2 = 0.552; the 2 over-expected alone: 0.520)
+
+4. WEIGHTS (ridge, all positive, each metric credited only for what it adds)
+  METRIC                       -K%      -WHIFF  wOBA|POWER
+  Cont%                        26%         91%         50%
+  C-Cont%                      20%          4%         17%
+  Cont% over exp               18%          1%          0%
+  S-Cont%                      13%          2%         17%
+  Z-Cont% over exp             10%          0%          0%
+  Z-Cont% (Hard)                6%          0%          0%
+  W-Cont%                       6%          2%         14%
+  Z-Cont%                       0%          0%          0%
+  H-Cont%                       0%          0%          0%
+  Z-Cont% (Soft)                0%          0%          3%
+  Composite with these weights (-K% target): cross-validated R^2 = 0.558
+  Z-Cont% alone vs next season -K%: r = 0.69   |   data composite: r = 0.75
+
+5. ARE THE WEIGHTS STABLE? (each season pair alone, -K% target, top 4)
+    2015->2016 (317): C-Cont% 28%, Cont% 27%, Z-Cont% (Hard) 16%, Cont% over exp 12%
+    2016->2017 (308): Cont% 27%, S-Cont% 24%, Cont% over exp 20%, Z-Cont% (Hard) 12%
+    2017->2018 (312): C-Cont% 29%, Cont% over exp 21%, S-Cont% 13%, Cont% 11%
+    2018->2019 (315): Cont% 24%, C-Cont% 22%, Z-Cont% (Soft) 15%, Z-Cont% over exp 15%
+    2019->2020 (207): Cont% 38%, W-Cont% 26%, Z-Cont% (Hard) 16%, C-Cont% 11%
+    2020->2021 (210): S-Cont% 42%, Cont% 31%, W-Cont% 12%, Cont% over exp 11%
+    2021->2022 (329): Cont% 34%, C-Cont% 26%, Z-Cont% over exp 20%, Cont% over exp 15%
+
+6. 2022 EYE TEST -- composite with the -K% weights (250+ swings)
+  top:    Luis Arraez 79 | Nick Madrigal 74 | Steven Kwan 73 | Jose Iglesias 71 | Isiah Kiner-Falefa 71 | David Fletcher 70 | Yuli Gurriel 70 | Ildemaro Vargas 70 | Wander Franco 69 | Tony Kemp 68
+  bottom: Keston Hiura 27 | Trevor Larnach 26 | Shea Langeliers 25 | David Villar 25 | Brett Phillips 23 | Joey Gallo 23 | Chris Taylor 21 | Dérmis Garcia 19
+
+====================================================================================================================
+2023+  (960 hitter season-pairs)
+
+1. EVERY METRIC ON ITS OWN
+  METRIC               SPLIT r SWINGS FOR .70 NEXT -K% r NEXT -WHIFF r NEXT wOBA r wOBA|POWER r
+  Cont% over exp          0.86            141       0.75          0.78        0.03         0.28
+  Cont%                   0.84            168       0.75          0.85        0.05         0.33
+  S-Cont%                 0.76            290       0.72          0.78        0.05         0.30
+  Z-Cont% over exp        0.78            257       0.72          0.75        0.02         0.27
+  Z-Cont%                 0.77            273       0.71          0.77        0.02         0.28
+  C-Cont%                 0.67            434       0.66          0.70        0.03         0.24
+  Z-Cont% (Hard)          0.74            321       0.63          0.66        0.01         0.24
+  Z-Cont% (Soft)          0.57            677       0.61          0.68        0.04         0.23
+  H-Cont%                 0.58            639       0.61          0.65       -0.00         0.21
+  W-Cont%                 0.37          1,539       0.42          0.40       -0.00         0.13
+  Squared-Up%             0.51            868       0.24          0.29        0.07         0.15
+
+2. HOW THE METRICS OVERLAP (correlation between them; 1.00 = the same information)
+            Cont  ZCont  ZHard  ZSoft  Heart  Shadw  Chase  Waste  xCont  xZCon   SqUp
+  Cont      1.00   0.92   0.78   0.80   0.75   0.92   0.81   0.47   0.91   0.88   0.27
+  ZCont     0.92   1.00   0.91   0.80   0.88   0.92   0.65   0.36   0.92   0.99   0.17
+  ZHard     0.78   0.91   1.00   0.49   0.86   0.78   0.49   0.28   0.78   0.90   0.15
+  ZSoft     0.80   0.80   0.49   1.00   0.63   0.81   0.66   0.37   0.81   0.78   0.15
+  Heart     0.75   0.88   0.86   0.63   1.00   0.67   0.44   0.24   0.75   0.88   0.14
+  Shadw     0.92   0.92   0.78   0.81   0.67   1.00   0.76   0.44   0.94   0.91   0.18
+  Chase     0.81   0.65   0.49   0.66   0.44   0.76   1.00   0.58   0.83   0.64   0.19
+  Waste     0.47   0.36   0.28   0.37   0.24   0.44   0.58   1.00   0.50   0.36   0.10
+  xCont     0.91   0.92   0.78   0.81   0.75   0.94   0.83   0.50   1.00   0.93   0.16
+  xZCon     0.88   0.99   0.90   0.78   0.88   0.91   0.64   0.36   0.93   1.00   0.15
+  SqUp      0.27   0.17   0.15   0.15   0.14   0.18   0.19   0.10   0.16   0.15   1.00
+
+3. STEP TEST -- how much of next season's strikeouts avoided each layer explains (cross-validated R^2)
+    Z-Cont% only                         R^2 = 0.504   (adds +0.504)
+    + Heart / Shadow / Chase / Waste     R^2 = 0.583   (adds +0.080)
+    + Hard / Soft in zone + Cont%        R^2 = 0.585   (adds +0.002)
+    + over-expected versions             R^2 = 0.589   (adds +0.004)
+    + Squared-Up%                        R^2 = 0.588   (adds -0.000)
+    (your 8 app metrics alone: R^2 = 0.585; the 2 over-expected alone: 0.563)
+
+4. WEIGHTS (ridge, all positive, each metric credited only for what it adds)
+  METRIC                       -K%      -WHIFF  wOBA|POWER
+  Cont% over exp               23%          0%          0%
+  Cont%                        19%         71%         56%
+  Z-Cont% over exp             16%          0%          0%
+  C-Cont%                      16%          9%          0%
+  Squared-Up%                  10%          9%         21%
+  H-Cont%                       8%          7%          0%
+  W-Cont%                       6%          0%          0%
+  Z-Cont% (Hard)                2%          0%          0%
+  S-Cont%                       1%          4%         23%
+  Z-Cont%                       0%          0%          0%
+  Z-Cont% (Soft)                0%          1%          0%
+  Composite with these weights (-K% target): cross-validated R^2 = 0.588
+  Z-Cont% alone vs next season -K%: r = 0.71   |   data composite: r = 0.78
+
+5. ARE THE WEIGHTS STABLE? (each season pair alone, -K% target, top 4)
+    2023->2024 (325): C-Cont% 26%, H-Cont% 19%, Cont% over exp 18%, Z-Cont% over exp 14%
+    2024->2025 (316): Squared-Up% 19%, Cont% over exp 18%, Z-Cont% over exp 17%, C-Cont% 17%
+    2025->2026 (319): Cont% 44%, Cont% over exp 24%, Z-Cont% (Hard) 13%, S-Cont% 7%
+
+6. 2026 EYE TEST -- composite with the -K% weights (250+ swings)
+  top:    Luis Arraez 80 | Steven Kwan 78 | Chandler Simpson 74 | Javier Sanoja 73 | Sal Frelick 73 | Nico Hoerner 72 | Jacob Wilson 71 | Keibert Ruiz 71 | Liam Hicks 71 | Ernie Clement 71
+  bottom: Spencer Jones 28 | Taylor Trammell 27 | Luke Raley 26 | Esmerlyn Valdez 25 | James Outman 23 | Matt Wallner 21 | Munetaka Murakami 21 | Gabriel Arias 19

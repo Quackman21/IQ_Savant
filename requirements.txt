@@ -3,4 +3,6 @@ pybaseball
 requests
 numpy
 pytest
-scikit-learn
+scikit-learn==1.7.2   # the trained models were saved with 1.7.2 -- newer versions can't open them
+pandas
+joblib
