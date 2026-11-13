@@ -18,21 +18,21 @@ Year to year (regulars, 300+ innings both years): r of the rate this season vs n
   OF Range          r 0.35  (1029 pairs)
 
 2026 eye test -- grades by position (300+ innings), regressed:
-  1B Range Grade          top: Jared Young 55 | Vinnie Pasquantino 54 | Kyle Manzardo 54 | Matt Olson 54   bottom: Vaughn Grissom 46 | Bryce Harper 45 | Gavin Sheets 45
-  1B Conversion Grade     top: Matt Olson 54 | Ty France 53 | Josh Naylor 53 | Nolan Schanuel 53   bottom: Kyle Manzardo 48 | Mark Vientos 47 | Jake Bauers 45
-  1B Ball Security Grade  top: Josh Naylor 51 | Spencer Torkelson 51 | Sal Stewart 51 | Bryce Harper 51   bottom: Jake Bauers 49 | Alec Burleson 48 | Mark Vientos 48
-  2B Range Grade          top: Nico Hoerner 57 | Nasim Nuñez 57 | Ben Williamson 57 | Richie Palacios 56   bottom: Edouard Julien 44 | Luis Arraez 43 | Bryson Stott 41
-  2B Conversion Grade     top: Luis Arraez 56 | Ketel Marte 56 | JJ Wetherholt 54 | Brice Turang 54   bottom: Jose Altuve 46 | Ernie Clement 45 | Luke Keaschall 45
-  2B Ball Security Grade  top: JJ Wetherholt 52 | Ketel Marte 52 | Michael Massey 52 | Bryson Stott 52   bottom: Brandon Lowe 48 | Ernie Clement 47 | Luke Keaschall 46
-  3B Range Grade          top: Miguel Vargas 55 | Kazuma Okamoto 54 | Kevin McGonigle 54 | Maikel Garcia 54   bottom: Nick Gonzales 45 | Max Muncy 44 | Isaac Paredes 41
-  3B Conversion Grade     top: Caleb Durbin 54 | Nolan Gorman 54 | Nolan Arenado 53 | Manny Machado 53   bottom: Alec Bohm 47 | Coby Mayo 47 | Nick Gonzales 46
-  3B Ball Security Grade  top: Manny Machado 52 | Alex Bregman 52 | Nick Loftin 52 | Miguel Vargas 51   bottom: Blaze Alexander 48 | Max Muncy 48 | Brady House 48
-  SS Range Grade          top: José Caballero 55 | Elly De La Cruz 55 | George Lombard Jr. 55 | Willy Adames 55   bottom: Colt Emerson 44 | Geraldo Perdomo 43 | Ezequiel Tovar 41
-  SS Conversion Grade     top: Taylor Walls 58 | Corey Seager 54 | Ezequiel Duran 54 | Mookie Betts 54   bottom: Kevin McGonigle 46 | J.P. Crawford 46 | Trea Turner 43
-  SS Ball Security Grade  top: Dansby Swanson 52 | Ezequiel Tovar 52 | Jacob Wilson 52 | J.P. Crawford 51   bottom: Jim Jarvis 48 | Elly De La Cruz 48 | Trea Turner 47
-  LF Range                top: Cody Bellinger 61 | Jackson Chourio 58 | Chandler Simpson 57 | Ramón Laureano 55   bottom: Tyler Soderstrom 43 | Angel Martínez 42 | Jarren Duran 35
-  CF Range                top: Cedric Mullins 60 | Evan Carter 60 | Michael Harris II 59 | Pete Crow-Armstrong 59   bottom: Trent Grisham 40 | Justin Crawford 40 | Lane Thomas 40
-  RF Range                top: Corbin Carroll 58 | Zach McKinstry 58 | Luis Lara 57 | Victor Mesa Jr. 57   bottom: Ronald Acuña Jr. 44 | Kerry Carpenter 44 | Troy Johnston 40
+  1B Range Grade          top: Jared Young 59 | Vinnie Pasquantino 58 | Kyle Manzardo 57 | Matt Olson 57   bottom: Vaughn Grissom 42 | Bryce Harper 40 | Gavin Sheets 40
+  1B Conversion Grade     top: Matt Olson 59 | Ty France 58 | Josh Naylor 57 | Nolan Schanuel 56   bottom: Kyle Manzardo 45 | Mark Vientos 44 | Jake Bauers 38
+  1B Ball Security Grade  top: Josh Naylor 54 | Spencer Torkelson 54 | Sal Stewart 53 | Bryce Harper 53   bottom: Jake Bauers 46 | Alec Burleson 45 | Mark Vientos 43
+  2B Range Grade          top: Nico Hoerner 63 | Nasim Nuñez 62 | Ben Williamson 61 | Richie Palacios 60   bottom: Edouard Julien 39 | Luis Arraez 38 | Bryson Stott 34
+  2B Conversion Grade     top: Luis Arraez 62 | Ketel Marte 62 | JJ Wetherholt 59 | Brice Turang 59   bottom: Jose Altuve 42 | Ernie Clement 41 | Luke Keaschall 39
+  2B Ball Security Grade  top: JJ Wetherholt 57 | Ketel Marte 56 | Michael Massey 55 | Bryson Stott 55   bottom: Brandon Lowe 44 | Ernie Clement 42 | Luke Keaschall 39
+  3B Range Grade          top: Miguel Vargas 59 | Kazuma Okamoto 57 | Kevin McGonigle 57 | Maikel Garcia 57   bottom: Nick Gonzales 40 | Max Muncy 39 | Isaac Paredes 33
+  3B Conversion Grade     top: Caleb Durbin 60 | Nolan Gorman 58 | Nolan Arenado 57 | Manny Machado 57   bottom: Alec Bohm 44 | Coby Mayo 43 | Nick Gonzales 42
+  3B Ball Security Grade  top: Manny Machado 58 | Alex Bregman 55 | Nick Loftin 55 | Miguel Vargas 54   bottom: Blaze Alexander 44 | Max Muncy 44 | Brady House 43
+  SS Range Grade          top: José Caballero 59 | Elly De La Cruz 58 | George Lombard Jr. 58 | Willy Adames 58   bottom: Colt Emerson 40 | Geraldo Perdomo 38 | Ezequiel Tovar 35
+  SS Conversion Grade     top: Taylor Walls 65 | Corey Seager 58 | Ezequiel Duran 58 | Mookie Betts 58   bottom: Kevin McGonigle 43 | J.P. Crawford 41 | Trea Turner 36
+  SS Ball Security Grade  top: Dansby Swanson 57 | Ezequiel Tovar 55 | Jacob Wilson 54 | J.P. Crawford 54   bottom: Jim Jarvis 45 | Elly De La Cruz 45 | Trea Turner 42
+  LF Range                top: Cody Bellinger 65 | Jackson Chourio 61 | Chandler Simpson 59 | Ramón Laureano 58   bottom: Tyler Soderstrom 39 | Angel Martínez 38 | Jarren Duran 29
+  CF Range                top: Cedric Mullins 64 | Evan Carter 63 | Michael Harris II 62 | Pete Crow-Armstrong 62   bottom: Trent Grisham 37 | Justin Crawford 37 | Lane Thomas 36
+  RF Range                top: Corbin Carroll 63 | Zach McKinstry 63 | Luis Lara 61 | Victor Mesa Jr. 61   bottom: Ronald Acuña Jr. 40 | Kerry Carpenter 40 | Troy Johnston 35
 
 ====================================================================================================
 2. FRAMING RUNS -- count only (profile) vs count + runners + outs (after-action reports)
@@ -45,9 +45,9 @@ Catcher seasons with 2,000+ framing opportunities.
 
   Which of THIS season's numbers best predicts NEXT season? (r, per pitch)
   this season                        extra strikes / pitch          count runs / pitch    situational runs / pitch
-  extra strikes                                      0.551                       0.531                       0.531
-  count runs                                         0.547                       0.534                       0.533
-  situational runs                                   0.543                       0.532                       0.530
+  extra strikes                                      0.553                       0.532                       0.532
+  count runs                                         0.549                       0.536                       0.534
+  situational runs                                   0.545                       0.533                       0.532
   (479 catcher pairs)
 
-done in 6 min
+done in 3 min
