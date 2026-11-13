@@ -1,5 +1,9 @@
 # IQ Savant – version history
 
+## v20.1.3 – 2026-11-13
+- fetch_drs: FanGraphs blocks scripts (403) but not your browser. --urls prints one link per season; open each,
+  Ctrl+S as data/compare/fg_<year>.json, then --local converts them to drs_<year>.csv for the comparison study.
+
 ## v20.1.2 – 2026-11-13
 - FIX (important): 2026 framing was using the ABS-OVERTURNED calls, not the umpire's original calls. The challenge
   data loaded, but writing the challenger ids crashed under pandas 3 ("Invalid value ... for dtype float64"), and

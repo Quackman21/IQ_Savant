@@ -2,6 +2,9 @@
 
     python -m pipeline.fetch_drs                 # 2016 -> last full season, skips seasons already saved
     python -m pipeline.fetch_drs --season 2026 --force
+    python -m pipeline.fetch_drs --urls          # FanGraphs blocks scripts (403)? print one link per season to open
+                                                 # in your browser and save as data/compare/fg_<year>.json
+    python -m pipeline.fetch_drs --local         # turn those saved fg_<year>.json files into drs_<year>.csv
 
 Writes data/compare/drs_<year>.csv (Name, Pos, Inn, DRS + the SIS pieces: rPM = range & positioning, rGFP = good
 plays / misplays, rARM, rGDP, ...). If FanGraphs blocks the request, the fallback is the
@@ -63,12 +66,49 @@ def fetch(year: int) -> pd.DataFrame:
     raise ValueError(f"no DRS column (got {last})")
 
 
+def from_local(year: int) -> pd.DataFrame | None:
+    """A FanGraphs feed page saved from the browser (fg_<year>.json; .txt / no extension also fine)."""
+    import json
+    for name in (f"fg_{year}.json", f"fg_{year}.txt", f"fg_{year}", f"fg_{year}.json.txt"):
+        p = OUT / name
+        if p.exists():
+            js = json.loads(p.read_text(encoding="utf-8-sig"))
+            d = tidy(js.get("data", js) if isinstance(js, dict) else js)
+            if "DRS" not in d or not {"Name", "Pos"} <= set(d.columns):
+                raise ValueError(f"{p.name} has no DRS / Name / Pos (got {list(d.columns)[:25]})")
+            d = d[[c for c in KEEP if c in d.columns]]
+            return d[pd.to_numeric(d["DRS"], errors="coerce").notna()]
+    return None
+
+
 def main(argv: list[str]) -> None:
     from pipeline.train_decisions import latest_full_season
     force = "--force" in argv
     years = [int(argv[argv.index("--season") + 1])] if "--season" in argv else \
         list(range(2016, latest_full_season() + 1))
     OUT.mkdir(parents=True, exist_ok=True)
+    if "--urls" in argv:
+        print("Open each link in your browser (Chrome / Edge), press Ctrl+S, and save it in\n"
+              f"  {OUT}\nas fg_<year>.json (e.g. fg_2026.json). Then run:  python -m pipeline.fetch_drs --local\n")
+        for y in years:
+            print(f"{y}:  {API.format(y=y, t=1)}")
+        return
+    if "--local" in argv:
+        done = []
+        for y in years:
+            try:
+                d = from_local(y)
+            except Exception as e:
+                print(f"[{y}] couldn't read the saved page: {e}", flush=True)
+                continue
+            if d is None:
+                continue
+            d.to_csv(OUT / f"drs_{y}.csv", index=False)
+            done.append(y)
+            print(f"[{y}] {len(d):,} player-positions -> drs_{y}.csv", flush=True)
+        print(f"\nConverted {len(done)} season(s)." + ("  Now run:  python -m pipeline.fielding_compare_study"
+                                                       if done else "  No fg_<year>.json files found in " + str(OUT)))
+        return
     failed = []
     for y in years:
         p = OUT / f"drs_{y}.csv"
@@ -84,7 +124,8 @@ def main(argv: list[str]) -> None:
             print(f"[{y}] FAILED: {type(e).__name__}: {str(e)[:150]}", flush=True)
         time.sleep(2)                                   # be polite to FanGraphs
     if failed:
-        print(f"\nCouldn't fetch: {failed}" + FALLBACK)
+        print(f"\nCouldn't fetch: {failed}. FanGraphs blocks scripts -- use your browser instead:\n"
+              "  python -m pipeline.fetch_drs --urls   (then save each page, then --local)" + FALLBACK)
     else:
         print("\nDone. Now run:  python -m pipeline.fielding_compare_study")
 

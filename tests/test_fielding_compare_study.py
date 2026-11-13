@@ -62,3 +62,16 @@ def test_fetch_drs_saves_fangraphs_format(monkeypatch, tmp_path):
     assert list(s["pos"]) == ["2B", "2B"] and s["sis"].tolist() == [15, -8]
     assert s["sis_range"].tolist() == [10, -6] and "sis_gfp" in s
     assert fc.norm("Nico Hoerner") in s["key"].tolist() if hasattr(fc, "norm") else True
+
+
+def test_fetch_drs_from_browser_saved_page(monkeypatch, tmp_path, capsys):
+    import json
+    from pipeline import fetch_drs
+    rows = [{"Name": "<a>Nico Hoerner</a>", "PlayerName": "Nico Hoerner", "Pos": "2B", "DRS": 15, "rPM": 10}]
+    (tmp_path / "fg_2025.json").write_text("﻿" + json.dumps({"data": rows}), encoding="utf-8")
+    monkeypatch.setattr(fetch_drs, "OUT", tmp_path)
+    fetch_drs.main(["--urls", "--season", "2025"])
+    assert "season=2025" in capsys.readouterr().out
+    fetch_drs.main(["--local", "--season", "2025"])
+    d = pd.read_csv(tmp_path / "drs_2025.csv")
+    assert d["Name"].tolist() == ["Nico Hoerner"] and d["DRS"].tolist() == [15]
