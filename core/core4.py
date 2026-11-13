@@ -47,7 +47,7 @@ GRADES = {g.key: g for g in [
     Grade("OS DECISION GRADE", "OS Decision Grade", "_DECOS_Z", "20-80 Grade, Swing Decisions on offspeed\n[same mix]"),
     Grade("BALL FLIGHT GRADE", "Ball Flight Grade", "_BF_Z",
           "20-80 Grade, Ball Flight: in the air, to the pull side, at repeatable angles (exit velo kept OUT)\n"
-          "[AirPull% 40% | Air% (10-50 deg) 25% | Pull-Air% 15% | launch-angle consistency 20%]\n"
+          "[AirPull% 45% | Air% (10-50 deg) 30% | launch-angle consistency 25%]\n"
           "Angle + direction only, so bat speed can't leak in. Regressed for sample size; hover a grade for each "
           "ingredient."),
 ]}

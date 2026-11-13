@@ -1,5 +1,11 @@
 # IQ Savant – version history
 
+## v19.9 – 2026-11-13
+- Ball Flight Grade: Pull-Air% removed (it double-counted AirPull%). New mix: AirPull% 45% (still the gold star) |
+  Air% 30% | launch-angle consistency 25%. Predicts next season's ball-flight value better than v19.8 in both
+  2015-21 and 2022-25; power leak stays ~0 (r with 90th EV -.03, bat speed -.02). Rebuild refs:
+  python -m pipeline.flight_ref --all
+
 ## v19.8 – 2026-11-13
 - BALL FLIGHT GRADE is live -- the Core 4 is complete. How well he steers the ball, with exit velo kept OUT:
   AirPull% 40% | Air% (10-50 deg) 25% | Pull-Air% 15% | launch-angle consistency 20%. Angle + direction only (no

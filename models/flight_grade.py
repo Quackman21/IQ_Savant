@@ -4,13 +4,13 @@ Bat speed / exit velo are kept OUT on purpose (that's the Bat Speed Grade). Ever
 spray direction only -- no exit-velo cut-offs and no xwOBA, both of which let power (and contact) leak back in.
 Weights from the Ball Flight study (python -m pipeline.flight_study, 2015-2026), the AirPull-heavy mix:
 
-    AirPull%            40%   balls hit 10-45 deg AND to the pull side (the most valuable ball in baseball)
-    Air%                25%   balls hit 10-50 deg (in the air, not on the ground or popped up)
-    Pull-Air%           15%   of his pulled balls, the share in the air
-    LA consistency      20%   launch-angle spread (lower = better)
+    AirPull%            45%   balls hit 10-45 deg AND to the pull side (the gold star: most valuable ball in baseball)
+    Air%                30%   balls hit 10-50 deg (in the air, not on the ground or popped up)
+    LA consistency      25%   launch-angle spread (lower = better)
 
-With power, contact and chase held equal, the mix predicts next season's ball-flight value about as well as the
-data's own best fit (within ~.01) and leaks almost nothing from the bat-speed grade.
+v19.9: Pull-Air% dropped -- it double-counted AirPull% (the data gave it a negative weight once AirPull was in).
+This mix predicts next season's ball-flight value better than v19.8's in BOTH halves of the data (2015-21 and
+2022-25, so not tuned to one era) and leaks essentially nothing from power (r with 90th EV -.03, bat speed -.02).
 
 Each ingredient is regressed toward the league average by its own sample (balls in play before it is 70% skill,
 from the study), then graded vs MLB-qualified hitters: 50 = average qualified hitter, 10 = one spread.
@@ -26,11 +26,11 @@ import numpy as np
 import pandas as pd
 
 REF_DIR = Path(__file__).resolve().parent.parent / "data" / "league"
-W = {"AirPull%": .40, "Air%": .25, "Pull-Air%": .15, "LA spread": .20}
-SIGN = {"AirPull%": 1, "Air%": 1, "Pull-Air%": 1, "LA spread": -1}
+W = {"AirPull%": .45, "Air%": .30, "LA spread": .25}
+SIGN = {"AirPull%": 1, "Air%": 1, "LA spread": -1}
 INGREDIENTS = list(W)
 # balls in play before each ingredient is 70% skill -- flight study, both eras averaged
-BIP_FOR_70 = {"AirPull%": 210, "Air%": 310, "Pull-Air%": 390, "LA spread": 410}
+BIP_FOR_70 = {"AirPull%": 210, "Air%": 310, "LA spread": 410}
 K = {m: n * 0.3 / 0.7 for m, n in BIP_FOR_70.items()}     # reliability = n / (n + k), n = his balls in play
 MIN_BIP = 25
 REGRESS = True
@@ -56,7 +56,7 @@ def balls(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def hitter_table(df: pd.DataFrame) -> pd.DataFrame:
-    """The four ingredients for every batter in df, plus BIP."""
+    """The three ingredients for every batter in df, plus BIP."""
     d = balls(df)
     if d.empty:
         return pd.DataFrame(columns=["BIP", *INGREDIENTS])
@@ -66,7 +66,6 @@ def hitter_table(df: pd.DataFrame) -> pd.DataFrame:
     out = pd.DataFrame({"BIP": g.size()})
     out["AirPull%"] = d[d["spr"]].groupby("batter")["airpull"].mean()
     out["Air%"] = g["air"].mean()
-    out["Pull-Air%"] = d[d["pull"]].groupby("batter")["air"].mean()
     out["LA spread"] = g["la"].std()
     return out
 
