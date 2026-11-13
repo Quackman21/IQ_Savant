@@ -38,3 +38,37 @@ def test_distance_only_for_balls_in_the_air():
     f = fm.features(pd.DataFrame({"launch_speed": [100, 100], "launch_angle": [5, 25], "hit_distance_sc": [120, 380],
                                   "hc_x": [125, 125], "hc_y": [100, 50], "events": ["single", "field_out"]}))
     assert f.loc[0, "dist"] == -1 and f.loc[1, "dist"] == 380
+
+
+def test_range_plus_conversion_equals_opa_end_to_end():
+    import numpy as np
+    import pandas as pd
+    from models import fielding as fm
+    from pipeline import train_fielding as tf
+    rng = np.random.default_rng(0)
+    n = 6000
+    la = rng.uniform(-30, 60, n)
+    hcx = rng.uniform(60, 190, n)
+    loc = np.where(la < 10, np.where(hcx < 100, 5, np.where(hcx < 125, 6, np.where(hcx < 150, 4, 3))),
+                   np.where(hcx < 105, 7, np.where(hcx < 145, 8, 9)))
+    u = rng.random(n)
+    ferr = (la < 10) & (u < 0.03)
+    out = ~ferr & (u < 0.72)
+    ev = np.where(ferr, "field_error", np.where(out, "field_out", "single"))
+    des = np.where(ferr, "reaches on a fielding error by shortstop", np.where(out, "groundout", "single"))
+    d = pd.DataFrame({"game_date": "2025-06-01", "game_pk": rng.integers(0, 400, n), "at_bat_number": 1,
+                      "inning": 1, "inning_topbot": "Top", "outs_when_up": rng.integers(0, 3, n), "events": ev,
+                      "des": des, "type": "X", "description": "hit_into_play", "hit_location": loc,
+                      "launch_speed": rng.uniform(60, 110, n), "launch_angle": la,
+                      "hit_distance_sc": rng.uniform(50, 400, n), "hc_x": hcx, "hc_y": rng.uniform(80, 180, n),
+                      "stand": "R", "on_1b": np.where(rng.random(n) < .3, 1, None), "on_2b": None, "on_3b": None,
+                      "delta_run_exp": np.where(out, -0.25, 0.4), "game_type": "R",
+                      **{f"fielder_{k}": 100 + k for k in range(2, 10)}})
+    b = tf.fit(d)
+    assert b["conv"] is not None and b["ferr"] is not None
+    pc = fm.play_credits(d, b)
+    p_ = pc.dropna(subset=["opa"])                                         # DP / arm rows carry no OPA
+    assert np.allclose(p_["rng"] + p_["conv"], p_["opa"])
+    assert pc.loc[pc.pos.isin([7, 8, 9]), "conv"].abs().sum() == 0          # outfield: no conversion split
+    s = fm.summarize(fm.daily_table(d, b), "0000", "9999", [6])[106]
+    assert s["_CONV_N"] > 0 and abs(s["_RNG"] + s["_CONV"] - s["OPA"]) < 1e-6

@@ -144,12 +144,12 @@ def resid(y: pd.Series, Z: pd.DataFrame) -> pd.Series:
     return out
 
 
-def push(paths: list[Path]) -> None:
+def push(paths: list[Path], msg: str = "Decision study results") -> None:
     def git(*a):
         return subprocess.run(["git", *a], cwd=ROOT, capture_output=True, text=True)
     git("add", *[str(p.relative_to(ROOT)) for p in paths])
     if git("diff", "--cached", "--quiet").returncode != 0:
-        git("commit", "-m", "Decision study results")
+        git("commit", "-m", msg)
     git("pull", "--rebase", "--autostash")
     r = git("push")
     print("Pushed the results to GitHub." if r.returncode == 0 else f"Push FAILED:\n{r.stderr}", flush=True)

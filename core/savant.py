@@ -147,3 +147,20 @@ def batted_balls(start: str, end: str) -> pd.DataFrame:
     if "type" in df:                                   # in case the filter is ever ignored
         df = df[df["type"].eq("X")]
     return df
+
+
+ARM_URLS = [
+    BASE + "/arm-strength?type=player&year={y}&pos=&team=&min=50&csv=true",
+    BASE + "/arm-strength?year={y}&min=50&csv=true",
+    BASE + "/arm-strength?type=player&year={y}&csv=true",
+]
+
+
+def arm_strength(year: int) -> pd.DataFrame:
+    """Statcast arm strength leaderboard (2020+): average arm by position (arm_1b .. arm_rf, arm_inf, arm_of,
+    arm_overall) and max throw. Season level only -- our pitch data has no throw speed. Empty if Savant is down."""
+    for tpl in ARM_URLS:
+        df, _ = _get(tpl.format(y=year), tries=2)
+        if not df.empty and any("arm" in c.lower() for c in df.columns):
+            return df
+    return pd.DataFrame()

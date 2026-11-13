@@ -10,8 +10,10 @@ from ui.hitting import CSS, GREEN, RED, _mix
 
 
 def _fmt(v, f: str) -> str:
-    if f in ("blank", "grade"):
+    if f == "blank":
         return ""
+    if f == "grade":
+        return "" if v is None or (isinstance(v, float) and math.isnan(v)) else f"{v:.0f}"
     if v is None or (isinstance(v, float) and math.isnan(v)):
         return "-"
     if f == "int":
@@ -70,7 +72,13 @@ def table_html(spec: list, rows: list[dict]) -> str:
         body += f"<tr{tr}>" + "".join(f'<td class="lbl">{escape(str(r["lead"].get(h, "")))}</td>' for h in dfn.LEAD)
         for i, (key, _, _, f) in enumerate(cols):
             v = r["vals"].get(key)
-            style = _pct_style(v) if f == "pctile" else _pct_style(r.get("pct", {}).get(key))
-            body += f'<td class="{"sep" if i in seps else ""}" style="{style}">{escape(_fmt(v, f))}</td>'
+            if f == "grade":                                   # 20-80: color like a percentile, hover = why
+                style = _pct_style(50 + (v - 50) * 50 / 30) if isinstance(v, (int, float)) and v == v else ""
+                tip = r["vals"].get(key + "_PARTS", "")
+                tip = f' title="{escape(tip)}"' if tip else ""
+            else:
+                style = _pct_style(v) if f == "pctile" else _pct_style(r.get("pct", {}).get(key))
+                tip = ""
+            body += f'<td class="{"sep" if i in seps else ""}" style="{style}"{tip}>{escape(_fmt(v, f))}</td>'
         body += "</tr>"
     return CSS + SEASON_CSS + f'<div class="ht"><table class="pin">{head}{body}</table></div>'

@@ -167,6 +167,12 @@ def fielding_daily(season: int) -> pd.DataFrame:
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
+def fielding_spread(season: int, nums: tuple) -> dict:
+    """League mean / spread of the Range / Conversion / Ball Security rates at these positions that season."""
+    return fielding_model.grade_spread(league_ref.load_fielding(season), list(nums))
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
 def ref_status(season: int) -> str:
     return league_ref.status(season)
 
@@ -211,6 +217,7 @@ def board(kind: str, year: int) -> pd.DataFrame:
               "oaa_if": lambda: pb.statcast_outs_above_average(year, "IF", 1),
               "oaa_of": lambda: pb.statcast_outs_above_average(year, "OF", 1),
               "of_jump": lambda: pb.statcast_outfielder_jump(year, 1),
+              "arm": lambda: savant.arm_strength(year),
               "of_catch": lambda: pb.statcast_outfield_catch_prob(year, 1),
               "of_dir": lambda: pb.statcast_outfield_directional_oaa(year, 1)}[kind]
     try:
@@ -826,10 +833,15 @@ if main == "Summary":
                 frv = [row_for(board(f"frv:{dfn.POS_NUM[x]}", year), pid) for x in positions]
                 b_["frv"] = sum(dfn.col(r_, "run") for r_ in frv if r_ is not None) if any(
                     r_ is not None for r_ in frv) else math.nan
+                b_["arm_board"] = board("arm", year)
+                b_["arm"] = row_for(b_["arm_board"], pid)
             elif grp == "Outfield":
                 oaa_key = "oaa_of" if pos_pick == "Aggregate" else f"oaa:{dfn.POS_NUM[pos_pick]}"
                 b_["oaa"] = row_for(board(oaa_key, year), pid)
-                b_["jump"] = row_for(board("of_jump", year), pid)
+                b_["jump_board"] = board("of_jump", year)
+                b_["jump"] = row_for(b_["jump_board"], pid)
+                b_["arm_board"] = board("arm", year)
+                b_["arm"] = row_for(b_["arm_board"], pid)
                 b_["catch_board"] = board("of_catch", year)
                 b_["catch"] = row_for(b_["catch_board"], pid)
                 frv = [row_for(board(f"frv:{dfn.POS_NUM[x]}", year), pid) for x in positions]
@@ -878,12 +890,22 @@ if main == "Summary":
                     vals["REACT_FT"] = dfn.col(j, "reaction")
                     vals["BURST_FT"] = dfn.col(j, "burst")
                     vals["ROUTE_FT"] = dfn.col(j, "rout")
+                    jb = sb.get("jump_board")
+                    for key_, nd_ in (("REACTION", ("reaction",)), ("ACCELERATION", ("burst",)),
+                                      ("DIRECTION", ("rout",)), ("JUMP", ("bootup",))):
+                        g_, t_ = dfn.board_grade(jb, j, nd_, ("opp",), k=dfn.JUMP_K, min_n=30,
+                                                 exclude=("f_", "rank", "pct"))
+                        vals[key_], vals[key_ + "_PARTS"] = g_, (t_ + " ft" if t_ else "")
                     cr, cb = sb.get("catch"), sb.get("catch_board")
                     for k in range(1, 6):
                         vals[f"S{k}_N"] = dfn.col(cr, f"{k}star", "opp")
                         rate = dfn.col(cr, f"{k}star", "percent")
                         vals[f"S{k}"] = rate / 100 if rate == rate and rate > 1 else rate
                         pct[f"S{k}"] = dfn.pctile(cb, rate, f"{k}star", "percent")
+                if sb and grp in ("Infield", "Outfield"):
+                    g_, t_ = dfn.board_grade(sb.get("arm_board"), sb.get("arm"), dfn.arm_column(positions))
+                    key_ = "ARM_STRENGTH_GRADE" if grp == "Infield" else "ARM_STR"
+                    vals[key_], vals[key_ + "_PARTS"] = g_, (t_.replace("vs board avg", "mph vs avg") if t_ else "")
                 if grp == "Catching":
                     fr = framing_model.summarize(catching_daily(per.season), start_d.isoformat(),
                                                  end_d.isoformat(), p.get("pitchHand", {}).get("code", "R"),
@@ -900,6 +922,8 @@ if main == "Summary":
                         for k_ in range(1, 6):
                             pct.pop(f"S{k_}", None)              # our stars replace Savant's
                         vals["DRS/S"] = per_season(fz["DRS"])
+                        vals.update(fielding_model.grades(fz, fielding_spread(per.season, tuple(nums)),
+                                                          "IF" if grp == "Infield" else "OF"))
                         board_rates = fielding_model.season_rates(fielding_daily(per.season), nums)
                         if len(board_rates) and vals["DRS/S"] == vals["DRS/S"]:
                             vals["PCT_MLB"] = vals["PCT_LVL"] = 100 * (board_rates < vals["DRS/S"]).mean()
@@ -934,10 +958,10 @@ if main == "Summary":
         for tab, name in zip(tabs, dfn.TABS[grp]):
             with tab:
                 show(defense_table(dfn.TABS[grp][name], rows_d))
-        st.caption("DRS, RS, OPA / FPA / CPA and stars come from our fielding model (any period; needs "
-                   "python -m pipeline.train_fielding + the data update). Tool grades need player-tracking data that "
-                   "isn't public. Statcast columns (OAA, FRV, jump, pop time) are full seasons only; catching DRS adds "
-                   "Statcast blocking / throwing, so it shows on season rows.")
+        st.caption("DRS, RS, OPA / FPA / CPA, stars and the Range / Conversion / Ball Security grades come from our "
+                   "fielding model (any period; needs python -m pipeline.train_fielding + the data update). Arm and "
+                   "jump grades and the Statcast columns (OAA, FRV, jump, pop time) are full seasons only. Grades left "
+                   "blank need tracking data that isn't public -- we don't use stand-ins. Hover a grade for why.")
         if grp == "Catching":
             st.caption("Framing comes from our own framing model (models/framing.py), so it works for any period. "
                        "It needs the data update: python -m pipeline.update")

@@ -79,7 +79,16 @@ def fit(df: pd.DataFrame) -> dict:
     dp_value = float(rv[dp_opp & ~ev.isin(fm.DP)].mean() - rv[dp_opp & ev.isin(fm.DP)].mean()) if dp is not None else 0.0
     arm_opp = f["fielder"].isin(fm.OUTFIELD) & (f["on1"] + f["on2"] + f["on3"] > 0) & rv.notna()
     arm = _reg().fit(f.loc[arm_opp, fm.ARM_FEATURES], rv[arm_opp]) if arm_opp.sum() > 200 else None
-    return {"out": m_out, "who": who, "fielded": fielded, "run_value": run_value, "dp": dp, "dp_value": dp_value,
+    # after he reaches it: out chance once an infielder fields it (Conversion) + fielding-error chance (Ball Security)
+    conv, ferr = None, None
+    got_it = f["fielder"].isin(fm.INFIELD)
+    if got_it.sum() > 500:
+        Xc = f.loc[got_it, fm.FEATURES + ["fielder"]]
+        yc = fm.converted(d[got_it]).astype(int)
+        conv = _clf().fit(Xc, yc) if yc.nunique() > 1 else None
+        ye = fm.fielding_error(d[got_it]).astype(int)
+        ferr = _clf().fit(Xc, ye) if ye.sum() > 50 else None
+    return {"out": m_out, "who": who, "fielded": fielded, "conv": conv, "ferr": ferr, "run_value": run_value, "dp": dp, "dp_value": dp_value,
             "arm": arm, "rv_sign": sign, "use_speed": fm.USE_SPEED,
             "trained_on": sorted(pd.to_datetime(df["game_date"]).dt.year.unique().tolist())}
 

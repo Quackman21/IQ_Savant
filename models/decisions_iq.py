@@ -249,6 +249,24 @@ def called_strike_chance(df: pd.DataFrame, bundle: dict | None = None) -> pd.Ser
     return out
 
 
+def strike_value_situational(df: pd.DataFrame, bundle: dict | None = None) -> pd.Series:
+    """Runs a strike instead of a ball is worth in each pitch's FULL situation: count x runners x outs
+    (ball value - strike value from the 'bo' tables; count-only where a situation is too rare). For after-action
+    reports -- skill grades and the profile stay on strike_value (count only), since a catcher doesn't pick the
+    base / out situations he catches in."""
+    b = bundle or load()
+    out = pd.Series(np.nan, index=df.index)
+    if b is None or df.empty:
+        return out
+    st = state(df)
+    for m, sub in _by_era(df, b):
+        t, core = sub["tables"].get("bo", {}), sub["tables"]["count"]
+        ball = _look(t.get("ball", {}), st.loc[m, "bo"], st.loc[m, "count"].map(core["ball"]).astype(float))
+        strike = _look(t.get("strike", {}), st.loc[m, "bo"], st.loc[m, "count"].map(core["strike"]).astype(float))
+        out[m] = (ball - strike).astype(float)
+    return out
+
+
 def strike_value(df: pd.DataFrame, bundle: dict | None = None) -> pd.Series:
     """Runs a strike instead of a ball is worth in each pitch's count (ball value - strike value)."""
     b = bundle or load()

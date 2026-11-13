@@ -1,5 +1,21 @@
 # IQ Savant – version history
 
+## v20.0 – 2026-11-13
+- Fielding tool grades (20-80, regressed for sample size, hover for the why) -- only what public data MEASURES:
+  * Infield Range / Conversion / Ball Security (our fielding model, any period). Range + Conversion = OPA:
+    Conversion = finishing balls he fielded vs an average fielder on that same ball (a 1B's dropped good throw isn't
+    charged to the thrower); Ball Security = fielding errors vs expected (throwing errors excluded).
+    New models in pipeline.train_fielding (out chance once fielded, fielding-error chance).
+  * Arm Strength (IF + OF) from Statcast's arm strength board; OF Reaction / Acceleration / Direction / Jump from
+    Statcast's jump board (full seasons); OF Range from our CPA.
+  * Left BLANK on purpose (no stand-ins): First Step, Arm Accuracy, 1B Catch, RS 1B Rec, OF Conversion / Max Spd /
+    XBH Prev / Reputation / Transfer / Momentum, catcher Accuracy. Hover says why.
+- Framing: every pitch now also stores SITUATIONAL runs (count + runners + outs, from the decision model's tables)
+  for after-action reports. The profile keeps count-valued runs (the skill / projection number).
+- python -m pipeline.defense_study: re-scores every season's fielding + framing files, measures how many chances
+  each grade needs (feeds the regression), year-to-year repeatability, eye test, and count vs situational framing
+  (which predicts next season). Pushes results to GitHub and opens the report.
+
 ## v19.9 – 2026-11-13
 - Ball Flight Grade: Pull-Air% removed (it double-counted AirPull%). New mix: AirPull% 45% (still the gold star) |
   Air% 30% | launch-angle consistency 25%. Predicts next season's ball-flight value better than v19.8 in both

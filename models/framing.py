@@ -74,7 +74,11 @@ def iq_v1(df: pd.DataFrame) -> pd.DataFrame:
     exp = center(dq.called_strike_chance(d), d["description"].eq("called_strike"),
                  pd.to_datetime(d["game_date"]).dt.year)
     val = dq.strike_value(d)
-    d = d.assign(exp=exp, val=val).dropna(subset=["exp"])
+    try:
+        sit = dq.strike_value_situational(d)
+    except Exception:
+        sit = pd.Series(np.nan, index=d.index)
+    d = d.assign(exp=exp, val=val, sit=sit).dropna(subset=["exp"])
     xn, zn = _norm(d)
     r = np.maximum(xn.abs(), zn.abs())
     edge = np.where(zn.abs() >= xn.abs(), np.where(zn > 0, "TOZ", "BOZ"), np.where(xn > 0, "SIDE+", "SIDE-"))
@@ -84,7 +88,9 @@ def iq_v1(df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame({"game_date": pd.to_datetime(d["game_date"]).dt.date.astype(str),
                          "game_pk": d["game_pk"] if "game_pk" in d else 0,
                          "catcher": d["fielder_2"].astype(int), "region": region, "strike": strike,
-                         "exp": d["exp"], "runs": (strike - d["exp"]) * d["val"].fillna(RUNS_PER_STRIKE)})
+                         "exp": d["exp"], "runs": (strike - d["exp"]) * d["val"].fillna(RUNS_PER_STRIKE),
+                         # situational (count + runners + outs) -- stored for after-action reports, not the profile
+                         "runs_sit": (strike - d["exp"]) * d["sit"].fillna(d["val"]).fillna(RUNS_PER_STRIKE)})
 
 
 REG_TAKES = {"pre": 720, "post": 1080}      # regressed SLAA: league-average takes added (framing study split-half)
@@ -122,11 +128,13 @@ def framing_pitches(df: pd.DataFrame, model: str | None = None) -> pd.DataFrame:
 def daily_table(fp: pd.DataFrame) -> pd.DataFrame:
     """Small file to save per season: catcher x game x region -> n, strikes, expected, runs."""
     if fp.empty:
-        return pd.DataFrame(columns=["game_date", "game_pk", "catcher", "region", "n", "strikes", "exp", "runs"])
+        return pd.DataFrame(columns=["game_date", "game_pk", "catcher", "region", "n", "strikes", "exp", "runs",
+                                     "runs_sit"])
     keys = ["game_date"] + (["game_pk"] if "game_pk" in fp else []) + ["catcher", "region"]
     agg = dict(n=("strike", "size"), strikes=("strike", "sum"), exp=("exp", "sum"))
-    if "runs" in fp:
-        agg["runs"] = ("runs", "sum")
+    for c in ("runs", "runs_sit"):
+        if c in fp:
+            agg[c] = (c, "sum")
     return fp.groupby(keys).agg(**agg).reset_index()
 
 
@@ -139,7 +147,7 @@ def summarize(daily: pd.DataFrame, start: str, end: str, throws: str = "R", min_
     w = daily[(daily["game_date"] >= start) & (daily["game_date"] <= end)]
     if w.empty:
         return {}
-    cols = ["n", "strikes", "exp"] + (["runs"] if "runs" in w else [])
+    cols = ["n", "strikes", "exp"] + [c for c in ("runs", "runs_sit") if c in w]
     tot = w.groupby("catcher")[cols].sum()
     games = w.groupby("catcher")["game_pk" if "game_pk" in w else "game_date"].nunique()
     out = {}
@@ -148,7 +156,8 @@ def summarize(daily: pd.DataFrame, start: str, end: str, throws: str = "R", min_
         out[c] = {"F_OPPS": r.n, "F_XS": xs, "F_XS/G": xs / games[c] if games[c] else np.nan,
                   "F_SLAA": xs / r.n if r.n else np.nan, "F_SLAA+": 100 * r.strikes / r.exp if r.exp else np.nan,
                   "F_rSLAA": xs / (r.n + REG_TAKES["post" if str(start)[:4] >= "2023" else "pre"]),
-                  "F_RS": r.runs if "runs" in r and pd.notna(r.runs) else xs * RUNS_PER_STRIKE}
+                  "F_RS": r.runs if "runs" in r and pd.notna(r.runs) else xs * RUNS_PER_STRIKE,
+                  "F_RS_SIT": r.runs_sit if "runs_sit" in r and pd.notna(r.runs_sit) else np.nan}
     side = {"F_TOZ": "TOZ", "F_BOZ": "BOZ",
             "F_GS": "SIDE-" if throws == "R" else "SIDE+", "F_AS": "SIDE+" if throws == "R" else "SIDE-"}
     for key, region in side.items():

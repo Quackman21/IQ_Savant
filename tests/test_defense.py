@@ -39,7 +39,38 @@ def test_table_blank_grades_and_season_rows():
     rows = [{"lead": {"Year": 2026, "Period": "Season"}, "vals": {"N": 1100, "OAA": 3}, "pct": {}, "season_row": True}]
     html = table_html(dfn.IF_GRADES_TAB, rows)
     assert 'class="season"' in html and "First Step Grade" in html and ">1,100<" in html
-    assert "DRS" in html and "Out Probability Added by fielder speed" in html
+    assert "DRS" in html and "Blank on purpose" in html
+
+
+def test_grade_cells_show_number_and_hover():
+    rows = [{"lead": {"Year": 2026}, "vals": {"RANGE_GRADE": 61.4, "RANGE_GRADE_PARTS": "+2.1 outs per 100 plays"},
+             "pct": {}, "season_row": True}]
+    html = table_html(dfn.IF_GRADES_TAB, rows)
+    assert ">61<" in html and 'title="+2.1 outs per 100 plays"' in html
+
+
+def test_board_grade_regresses():
+    board = pd.DataFrame({"player_id": range(40), "rel_league_bootup_distance": [i / 4 - 5 for i in range(40)],
+                          "n_opp_30": [100] * 40})
+    full = dfn.board_grade(board, board.iloc[39], ("bootup",), ("opp",), k=0)[0]
+    reg = dfn.board_grade(board, board.iloc[39], ("bootup",), ("opp",), k=30)[0]
+    assert full > reg > 50
+    assert dfn.arm_column(["SS"]) == ("arm_ss",) and dfn.arm_column(["2B", "SS"]) == ("arm_inf",)
+
+
+def test_fielding_grades_regress_and_split():
+    from models import fielding as fm
+    spread = {"range": (0.0, 0.02), "conv": (0.0, 0.02), "sec": (0.0, 0.005)}
+    big = {"_N": 400, "_RNG": 12, "_CONV_N": 300, "_CONV": 6, "_SEC": 1.5}
+    small = {"_N": 40, "_RNG": 1.2, "_CONV_N": 30, "_CONV": 0.6, "_SEC": 0.15}
+    g, s_ = fm.grades(big, spread, "IF"), fm.grades(small, spread, "IF")
+    assert g["RANGE_GRADE"] > s_["RANGE_GRADE"] > 50 and "BALL_SECURITY_GRADE" in g
+    assert set(fm.grades(big, spread, "OF")) == {"RANGE", "RANGE_PARTS"}
+    d = pd.DataFrame({"events": ["field_error", "field_error", "field_out", "single"],
+                      "des": ["fielding error by shortstop", "throwing error by shortstop",
+                              "groundout", "missed catch error by first baseman"]})
+    assert fm.fielding_error(d).tolist() == [True, False, False, False]
+    assert fm.converted(d).tolist() == [False, False, True, True]
 
 
 def test_defense_tabs():

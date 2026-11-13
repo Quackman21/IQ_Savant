@@ -91,6 +91,21 @@ def player_at(d: pd.DataFrame, pos: pd.Series) -> pd.Series:
     return out
 
 
+def _des(d: pd.DataFrame) -> pd.Series:
+    return d["des"].astype(str).str.lower() if "des" in d else pd.Series("", index=d.index)
+
+
+def converted(d: pd.DataFrame) -> pd.Series:
+    """Did the fielder who got to the ball finish the play? An out -- or a 'missed catch' error, where the RECEIVER
+    dropped a good throw (that's on the first baseman, not the fielder)."""
+    return d["events"].astype(str).isin(OUTS) | _des(d).str.contains("missed catch")
+
+
+def fielding_error(d: pd.DataFrame) -> pd.Series:
+    """Bobbles / boots: a FIELDING error (not a throwing error) on the play."""
+    return d["events"].astype(str).eq("field_error") & _des(d).str.contains("fielding error")
+
+
 def run_bucket(la: pd.Series) -> pd.Series:
     return pd.cut(la, [-1e9, 10, 25, 50, 1e9], labels=["GB", "LD", "FB", "PU"]).astype(str)
 
@@ -132,6 +147,16 @@ def play_credits(df: pd.DataFrame, b: dict) -> pd.DataFrame:
         fld = pd.DataFrame(sub["fielded"].predict_proba(f[FEATURES]), index=d.index, columns=sub["fielded"].classes_)
         rv = run_bucket(f["la"]).map(sub["run_value"]).fillna(np.mean(list(sub["run_value"].values())))
         made_by = f["fielder"]
+        Xc = f[FEATURES].assign(fielder=made_by)
+        got_if = made_by.isin(INFIELD)
+        p_conv = pd.Series(np.nan, index=d.index)
+        p_ferr = pd.Series(np.nan, index=d.index)
+        if sub.get("conv") is not None and got_if.any():
+            p_conv[got_if] = sub["conv"].predict_proba(Xc.loc[got_if, FEATURES + ["fielder"]])[:, 1]
+        if sub.get("ferr") is not None and got_if.any():
+            p_ferr[got_if] = sub["ferr"].predict_proba(Xc.loc[got_if, FEATURES + ["fielder"]])[:, 1]
+        did_conv = converted(d).astype(float)
+        did_ferr = fielding_error(d).astype(float)
         for k in sorted(POS):
             share = who.get(k, pd.Series(0.0, index=d.index))
             mine = (out == 1) & (made_by == k)
@@ -139,13 +164,20 @@ def play_credits(df: pd.DataFrame, b: dict) -> pd.DataFrame:
             fpa = (made_by == k).astype(float) - fld.get(k, pd.Series(0.0, index=d.index))
             player = _c(d, f"fielder_{k}")
             primary = who.idxmax(axis=1).eq(k) | mine                    # this play is "his" for stars
+            # Range + Conversion = OPA. Conversion: balls he fielded (infield), finished vs expected once fielded.
+            # Range: everything else -- getting to the ball. Ball Security: fielding errors vs expected (part of
+            # Conversion, shown on its own).
+            fielded_me = (made_by == k) & p_conv.notna()
+            conv = np.where(fielded_me, did_conv - p_conv.fillna(0), 0.0)
+            sec = np.where(fielded_me & p_ferr.notna(), p_ferr.fillna(0) - did_ferr, 0.0)
             keep = (np.abs(opa) > 1e-9) | (np.abs(fpa) > 1e-3) | primary
             if not keep.any():
                 continue
             r = pd.DataFrame({"game_date": d["game_date"].astype(str).str[:10], "game_pk": d.get("game_pk", 0),
                               "player": player, "pos": k, "opa": opa, "runs": opa * rv, "fpa": fpa,
                               "primary": primary.astype(float), "p_out": p_out, "out": out,
-                              "made": mine.astype(float)}, index=d.index)[keep]
+                              "made": mine.astype(float), "rng": opa - conv, "conv": conv, "sec": sec,
+                              "conv_n": fielded_me.astype(float)}, index=d.index)[keep]
             rows.append(r)
         # double plays: grounders, runner on 1st, < 2 outs, fielded by an infielder
         dp_opp = (f["la"] < 10) & f["on1"].eq(1) & (f["outs"] < 2) & made_by.isin(INFIELD)
@@ -206,7 +238,8 @@ def blocking_opps(df: pd.DataFrame) -> pd.DataFrame:
 
 from models.catching import CATCH_COLS  # noqa: E402
 
-SUM_COLS = ["outs", "n", "opa", "runs", "fpa", "dp_opps", "dp_runs", "arm_opps", "arm_runs", "b_opps"] + \
+SUM_COLS = ["outs", "n", "opa", "runs", "fpa", "dp_opps", "dp_runs", "arm_opps", "arm_runs", "b_opps",
+            "rng", "conv", "sec", "conv_n"] + \
            [f"s{k}_{x}" for k in range(1, 6) for x in ("n", "opa", "out")] + CATCH_COLS
 
 
@@ -256,7 +289,9 @@ def summarize(daily: pd.DataFrame, start: str, end: str, positions: list[int]) -
         inn = r.get("outs", 0) / 3
         v = {"OPA": r.get("opa", 0), "CPA": r.get("opa", 0), "FPA": r.get("fpa", 0),
              "RS_FIELD": r.get("runs", 0), "RS_RANGE": r.get("runs", 0), "DP_RS": r.get("dp_runs", 0),
-             "RS_ARM": r.get("arm_runs", 0), "B_OPPS": r.get("b_opps", 0), "IQ_INN": inn}
+             "RS_ARM": r.get("arm_runs", 0), "B_OPPS": r.get("b_opps", 0), "IQ_INN": inn,
+             "_N": r.get("n", 0), "_RNG": r.get("rng", 0), "_CONV": r.get("conv", 0), "_SEC": r.get("sec", 0),
+             "_CONV_N": r.get("conv_n", 0)}
         infield = set(positions) <= INFIELD
         v["DRS"] = v["RS_FIELD"] + v["DP_RS"] if infield else v["RS_RANGE"] + v["RS_ARM"]
         for k in range(1, 6):
@@ -272,3 +307,60 @@ def season_rates(daily: pd.DataFrame, positions: list[int], min_inn: float = 300
     s = summarize(daily, "0000", "9999", positions)
     rates = {p: v["DRS"] / v["IQ_INN"] * SEASON_INN for p, v in s.items() if v["IQ_INN"] >= min_inn}
     return pd.Series(rates, dtype=float)
+
+
+# ----------------------------------------------------------------------------
+# Tool grades (20-80) -- only what public data can MEASURE (no stand-ins)
+# ----------------------------------------------------------------------------
+GRADE_FILE = Path(__file__).resolve().parent.parent / "data" / "league" / "fielding_grades.json"
+# chances before each rate is 70% skill. Defaults until python -m pipeline.defense_study measures them
+# (it writes data/league/fielding_grades.json, which overrides these).
+FOR_70 = {"range": 250, "conv": 300, "sec": 600}
+MIN_GRADE_N = {"range": 25, "conv": 20, "sec": 20}
+# (stat, numerator, denominator) -- Range per responsible play, Conversion / Ball Security per ball he fielded
+GRADE_STATS = {"range": ("_RNG", "_N"), "conv": ("_CONV", "_CONV_N"), "sec": ("_SEC", "_CONV_N")}
+GRADE_KEYS = {"IF": {"range": "RANGE_GRADE", "conv": "CONVERSION_GRADE", "sec": "BALL_SECURITY_GRADE"},
+              "OF": {"range": "RANGE"}}
+
+
+def _for70() -> dict:
+    try:
+        import json
+        return {**FOR_70, **json.loads(GRADE_FILE.read_text()).get("for_70", {})}
+    except Exception:
+        return dict(FOR_70)
+
+
+def _rate(v: dict, stat: str) -> tuple[float, float]:
+    num, den = GRADE_STATS[stat]
+    n = float(v.get(den, 0) or 0)
+    return (float(v.get(num, 0) or 0) / n if n else np.nan), n
+
+
+def grade_spread(daily: pd.DataFrame, positions: list[int], min_inn: float = 300) -> dict:
+    """League mean / spread of each graded rate among MLB regulars at these positions (whole season file)."""
+    s = summarize(daily, "0000", "9999", positions)
+    out = {}
+    for stat in GRADE_STATS:
+        xs = [_rate(v, stat)[0] for v in s.values() if v["IQ_INN"] >= min_inn]
+        xs = pd.Series(xs, dtype=float).dropna()
+        if len(xs) >= 15 and xs.std() > 0:
+            out[stat] = (float(xs.mean()), float(xs.std()))
+    return out
+
+
+def grades(v: dict, spread: dict, group: str) -> dict:
+    """Range / Conversion / Ball Security grades (infield) or Range (outfield) for one player's summary row,
+    regressed by his own sample: 50 = average MLB regular at the position, 10 = one spread."""
+    out, k70 = {}, _for70()
+    for stat, key in GRADE_KEYS[group].items():
+        x, n = _rate(v, stat)
+        if stat not in spread or x != x or n < MIN_GRADE_N[stat]:
+            continue
+        mean, sd = spread[stat]
+        shrink = n / (n + k70.get(f"{stat}_{group}", k70[stat]) * 0.3 / 0.7)
+        out[key] = 50 + 10 * (x - mean) * shrink / sd
+        unit = "plays" if stat == "range" else "balls fielded"
+        out[key + "_PARTS"] = f"{100 * x:+.1f} outs per 100 {unit} vs average | {int(n)} {unit}, " \
+                              f"{100 * shrink:.0f}% trusted"
+    return out

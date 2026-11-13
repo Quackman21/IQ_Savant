@@ -6,8 +6,11 @@ Sources
     jump, catch probability, catcher framing, pop time
   * IQ fielding model (models/fielding.py, any period): DRS, RS Field / Range / Arm, DP runs, OPA / FPA / CPA,
     stars, DRS / Season + percentiles, catcher DRS (framing + Statcast blocking / throwing), blocking opps
-  * Blank (need player-tracking data that isn't public): tool grades, RS 1B receiving, range vs conversion
-    splits, catcher blocking-by-location, Frame Speed Grade (-> SAM 3 glove model)
+  * Tool grades (v20.0): infield Range / Conversion / Ball Security (our model, any period) + Arm Strength
+    (Statcast, seasons); outfield Range (ours) + Reaction / Acceleration / Jump / Direction / Arm (Statcast)
+  * Blank on purpose (need tracking that isn't public; no stand-ins): First Step, Arm Accuracy, 1B Catch,
+    RS 1B receiving, OF conversion / max speed / XBH prev / reputation / transfer / momentum, catcher accuracy,
+    Frame Speed Grade (-> SAM 3 glove model)
 """
 from __future__ import annotations
 
@@ -40,6 +43,11 @@ def _g(label, desc):
     return (label.upper().replace(" ", "_"), label, desc, "grade")
 
 
+def _nb(label, why):
+    """A tool grade we leave BLANK on purpose: the data isn't public and we don't use stand-ins."""
+    return (label.upper().replace(" ", "_"), label, f"Blank on purpose: {why}. No stand-ins.", B)
+
+
 IF_GRADES_TAB = [("N", "#", "Chances (putouts + assists + errors)", "int"), "|", *_DRS,
                  ("RS_FIELD", "RS Field", "Runs saved turning batted balls into outs: OPA x run value of an out vs "
                   "a hit on that kind of ball", "num1s"),
@@ -49,15 +57,23 @@ IF_GRADES_TAB = [("N", "#", "Chances (putouts + assists + errors)", "int"), "|",
                   "share of the play). Out chance from exit velo, launch angle, direction, distance", "num1s"),
                  ("FPA", "FPA", "Fielded Probability Added: fielded by him (1 / 0) - chance he'd be the one to field "
                   "it", "num1s"), "|",
-                 _g("First Step Grade", "Out Probability Added by fielder speed towards the ball in first second off bat"),
-                 _g("Range Grade", "Out Probability Added by fielder between time of field (first contact) and off bat"),
-                 _g("Conversion Grade", "On fielded balls, the difference between Out Prob at Throw (or step on base) "
-                                        "and Out Prob at Field (1B: Out Prob at Catch)"),
-                 _g("Ball Security Grade", "On fielded balls, the difference between Out Prob at Throw (or step on base) "
-                                           "and Out Prob at Field"),
-                 _g("Arm Strength Grade", "On thrown balls, the Out Probability Added from the fielder's throw speed"),
-                 _g("Arm Accuracy Grade", "On thrown balls, the Out Probability Added from the throw accuracy"),
-                 _g("1B Catch Grade", "Ability for first baseman to convert outs given the throw"), "|",
+                 _nb("First Step Grade", "how fast he reacts off the bat (needs infielder tracking, which MLB doesn't "
+                                         "publish)"),
+                 _g("Range Grade", "20-80. Getting to the ball: the part of his OPA from reaching balls (everything "
+                                   "except finishing plays he already fielded), per responsible play, regressed for "
+                                   "sample size. Hover for his rate."),
+                 _g("Conversion Grade", "20-80. Finishing the play once he has the ball: on balls he fielded, outs vs "
+                                        "how often an average fielder at his position finishes that same ball (exit "
+                                        "velo, angle, direction, distance). Includes throws and bobbles; a first "
+                                        "baseman's dropped good throw isn't charged to him. Regressed for sample size."),
+                 _g("Ball Security Grade", "20-80. Bobbles and boots: fielding errors vs expected on the balls he "
+                                           "fielded (throwing errors excluded). Part of Conversion, shown on its own. "
+                                           "Regressed -- errors are rare, so it takes many chances to trust."),
+                 _g("Arm Strength Grade", "20-80. Statcast average throw speed at his position (full seasons, 2020+) "
+                                          "vs other qualified throwers there"),
+                 _nb("Arm Accuracy Grade", "throw accuracy (needs throw tracking; error counts alone are too rare to be "
+                                           "more than a stand-in)"),
+                 _nb("1B Catch Grade", "first-base receiving (scoops aren't tracked publicly)"), "|",
                  ("OAA", "OAA", "Statcast Outs Above Average (full seasons)", "int"),
                  ("FRV", "FRV", "Statcast Fielding Run Value (full seasons)", "int"),
                  *_FIELDING]
@@ -92,22 +108,20 @@ OF_GRADES_TAB = [("N", "#", "Chances (putouts + assists + errors)", "int"), "|",
                   "his share)", "num1s"),
                  ("CPA_R", "CPA Range", "Catch Probability Added from range (needs fielder tracking -- not public)", B),
                  ("CPA_C", "CPA Conversion", "Catch Probability Added from conversion (needs fielder tracking)", B), "|",
-                 _g("Range", "20-80 range grade"),
-                 _g("Reaction", "Catch probability added from the fielder's first step"),
-                 _g("Acceleration", "Catch probability added from the fielder's average speed over the first two "
-                                    "seconds after contact. Combination of Reaction & Acceleration"),
-                 _g("Jump", "Jump grade (reaction + acceleration + direction)"),
-                 _g("Direction", "The angle between a fielder's starting location, his location after 2 seconds, and "
-                                 "the landing location of the ball"),
-                 _g("Max Spd", "Catch probability added from the fielder's maximum speed reached on the play "
-                               "relative to the expected given hang time & distance to cover"), "|",
-                 _g("Conversion", "Fielder's ability to complete the play; the difference between baseline prob "
-                                  "caught and tool-adjusted prob caught"),
-                 _g("XBH Prev", "XBH prevention grade from the outfield defensive range model"), "|",
-                 _g("Arm Str", "Arm strength grade"),
-                 _g("Reputation", "Arm reputation grade from the outfield arm run value model"),
-                 _g("Transfer", "Transfer (exchange) grade"),
-                 _g("Momentum", "Momentum into the throw grade"), "|",
+                 _g("Range", "20-80. Catch Probability Added per responsible play (our model, any period), "
+                             "regressed for sample size. Includes conversion -- public data can't split them."),
+                 _g("Reaction", "20-80. Statcast jump: feet covered vs average in the first 1.5 s (full seasons), "
+                                "regressed by his opportunities"),
+                 _g("Acceleration", "20-80. Statcast jump, burst: feet vs average from 1.5 to 3 s (full seasons)"),
+                 _g("Jump", "20-80. Statcast total jump: feet vs average in the first 3 s = reaction + burst + route"),
+                 _g("Direction", "20-80. Statcast jump, route: feet vs average from running a direct path"),
+                 _nb("Max Spd", "top speed on the play vs needed (needs fielder tracking)"), "|",
+                 _nb("Conversion", "finishing balls he reached (public data can't tell if he reached it)"),
+                 _nb("XBH Prev", "extra-base-hit prevention (needs fielder tracking)"), "|",
+                 _g("Arm Str", "20-80. Statcast average throw speed at his position (full seasons, 2020+)"),
+                 _nb("Reputation", "runners not testing his arm (no public model yet)"),
+                 _nb("Transfer", "exchange time (outfield transfers aren't public)"),
+                 _nb("Momentum", "momentum into the throw (needs fielder tracking)"), "|",
                  ("OAA", "OAA", "Statcast Outs Above Average (full seasons)", "int"),
                  ("REACT_FT", "Reaction (ft)", "Statcast jump: feet covered vs average in the reaction phase", "num1"),
                  ("BURST_FT", "Burst (ft)", "Statcast jump: feet covered vs average in the burst phase", "num1"),
@@ -199,7 +213,7 @@ C_THROWING = [("DRS", "DRS", "Catching DRS: Framing + Blocking + Throwing runs (
                                   "(to 2B, Statcast, full seasons)", "time"),
               ("XFER", "Xfer", "Exchange time: glove to release (Statcast, full seasons)", "time"),
               ("ARM", "Arm Strength", "Max-effort arm strength (Statcast, full seasons)", "mph"),
-              _g("Accuracy Grade", "Throw accuracy grade"), "|",
+              _nb("Accuracy Grade", "throw accuracy (needs throw tracking)"), "|",
               ("SB", "SB", "Stolen bases allowed", "int"), ("CS", "CS", "Runners caught stealing", "int"),
               ("CS%", "CS%", "Caught stealing rate", "pct")]
 
@@ -337,3 +351,54 @@ BR_TOOLS = [("SPRINT", "Sprint Speed", "Statcast sprint speed, ft/sec (full seas
             _g("HTF Grade", "Home-to-first grade"), _g("OOB Grade", "Out-of-the-box grade"),
             _g("Max Speed Grade", "Max speed grade"), _g("Acceleration Grade", "Acceleration grade")]
 BR_TABS = {"Advancing": BR_ADVANCING, "Base Stealing": BR_STEALING, "Tools": BR_TOOLS}
+
+
+# ----------------------------------------------------------------------------
+# 20-80 grades from Savant season boards (jump, arm strength)
+# ----------------------------------------------------------------------------
+JUMP_K = 30          # 2-star+ opportunities before half of a jump number is trusted (until the study measures it)
+
+
+def _num(board: pd.DataFrame, c: str) -> pd.Series:
+    return pd.to_numeric(board[c], errors="coerce")
+
+
+def _find(board: pd.DataFrame, needles: tuple, exclude: tuple = ()) -> str | None:
+    for c in board.columns:
+        lc = c.lower()
+        if all(n in lc for n in needles) and not any(x in lc for x in exclude):
+            return c
+    return None
+
+
+def board_grade(board: pd.DataFrame | None, row: pd.Series | None, needles: tuple, n_needles: tuple | None = None,
+                k: float = 0, min_n: float = 0, exclude: tuple = ()) -> tuple[float, str]:
+    """(20-80 grade, hover text) for one player's value in a Savant board column, vs everyone on the board with
+    min_n+ opportunities. Regressed by n / (n + k) when k > 0."""
+    if board is None or board.empty or row is None:
+        return math.nan, ""
+    c = _find(board, needles, exclude)
+    if c is None:
+        return math.nan, ""
+    x = pd.to_numeric(row.get(c), errors="coerce")
+    if pd.isna(x):
+        return math.nan, ""
+    vals = _num(board, c)
+    nc = _find(board, n_needles) if n_needles else None
+    n = float(pd.to_numeric(row.get(nc), errors="coerce")) if nc else math.nan
+    if nc and min_n:
+        vals = vals[_num(board, nc) >= min_n]
+    vals = vals.dropna()
+    if len(vals) < 15 or not vals.std():
+        return math.nan, ""
+    shrink = n / (n + k) if k and n == n else 1.0
+    g = 50 + 10 * (x - vals.mean()) * shrink / vals.std()
+    tail = f" | {int(n)} opps, {100 * shrink:.0f}% trusted" if k and n == n else ""
+    return float(g), f"{x:+.1f} vs board avg {vals.mean():+.1f}{tail}"
+
+
+def arm_column(positions: list[str]) -> tuple:
+    """Savant arm board column for these positions (one position -> arm_ss; several -> arm_inf / arm_of)."""
+    if len(positions) == 1:
+        return ("arm_" + positions[0].lower(),)
+    return ("arm_inf",) if set(positions) <= set(INFIELD) else ("arm_of",)
