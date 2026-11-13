@@ -1,0 +1,132 @@
+IQ BALL FLIGHT STUDY -- how much of a hitter's run value comes from WHERE he hits the ball (angle + direction),
+with bat speed / exit velocity taken out
+Regular season, no bunts. Hitter-seasons with 200+ balls in play. FLIGHT RUNS = SAxwOBA minus an average ball hit exactly that hard, / 1.2.
+
+HOW TO READ
+  RUNS/SZN        typical regular's flight runs from that piece over a season
+  REL r / BIP .70 odd vs even games -- is it real skill? / balls in play before it's 70% skill
+  AT STAKE        top-10% vs bottom-10% hitter there, runs per season
+  SKILL SHARE     share of the REAL (repeatable) differences in flight runs from that piece
+  NEXT FLIGHT     NEXT season's ACTUAL flight value per BIP (real outcomes, exit velo held equal) -- main target
+  NEXT RUNS|TOOLS next season's wOBA with power (90th EV, avg EV) + contact held equal
+  WEIGHT          ridge regression, each metric credited only for what it ADDS (signs set by the data)
+
+================================================================================================================
+2015-2022
+
+1. WHERE FLIGHT RUNS COME FROM (per BIP, adds up to the total)
+  Total flight runs/BIP: odd vs even r = 0.49;  top-10% vs bottom-10% = 24.6 runs a season
+  PIECE                      RUNS/SZN  REL r  AT STAKE  SKILL SHARE
+  Ground ball, Oppo              -7.9   0.62       9.8          32%
+  Ground ball, Pull              -8.7   0.66      10.7          28%
+  Line drive, Pull              +11.3   0.38       9.0          18%
+  Ground ball, Middle            -2.7   0.61       6.0          14%
+  Line drive, Oppo               +9.6   0.20       5.3           7%
+  Fly ball, Pull                 +1.6   0.15       2.9           5%
+  Line drive, Middle             +7.6   0.26       5.5           3%
+  Fly ball, Middle               -1.1   0.20       2.6           1%
+  Weak air / pop, Pull           -1.0   0.40       2.0           0%
+  Weak air / pop, Middle         -2.2   0.35       2.6          -1%
+  Weak air / pop, Oppo           -1.6   0.34       2.1          -1%
+  Fly ball, Oppo                 -4.6   0.28       3.7          -7%
+
+2. EVERY METRIC ON ITS OWN (1011 hitter season-pairs)
+   NEXT FLIGHT|TOOLS = next season's actual flight value with power (90th + avg EV), contact and chase held equal
+   LEAK columns = how tied it is to the OTHER grades' ingredients (near 0 = measures its own thing)
+  METRIC                      REL r  BIP .70 NEXT FLIGHT|TOOLS NEXT RUNS|TOOLS LEAK pwr LEAK bat LEAK con LEAK chase
+  Flight runs/BIP (actual)     0.37      689             +0.30           +0.19    -0.42        -    -0.02      +0.06
+  Flight runs/BIP (x)          0.49      422             +0.26           +0.19    -0.30        -    -0.09      -0.02
+  FB% (angle only)             0.60      273             +0.23           +0.15    -0.05        -    -0.18      -0.14
+  LD+FB%                       0.60      268             +0.22           +0.14    -0.01        -    -0.21      -0.16
+  FB%                          0.62      251             +0.21           +0.14    +0.04        -    -0.23      -0.18
+  Sweet Spot%                  0.34      777             +0.20           +0.12    -0.11        -    -0.05      -0.13
+  PULL-AIR%                    0.50      404             +0.20           +0.11    +0.07        -    -0.20      -0.06
+  Flight percentile            0.46      464             +0.20           +0.12    -0.45        -    +0.09      +0.04
+  PULL-AIR% (angle only)       0.50      402             +0.20           +0.10    +0.03        -    -0.18      -0.03
+  GB% (angle only)             0.73      147             -0.19           -0.10    -0.03        -    +0.23      +0.11
+  LD%                          0.28    1,013             +0.19           +0.12    -0.09        -    -0.05      -0.12
+  LA (hard-hit)                0.79      106             +0.18           +0.15    +0.15        -    -0.45      -0.13
+  GB%                          0.65      213             -0.16           -0.05    -0.09        -    +0.29      +0.11
+  AIRPULL% (angle only)        0.65      214             +0.16           +0.08    +0.04        -    -0.19      -0.09
+  AIRPULL%                     0.65      220             +0.15           +0.08    +0.14        -    -0.25      -0.13
+  LA sd (consistency)          0.58      293             -0.12           -0.16    +0.23        -    -0.14      +0.08
+  FB-PULL%                     0.57      300             +0.09           +0.04    +0.07        -    -0.14      -0.01
+  WEAK FB%                     0.59      277             +0.04           -0.03    +0.00        -    -0.08      +0.09
+  MIDDLE%                      0.19    1,756             -0.03           -0.12    +0.09        -    -0.03      -0.01
+  Pop-up% (angle only)         0.63      235             +0.02           -0.04    +0.16        -    -0.18      +0.01
+  PULL%                        0.63      235             +0.02           +0.03    +0.05        -    -0.12      -0.08
+  OPPO%                        0.54      346             +0.00           +0.05    -0.13        -    +0.18      +0.11
+
+3. WHAT PREDICTS NEXT SEASON'S FLIGHT VALUE (tools held equal)? cross-validated R^2
+    flight percentile alone            R^2 = 0.032
+    flight runs (in runs) alone        R^2 = 0.061
+    + angle-only metrics               R^2 = 0.058
+    + the 11 app metrics               R^2 = 0.058
+    the 11 app metrics alone           R^2 = 0.040
+    angle-only metrics alone           R^2 = 0.042
+  data's weights: Flight percentile 31%, OPPO% 13%, PULL-AIR% 12%, PULL-AIR% (angle only) 10%, LA sd (consistency) (low) 7%, LA (hard-hit) 6%, WEAK FB% 5%, Pop-up% (angle only) 4%, FB-PULL% 4%, FB% (angle only) 3%, GB% (angle only) (low) 3%, AIRPULL% (angle only) 1%, LD+FB% 1%
+  same, for runs with tools held equal: LA (hard-hit) 27%, LA sd (consistency) (low) 26%, OPPO% 20%, MIDDLE% (low) 14%, FB-PULL% 8%, PULL-AIR% 5%
+
+4. 2022 EYE TEST -- flight percentile (200+ BIP; +5 = his balls average the 55th percentile of balls hit that hard). 90th EV shown to check power isn't driving it
+  top:    Harold Castro +7.6 (101 90thEV) | Tomás Nido +7.4 (103 90thEV) | Luis Guillorme +7.1 (99 90thEV) | Tim Anderson +6.8 (102 90thEV) | Yonathan Daza +6.5 (100 90thEV) | Jose Altuve +6.2 (102 90thEV) | Garrett Cooper +6.1 (107 90thEV) | Luis Arraez +6.0 (99 90thEV) | Brandon Marsh +5.6 (105 90thEV) | Luis García Jr. +5.2 (104 90thEV)
+  bottom: Yandy Díaz -4.3 (108 90thEV) | Patrick Wisdom -4.4 (107 90thEV) | Rowdy Tellez -4.9 (107 90thEV) | Matt Chapman -5.1 (107 90thEV) | Rougned Odor -5.4 (103 90thEV) | Mauricio Dubón -5.6 (101 90thEV) | Carlos Santana -5.7 (106 90thEV) | Vladimir Guerrero Jr. -5.7 (111 90thEV)
+
+================================================================================================================
+2023+
+
+1. WHERE FLIGHT RUNS COME FROM (per BIP, adds up to the total)
+  Total flight runs/BIP: odd vs even r = 0.45;  top-10% vs bottom-10% = 22.7 runs a season
+  PIECE                      RUNS/SZN  REL r  AT STAKE  SKILL SHARE
+  Ground ball, Oppo              -7.0   0.68       9.8          33%
+  Ground ball, Pull              -8.8   0.67      11.0          31%
+  Line drive, Pull              +12.7   0.43      10.2          24%
+  Ground ball, Middle            -1.8   0.60       5.1          14%
+  Line drive, Oppo               +8.7   0.14       4.4           4%
+  Fly ball, Pull                 +2.1   0.11       2.8           3%
+  Line drive, Middle             +6.4   0.29       5.5           2%
+  Fly ball, Middle               -0.9   0.21       2.6           0%
+  Weak air / pop, Pull           -1.5   0.35       2.1          -1%
+  Weak air / pop, Oppo           -2.0   0.30       2.0          -2%
+  Weak air / pop, Middle         -3.0   0.24       2.2          -2%
+  Fly ball, Oppo                 -4.8   0.16       2.7          -7%
+
+2. EVERY METRIC ON ITS OWN (594 hitter season-pairs)
+   NEXT FLIGHT|TOOLS = next season's actual flight value with power (90th + avg EV), contact and chase held equal
+   LEAK columns = how tied it is to the OTHER grades' ingredients (near 0 = measures its own thing)
+  METRIC                      REL r  BIP .70 NEXT FLIGHT|TOOLS NEXT RUNS|TOOLS LEAK pwr LEAK bat LEAK con LEAK chase
+  Flight runs/BIP (x)          0.44      498             +0.29           +0.17    -0.38    -0.37    -0.01      -0.01
+  FB% (angle only)             0.53      352             +0.25           +0.12    -0.08    -0.07    -0.14      -0.09
+  Flight runs/BIP (actual)     0.32      861             +0.25           +0.13    -0.46    -0.43    +0.06      +0.04
+  LD+FB%                       0.53      348             +0.23           +0.10    -0.04    -0.04    -0.16      -0.11
+  LA sd (consistency)          0.43      522             -0.22           -0.11    +0.08    +0.16    -0.05      +0.08
+  AIRPULL%                     0.63      234             +0.22           +0.07    +0.09    +0.11    -0.25      -0.04
+  PULL-AIR% (angle only)       0.52      374             +0.22           +0.06    -0.07    -0.03    -0.12      +0.01
+  PULL-AIR%                    0.50      395             +0.22           +0.05    -0.03    -0.00    -0.15      -0.01
+  AIRPULL% (angle only)        0.66      205             +0.21           +0.07    -0.02    +0.04    -0.18      -0.01
+  LA (hard-hit)                0.78      109             +0.21           +0.13    +0.15    +0.17    -0.45      -0.09
+  FB%                          0.54      345             +0.21           +0.09    +0.02    +0.00    -0.19      -0.14
+  Flight percentile            0.45      491             +0.21           +0.13    -0.48    -0.50    +0.19      +0.04
+  GB% (angle only)             0.70      170             -0.19           -0.07    +0.07    +0.01    +0.14      +0.08
+  Sweet Spot%                  0.30      922             +0.19           +0.06    -0.10    -0.14    -0.03      -0.08
+  LD%                          0.26    1,147             +0.18           +0.07    -0.09    -0.12    -0.01      -0.08
+  FB-PULL%                     0.61      256             +0.17           +0.06    -0.05    +0.02    -0.13      +0.03
+  GB%                          0.59      279             -0.16           -0.05    +0.05    -0.01    +0.16      +0.07
+  PULL%                        0.68      189             +0.12           +0.07    -0.01    +0.06    -0.15      -0.02
+  MIDDLE%                      0.27    1,081             -0.09           -0.07    +0.08    +0.03    -0.00      +0.01
+  OPPO%                        0.55      322             -0.09           -0.05    -0.06    -0.10    +0.21      +0.03
+  WEAK FB%                     0.60      261             +0.05           +0.01    -0.15    -0.02    +0.01      +0.04
+  Pop-up% (angle only)         0.61      251             +0.01           -0.03    -0.02    +0.09    -0.07      -0.02
+
+3. WHAT PREDICTS NEXT SEASON'S FLIGHT VALUE (tools held equal)? cross-validated R^2
+    flight percentile alone            R^2 = 0.040
+    flight runs (in runs) alone        R^2 = 0.079
+    + angle-only metrics               R^2 = 0.093
+    + the 11 app metrics               R^2 = 0.101
+    the 11 app metrics alone           R^2 = 0.045
+    angle-only metrics alone           R^2 = 0.084
+  data's weights: LA sd (consistency) (low) 28%, Flight percentile 25%, WEAK FB% 15%, AIRPULL% 12%, LA (hard-hit) 11%, FB-PULL% 10%
+  same, for runs with tools held equal: Flight percentile 33%, LA (hard-hit) 30%, LA sd (consistency) (low) 16%, MIDDLE% (low) 7%, PULL% 7%, WEAK FB% 5%, OPPO% (low) 3%
+
+4. 2026 EYE TEST -- flight percentile (200+ BIP; +5 = his balls average the 55th percentile of balls hit that hard). 90th EV shown to check power isn't driving it
+  top:    Steven Kwan +8.7 (95 90thEV) | Wade Meckler +8.1 (100 90thEV) | Luis Arraez +7.0 (97 90thEV) | Gleyber Torres +6.6 (100 90thEV) | Nick Gonzales +6.6 (102 90thEV) | Chase Meidroth +6.2 (101 90thEV) | Sam Antonacci +6.2 (101 90thEV) | Nathan Lukes +6.0 (100 90thEV) | Chandler Simpson +5.9 (97 90thEV) | Jacob Wilson +5.6 (100 90thEV)
+  bottom: Lars Nootbaar -4.5 (106 90thEV) | Evan Carter -4.6 (103 90thEV) | Isaac Collins -4.9 (104 90thEV) | Cal Raleigh -4.9 (106 90thEV) | Francisco Lindor -5.1 (104 90thEV) | Jake Burger -5.4 (108 90thEV) | Ketel Marte -5.5 (108 90thEV) | Cedric Mullins -9.4 (102 90thEV)
