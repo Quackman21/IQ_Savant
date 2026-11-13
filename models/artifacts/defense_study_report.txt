@@ -1,0 +1,53 @@
+IQ DEFENSE STUDY (v20.0)
+seasons 2015-2026
+
+====================================================================================================
+1. FIELDING GRADES -- can we trust them?
+====================================================================================================
+Split-half: each player's odd games vs even games, same season and position group. r = how much of the rate repeats; 'for .70' = chances before the rate is 70% skill (what the grades regress with).
+
+  IF Range          split-half r 0.22 at 166 chances a half -> 1,387 chances for .70   (2347 player-seasons)
+  IF Conversion     split-half r 0.14 at 117 chances a half -> 1,635 chances for .70   (2298 player-seasons)
+  IF Ball Security  split-half r 0.07 at 117 chances a half -> 3,830 chances for .70   (2298 player-seasons)
+  OF Range          split-half r 0.33 at 126 chances a half -> 606 chances for .70   (1770 player-seasons)
+
+Year to year (regulars, 300+ innings both years): r of the rate this season vs next
+  IF Range          r 0.30  (1416 pairs)
+  IF Conversion     r 0.24  (1416 pairs)
+  IF Ball Security  r 0.13  (1416 pairs)
+  OF Range          r 0.35  (1029 pairs)
+
+2026 eye test -- grades by position (300+ innings), regressed:
+  1B Range Grade          top: Jared Young 55 | Vinnie Pasquantino 54 | Kyle Manzardo 54 | Matt Olson 54   bottom: Vaughn Grissom 46 | Bryce Harper 45 | Gavin Sheets 45
+  1B Conversion Grade     top: Matt Olson 54 | Ty France 53 | Josh Naylor 53 | Nolan Schanuel 53   bottom: Kyle Manzardo 48 | Mark Vientos 47 | Jake Bauers 45
+  1B Ball Security Grade  top: Josh Naylor 51 | Spencer Torkelson 51 | Sal Stewart 51 | Bryce Harper 51   bottom: Jake Bauers 49 | Alec Burleson 48 | Mark Vientos 48
+  2B Range Grade          top: Nico Hoerner 57 | Nasim Nuñez 57 | Ben Williamson 57 | Richie Palacios 56   bottom: Edouard Julien 44 | Luis Arraez 43 | Bryson Stott 41
+  2B Conversion Grade     top: Luis Arraez 56 | Ketel Marte 56 | JJ Wetherholt 54 | Brice Turang 54   bottom: Jose Altuve 46 | Ernie Clement 45 | Luke Keaschall 45
+  2B Ball Security Grade  top: JJ Wetherholt 52 | Ketel Marte 52 | Michael Massey 52 | Bryson Stott 52   bottom: Brandon Lowe 48 | Ernie Clement 47 | Luke Keaschall 46
+  3B Range Grade          top: Miguel Vargas 55 | Kazuma Okamoto 54 | Kevin McGonigle 54 | Maikel Garcia 54   bottom: Nick Gonzales 45 | Max Muncy 44 | Isaac Paredes 41
+  3B Conversion Grade     top: Caleb Durbin 54 | Nolan Gorman 54 | Nolan Arenado 53 | Manny Machado 53   bottom: Alec Bohm 47 | Coby Mayo 47 | Nick Gonzales 46
+  3B Ball Security Grade  top: Manny Machado 52 | Alex Bregman 52 | Nick Loftin 52 | Miguel Vargas 51   bottom: Blaze Alexander 48 | Max Muncy 48 | Brady House 48
+  SS Range Grade          top: José Caballero 55 | Elly De La Cruz 55 | George Lombard Jr. 55 | Willy Adames 55   bottom: Colt Emerson 44 | Geraldo Perdomo 43 | Ezequiel Tovar 41
+  SS Conversion Grade     top: Taylor Walls 58 | Corey Seager 54 | Ezequiel Duran 54 | Mookie Betts 54   bottom: Kevin McGonigle 46 | J.P. Crawford 46 | Trea Turner 43
+  SS Ball Security Grade  top: Dansby Swanson 52 | Ezequiel Tovar 52 | Jacob Wilson 52 | J.P. Crawford 51   bottom: Jim Jarvis 48 | Elly De La Cruz 48 | Trea Turner 47
+  LF Range                top: Cody Bellinger 61 | Jackson Chourio 58 | Chandler Simpson 57 | Ramón Laureano 55   bottom: Tyler Soderstrom 43 | Angel Martínez 42 | Jarren Duran 35
+  CF Range                top: Cedric Mullins 60 | Evan Carter 60 | Michael Harris II 59 | Pete Crow-Armstrong 59   bottom: Trent Grisham 40 | Justin Crawford 40 | Lane Thomas 40
+  RF Range                top: Corbin Carroll 58 | Zach McKinstry 58 | Luis Lara 57 | Victor Mesa Jr. 57   bottom: Ronald Acuña Jr. 44 | Kerry Carpenter 44 | Troy Johnston 40
+
+====================================================================================================
+2. FRAMING RUNS -- count only (profile) vs count + runners + outs (after-action reports)
+====================================================================================================
+Catcher seasons with 2,000+ framing opportunities.
+
+  same season: r(count runs, situational runs) = 0.999
+  average rank change between the two: 0.9 spots (of ~61 catchers a season)
+  biggest gap: 1.7 runs; typical gap 0.3 runs
+
+  Which of THIS season's numbers best predicts NEXT season? (r, per pitch)
+  this season                        extra strikes / pitch          count runs / pitch    situational runs / pitch
+  extra strikes                                      0.551                       0.531                       0.531
+  count runs                                         0.547                       0.534                       0.533
+  situational runs                                   0.543                       0.532                       0.530
+  (479 catcher pairs)
+
+done in 6 min
