@@ -148,7 +148,8 @@ def original_calls(df: pd.DataFrame, fetch: bool = True) -> pd.DataFrame:
         idx = sub["index"].values
         out.loc[idx, "abs_challenged"] = True
         out.loc[idx, "abs_overturned"] = sub["overturned"].astype(bool).values
-        out.loc[idx, "abs_challenger"] = sub["challenger"].values
+        # numbers, not an object array: pandas 3 refuses object values in a float column (the v20.0 2026 crash)
+        out.loc[idx, "abs_challenger"] = pd.to_numeric(sub["challenger"], errors="coerce").astype(float).values
         taken = out.loc[idx, "description"].isin(["called_strike", "ball", "blocked_ball"])
         idx = idx[taken.values]
         stood = call_that_stood(df.loc[m]).reindex(idx)

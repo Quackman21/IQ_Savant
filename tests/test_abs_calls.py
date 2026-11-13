@@ -47,3 +47,14 @@ def test_center_league_to_zero():
     y = pd.Series((rng.random(5000) < (p + 0.03).clip(0, 1)).astype(int))
     c = framing.center(p, y, pd.Series(2025, index=p.index))
     assert abs((y - c).sum()) < 1 and abs((y - p).sum()) > 50
+
+
+def test_float_challenger_ids_and_missing_challenger(monkeypatch):
+    """Fresh 2026 challenges come back with challenger ids as an OBJECT array (521692.0, blanks) -- v20.0 crashed
+    on them under pandas 3 and fell back to the overturned calls."""
+    ch = pd.DataFrame({"game_pk": [9, 9], "at_bat_number": [3, 3], "pitch_number": [1, 3],
+                       "overturned": [True, False], "challenger": np.array([521692.0, None], dtype=object)})
+    monkeypatch.setattr(abs_calls, "season_challenges", lambda y, games: ch)
+    out = abs_calls.original_calls(_pa(), fetch=True)
+    assert out["abs_challenger"].iloc[0] == 521692 and out["abs_challenged"].sum() == 2
+    assert out["description"].iloc[0] == "ball"

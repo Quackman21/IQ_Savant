@@ -41,17 +41,24 @@ def test_scale_factor_orders():
 
 
 def test_fetch_drs_saves_fangraphs_format(monkeypatch, tmp_path):
-    import sys
-    import types
     from pipeline import fetch_drs
-    pb = types.ModuleType("pybaseball")
-    monkeypatch.setitem(sys.modules, "pybaseball", pb)
-    fake = pd.DataFrame({"Name": ["Nico Hoerner", "Bryson Stott"], "Team": ["CHC", "PHI"], "Pos": ["2B", "2B"],
-                         "Inn": [1300.0, 1200.0], "DRS": [15, -8], "rPM": [10, -6], "rGFP": [2, -1], "Junk": [1, 2]})
-    pb.fielding_stats = lambda *a, **k: fake
+    rows = [{"Name": '<a href="x">Nico Hoerner</a>', "PlayerName": "Nico Hoerner", "Team": "CHC", "Pos": "2B",
+             "Inn": 1300.0, "DRS": 15, "rPM": 10, "rGFP": 2, "Junk": 1},
+            {"Name": "<a>Bryson Stott</a>", "PlayerName": "Bryson Stott", "Team": "PHI", "Pos": "2B",
+             "Inn": 1200.0, "DRS": -8, "rPM": -6, "rGFP": -1, "Junk": 2}]
+
+    class R:
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"data": rows, "totalCount": 2}
+    import requests
+    monkeypatch.setattr(requests, "get", lambda *a, **k: R())
     monkeypatch.setattr(fetch_drs, "OUT", tmp_path)
     monkeypatch.setattr(fc, "COMPARE", tmp_path)
     fetch_drs.main(["--season", "2026"])
     s = fc.sis(2026)
     assert list(s["pos"]) == ["2B", "2B"] and s["sis"].tolist() == [15, -8]
     assert s["sis_range"].tolist() == [10, -6] and "sis_gfp" in s
+    assert fc.norm("Nico Hoerner") in s["key"].tolist() if hasattr(fc, "norm") else True

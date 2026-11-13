@@ -1,5 +1,13 @@
 # IQ Savant – version history
 
+## v20.1.2 – 2026-11-13
+- FIX (important): 2026 framing was using the ABS-OVERTURNED calls, not the umpire's original calls. The challenge
+  data loaded, but writing the challenger ids crashed under pandas 3 ("Invalid value ... for dtype float64"), and
+  framing quietly fell back to the calls as recorded. Ids are now cast to numbers; a test reproduces the crash.
+  Re-score with:  python -m pipeline.defense_study  (rebuilds every season's framing + fielding files, ~6 min).
+- fetch_drs reads FanGraphs' own leaderboard feed (pybaseball's FanGraphs reader comes back with only an IDfg
+  column since their redesign).
+
 ## v20.1.1 – 2026-11-13
 - python -m pipeline.fetch_drs: saves SIS DRS (as published on FanGraphs, with rPM range/positioning and rGFP good
   plays/misplays) to data/compare/drs_<year>.csv for 2016-now, for the fielding comparison study. Fieldingbible.com
