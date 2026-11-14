@@ -1,5 +1,14 @@
 # IQ Savant – version history
 
+## v20.2 – 2026-11-13
+- Range grade rebuilt from the fielding comparison study:
+  * Full seasons: 90% Statcast OAA + 10% ours (the study's best blend for both infield and outfield), regressed
+    by innings with OAA's measured reliability (IF .43, OF .61 a season), on the talent scale.
+  * Partial periods: OF Range = ours (agrees with OAA ~.7); IF Range = BLANK -- ours doesn't know where the
+    fielder started and mostly measures team positioning in the infield (r .06 with OAA at SS; the biggest
+    "we like more" gaps were Rays).
+  * Conversion, Ball Security, DRS* unchanged. Hover a Range grade for the OAA / ours pieces.
+
 ## v20.1.3 – 2026-11-13
 - fetch_drs: FanGraphs blocks scripts (403) but not your browser. --urls prints one link per season; open each,
   Ctrl+S as data/compare/fg_<year>.json, then --local converts them to drs_<year>.csv for the comparison study.

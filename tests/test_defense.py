@@ -98,3 +98,18 @@ def test_framing_model_any_period():
     june = framing.summarize(daily, "2025-06-01", "2025-06-30")
     assert june[1]["F_OPPS"] < season[1]["F_OPPS"]         # months work
     assert framing.summarize(daily, "2025-09-01", "2025-09-30") == {}
+
+
+def test_range_grade_from_oaa():
+    from models import fielding as fm
+    ospread = fm.oaa_spread({6: {1: 12, 2: 0, **{p: (p % 9) - 4 for p in range(3, 40)}}},
+                            {6: {p: 1100 for p in range(1, 40)}})
+    assert ospread is not None
+    spread = {"range": (0.0, 0.02, 450)}
+    v = {"_N": 450, "_RNG": 0, "_CONV_N": 0}
+    elite = fm.range_grade_oaa(12, 1100, ospread, v, spread, "IF")["RANGE_GRADE"]
+    part = fm.range_grade_oaa(3, 275, ospread, v, spread, "IF")["RANGE_GRADE"]      # same pace, quarter season
+    assert elite > 60 and 50 < part < elite
+    of = fm.range_grade_oaa(12, 1100, ospread, v, spread, "OF")["RANGE"]
+    assert of > elite                                     # OF OAA is more reliable -> less regression
+    assert fm.range_grade_oaa(float("nan"), 1100, ospread, v, spread, "IF") == {}

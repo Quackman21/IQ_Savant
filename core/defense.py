@@ -63,9 +63,10 @@ IF_GRADES_TAB = [("N", "#", "Chances (putouts + assists + errors)", "int"), "|",
                   "it", "num1s"), "|",
                  _nb("First Step Grade", "how fast he reacts off the bat (needs infielder tracking, which MLB doesn't "
                                          "publish)"),
-                 _g("Range Grade", "20-80. Getting to the ball: the part of his OPA from reaching balls (everything "
-                                   "except finishing plays he already fielded), per responsible play, regressed for "
-                                   "sample size. Hover for his rate."),
+                 _g("Range Grade", "20-80. Getting to the ball. Full seasons: 90% Statcast OAA + 10% ours -- OAA "
+                                   "knows where the fielder started; ours doesn't, and in the infield it mostly "
+                                   "measures the team's positioning (fielding comparison study), so partial periods "
+                                   "are blank. Regressed by innings. Hover for the pieces."),
                  _g("Conversion Grade", "20-80. Finishing the play once he has the ball: on balls he fielded, outs vs "
                                         "how often an average fielder at his position finishes that same ball (exit "
                                         "velo, angle, direction, distance). Includes throws and bobbles; a first "
@@ -112,8 +113,8 @@ OF_GRADES_TAB = [("N", "#", "Chances (putouts + assists + errors)", "int"), "|",
                   "his share)", "num1s"),
                  ("CPA_R", "CPA Range", "Catch Probability Added from range (needs fielder tracking -- not public)", B),
                  ("CPA_C", "CPA Conversion", "Catch Probability Added from conversion (needs fielder tracking)", B), "|",
-                 _g("Range", "20-80. Catch Probability Added per responsible play (our model, any period), "
-                             "regressed for sample size. Includes conversion -- public data can't split them."),
+                 _g("Range", "20-80. Full seasons: 90% Statcast OAA + 10% our Catch Probability Added. Partial "
+                             "periods: ours alone (it agrees with OAA ~.7 in the outfield). Regressed for sample size."),
                  _g("Reaction", "20-80. Statcast jump: feet covered vs average in the first 1.5 s (full seasons), "
                                 "regressed by his opportunities"),
                  _g("Acceleration", "20-80. Statcast jump, burst: feet vs average from 1.5 to 3 s (full seasons)"),

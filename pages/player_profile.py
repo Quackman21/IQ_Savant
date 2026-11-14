@@ -172,6 +172,23 @@ def fielding_spread(season: int, nums: tuple) -> dict:
     return fielding_model.grade_spread(league_ref.load_fielding(season), list(nums))
 
 
+@st.cache_data(ttl=24 * 3600, show_spinner=False)
+def oaa_ref(season: int, nums: tuple) -> tuple | None:
+    """League OAA per full season among regulars at these positions (for the Range grade)."""
+    daily = league_ref.load_fielding(season)
+    oaa_by, inn_by = {}, {}
+    for k in nums:
+        try:
+            b = board(f"oaa:{k}", season)
+            idc = next(c for c in b.columns if "player_id" in c.lower())
+            vc = next(c for c in b.columns if c.lower() == "outs_above_average")
+            oaa_by[k] = dict(zip(pd.to_numeric(b[idc], errors="coerce"), pd.to_numeric(b[vc], errors="coerce")))
+        except Exception:
+            continue
+        inn_by[k] = {p: v["IQ_INN"] for p, v in fielding_model.summarize(daily, "0000", "9999", [k]).items()}
+    return fielding_model.oaa_spread(oaa_by, inn_by)
+
+
 @st.cache_data(ttl=3600, show_spinner=False)
 def ref_status(season: int) -> str:
     return league_ref.status(season)
@@ -922,8 +939,22 @@ if main == "Summary":
                         for k_ in range(1, 6):
                             pct.pop(f"S{k_}", None)              # our stars replace Savant's
                         vals["DRS/S"] = per_season(fz["DRS"])
-                        vals.update(fielding_model.grades(fz, fielding_spread(per.season, tuple(nums)),
-                                                          "IF" if grp == "Infield" else "OF"))
+                        g4 = "IF" if grp == "Infield" else "OF"
+                        fsp = fielding_spread(per.season, tuple(nums))
+                        vals.update(fielding_model.grades(fz, fsp, g4))
+                        rkey = fielding_model.GRADE_KEYS[g4]["range"]
+                        if sb:                                # full season: Range = 90% OAA + 10% ours
+                            got = fielding_model.range_grade_oaa(
+                                dfn.col(sb.get("oaa"), "outs_above_average"), fz.get("IQ_INN", 0),
+                                oaa_ref(per.season, tuple(nums)), fz, fsp, g4)
+                            if got:
+                                vals.update(got)
+                            elif g4 == "IF":
+                                vals.pop(rkey, None)
+                                vals.pop(rkey + "_PARTS", None)
+                        elif g4 == "IF":                      # partial period: ours only measures positioning
+                            vals.pop(rkey, None)
+                            vals.pop(rkey + "_PARTS", None)
                         board_rates = fielding_model.season_rates(fielding_daily(per.season), nums)
                         if len(board_rates) and vals["DRS/S"] == vals["DRS/S"]:
                             vals["PCT_MLB"] = vals["PCT_LVL"] = 100 * (board_rates < vals["DRS/S"]).mean()

@@ -378,3 +378,40 @@ def grades(v: dict, spread: dict, group: str, scale: str | None = None) -> dict:
         out[key + "_PARTS"] = f"{100 * x:+.1f} outs per 100 {unit} vs average | {int(n)} {unit}, " \
                               f"{100 * shrink:.0f}% trusted"
     return out
+
+
+# ----------------------------------------------------------------------------
+# v20.2 Range = 90% Statcast OAA + 10% ours (full seasons). From the fielding comparison study: OAA knows where the
+# fielder STARTED, ours doesn't -- in the infield ours mostly measures the team's positioning (r .06 with OAA at
+# SS), so partial-period infield Range is left blank. OF ours agrees with OAA (~.7), so it stays for partial periods.
+# ----------------------------------------------------------------------------
+RANGE_W_OAA = 0.9
+OAA_REL = {"IF": 0.425, "OF": 0.606}       # OAA year-to-year r for regulars = reliability of a full season (study)
+TYPICAL_INN = 1100
+
+
+def oaa_spread(oaa_by_pos: dict, inn_by_pos: dict, min_inn: float = 300) -> tuple[float, float] | None:
+    """Mean / spread of OAA per full season (1,200 innings) among regulars at these positions.
+    oaa_by_pos: {pos: {player: OAA}}, inn_by_pos: {pos: {player: our innings there}}."""
+    xs = [o * SEASON_INN / inn_by_pos[k][p] for k, b in oaa_by_pos.items() for p, o in b.items()
+          if inn_by_pos.get(k, {}).get(p, 0) >= min_inn and o == o]
+    xs = pd.Series(xs, dtype=float)
+    return (float(xs.mean()), float(xs.std())) if len(xs) >= 15 and xs.std() > 0 else None
+
+
+def range_grade_oaa(oaa: float, inn: float, ospread: tuple | None, v: dict, spread: dict, group: str) -> dict:
+    """Full-season Range grade: 90% OAA + 10% our Range (each vs regulars at the position), regressed by innings
+    with OAA's reliability, on the talent scale (a typical regular: 50 + 10 x z x sqrt(reliability))."""
+    key = GRADE_KEYS[group]["range"]
+    if ospread is None or oaa != oaa or not inn:
+        return {}
+    z_oaa = (oaa * SEASON_INN / inn - ospread[0]) / ospread[1]
+    x, n = _rate(v, "range")
+    z_ours = (x - spread["range"][0]) / spread["range"][1] if "range" in spread and x == x and n else 0.0
+    z = RANGE_W_OAA * z_oaa + (1 - RANGE_W_OAA) * z_ours
+    rel = OAA_REL[group]
+    k = TYPICAL_INN * (1 - rel) / rel
+    shrink = inn / (inn + k)
+    return {key: 50 + 10 * z * shrink / rel ** 0.5,
+            key + "_PARTS": f"OAA {oaa:+.0f} in {inn:,.0f} inn ({z_oaa:+.1f} spreads, 90%) | ours "
+                            f"{z_ours:+.1f} spreads (10%) | {100 * shrink:.0f}% trusted"}
