@@ -1,84 +1,55 @@
-"""AAR page pieces (HTML + inline SVG, same look as the rest of the site): header, box line, metric tiles,
-zone / spray / point-of-contact charts, and collapsible plate appearances (open as many as you want)."""
+"""AAR page: one interactive panel (a Streamlit component, so it can run its own clicks):
+
+    [ box line + Last 30 PA / Season / MLB season tiles (metric picker) ]  [ zone ][ spray ][ point of contact ]
+    [ ONE pitch table, grouped by plate appearance -- every PA starts collapsed; open as many as you want     ]
+
+Click any pitch -- a dot on any chart or a row in the table -- and it lights up everywhere at once; click more to
+select several; "Clear" resets. Opening PAs filters the charts to those PAs (none open = the whole game). Selecting a
+pitch from a chart opens its PA so its row is visible."""
 from __future__ import annotations
 
+import json
 import math
 from html import escape
 
 import pandas as pd
 
-from core.aar import SAVANT_VIDEO
+from core.aar import PLATE_HALF, SAVANT_VIDEO
 
 TEAL, INK, MUTED, LINE = "#4a8b96", "#16202b", "#6a7681", "#e6eaed"
 SWING, TAKE = "#d9822b", "#5b6bc8"
 RES_COLOR = {"Single": "#2bb3c0", "Double": "#e0b300", "Triple": "#8e5bd0", "Home run": "#3a9a4f"}
 OUT_COLOR = "#9aa5ae"
 PT_COLOR = {"FF": "#c0392b", "FA": "#c0392b", "SI": "#e67e22", "FC": "#8e5b3a", "SL": "#c9a400", "ST": "#b8860b",
-            "SV": "#b8860b", "CU": "#2e6fd1", "KC": "#2e6fd1", "CS": "#2e6fd1", "CH": "#2e9b57", "FS": "#16a2a8",
-            "FO": "#16a2a8", "KN": "#666", "EP": "#666"}
+            "SV": "#b8860b", "SW": "#b8860b", "CU": "#2e6fd1", "KC": "#2e6fd1", "CS": "#2e6fd1", "CH": "#2e9b57",
+            "FS": "#16a2a8", "FO": "#16a2a8", "KN": "#666", "EP": "#666"}
 DEC_COLOR = {"Great": ("#1f7a3a", "#fff"), "Good": ("#cdebd5", INK), "Neutral": ("#eef1f3", MUTED),
              "Bad": ("#f6d3d0", INK), "Poor": ("#b8322a", "#fff")}
-
-CSS = f"""
-<style>
-.aar{{font:13px system-ui,sans-serif;color:{INK}}}
-.aar .card{{border:1px solid {LINE};border-radius:10px;padding:10px 12px;background:#fff}}
-.aar .hdr{{display:flex;align-items:center;gap:14px;flex-wrap:wrap}}
-.aar .hdr img.hs{{width:56px;height:56px;border-radius:50%;object-fit:cover;background:#eef1f3}}
-.aar .hdr .nm{{font:700 22px system-ui,sans-serif}}
-.aar .hdr .sub{{color:{MUTED};font-size:12px}}
-.aar .hdr .gm{{margin-left:auto;display:flex;align-items:center;gap:10px;font:700 20px system-ui,sans-serif}}
-.aar .hdr .gm img{{width:30px;height:30px;object-fit:contain}}
-.aar .hdr .gm .d{{font:12px system-ui,sans-serif;color:{MUTED};text-align:center;line-height:1.3}}
-.aar table.line{{border-collapse:collapse;width:100%;margin-top:8px}}
-.aar table.line th{{font:600 11px system-ui,sans-serif;color:{MUTED};padding:4px;border-bottom:1.5px solid {TEAL}}}
-.aar table.line td{{font:600 16px ui-monospace,monospace;text-align:center;padding:4px}}
-.aar .tiles{{display:flex;gap:8px;flex-wrap:wrap}}
-.aar .tile{{flex:1;min-width:110px;text-align:center;border:1px solid {LINE};border-radius:8px;padding:6px}}
-.aar .tile .l{{font-size:11px;color:{MUTED}}}
-.aar .tile .v{{font:700 18px ui-monospace,monospace}}
-.aar .charts{{display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between}}
-.aar .chart{{flex:1;min-width:230px;max-width:340px;text-align:center}}
-.aar .chart .t{{font:600 12px system-ui,sans-serif;color:{MUTED};margin-bottom:2px}}
-.aar .chart svg{{width:100%;height:auto}}
-.aar .chart .leg{{font-size:10.5px;color:{MUTED}}}
-.aar .chart .none{{color:{MUTED};font-size:12px;padding:40px 6px}}
-.aar details.pa{{border:1px solid {LINE};border-radius:10px;margin:8px 0;background:#fff}}
-.aar details.pa[open]{{border-color:{TEAL};box-shadow:0 1px 6px rgba(74,139,150,.18)}}
-.aar details.pa summary{{cursor:pointer;list-style:none;display:grid;align-items:center;gap:10px;padding:9px 12px;
-  grid-template-columns:22px 52px minmax(140px,1.2fr) 110px minmax(150px,2fr) 110px}}
-.aar details.pa summary::-webkit-details-marker{{display:none}}
-.aar details.pa summary .car{{color:{TEAL};font-weight:700;transition:transform .15s}}
-.aar details.pa[open] summary .car{{transform:rotate(90deg)}}
-.aar summary .inn{{font:700 13px ui-monospace,monospace}}
-.aar summary .res{{font-weight:700}}
-.aar summary .ex{{color:{MUTED};font-weight:400;margin-left:6px}}
-.aar summary .dr{{text-align:right;font:12px ui-monospace,monospace}}
-.aar .pa-body{{padding:4px 12px 12px;border-top:1px solid {LINE}}}
-.aar .wrap{{overflow-x:auto;-webkit-overflow-scrolling:touch}}
-.aar table.p{{border-collapse:collapse;width:100%;white-space:nowrap;margin:6px 0 10px}}
-.aar table.p th{{font:600 11px system-ui,sans-serif;color:{MUTED};padding:5px 7px;border-bottom:1.5px solid {TEAL};
-  text-align:right}}
-.aar table.p td{{font:12.5px ui-monospace,"SF Mono",Menlo,monospace;padding:4px 7px;border-bottom:1px solid {LINE};
-  text-align:right}}
-.aar table.p td.l,.aar table.p th.l{{text-align:left;font-family:system-ui,sans-serif}}
-.aar table.p tr.bip td{{background:#f6fafb}}
-.aar .chip{{display:inline-block;padding:1px 7px;border-radius:9px;font:600 11px system-ui,sans-serif}}
-.aar a.vid{{color:{TEAL};text-decoration:none;font-size:15px}}
-.aar a.vid:hover{{color:{INK}}}
-.aar .muted{{color:{MUTED}}}
-@media (max-width:700px){{.aar details.pa summary{{grid-template-columns:18px 44px 1fr;row-gap:2px}}
-  .aar summary .cnt,.aar summary .dr{{display:none}}}}
-</style>
-"""
-
 HEADSHOT = ("https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/"
             "w_120,q_auto:best/v1/people/{id}/headshot/67/current")
 LOGO = "https://www.mlbstatic.com/team-logos/{id}.svg"
+CAMERA = ('<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" '
+          'stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="13" height="12" rx="2"/>'
+          '<path d="M15.5 10.5l6-3.5v10l-6-3.5z"/></svg>')
+
+HEAD_CSS = f"""<style>
+.aarh{{font:13px system-ui,sans-serif;color:{INK};display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  border:1px solid {LINE};border-radius:10px;padding:10px 14px;background:#fff}}
+.aarh img.hs{{width:56px;height:56px;border-radius:50%;object-fit:cover;background:#eef1f3}}
+.aarh .nm{{font:700 22px system-ui,sans-serif}} .aarh .sub{{color:{MUTED};font-size:12px}}
+.aarh .gm{{margin-left:auto;display:flex;align-items:center;gap:10px;font:700 20px system-ui,sans-serif}}
+.aarh .gm img{{width:30px;height:30px;object-fit:contain}}
+.aarh .gm .d{{font:12px system-ui,sans-serif;color:{MUTED};text-align:center;line-height:1.3}}
+</style>"""
 
 
 def _f(v, fmt="{:.1f}", dash="–"):
-    return dash if v is None or (isinstance(v, float) and math.isnan(v)) or v is pd.NA else fmt.format(v)
+    try:
+        if v is None or v is pd.NA or (isinstance(v, float) and math.isnan(v)):
+            return dash
+    except TypeError:
+        pass
+    return fmt.format(v)
 
 
 def _woba(v) -> str:
@@ -93,152 +64,130 @@ def _woba_style(v) -> str:
     return f"background:rgb({r},{g},{b});color:{'#fff' if t > .6 else INK}"
 
 
-# ----------------------------------------------------------------------------- header + tiles
 def header_html(pid: int, name: str, team: str, gm: dict) -> str:
-    a, h = gm["away"], gm["home"]
-    return (CSS + f'<div class="aar"><div class="card hdr"><img class="hs" src="{HEADSHOT.format(id=pid)}" alt="">'
+    return (HEAD_CSS + f'<div class="aarh"><img class="hs" src="{HEADSHOT.format(id=pid)}" alt="">'
             f'<div><div class="sub">{escape(team)} · Hitter AAR</div><div class="nm">{escape(name)}</div></div>'
-            f'<div class="gm">{_f(gm["away_runs"], "{}", "")}<img src="{LOGO.format(id=a)}" alt="">'
+            f'<div class="gm">{_f(gm["away_runs"], "{}", "")}<img src="{LOGO.format(id=gm["away"])}" alt="">'
             f'<div class="d">{escape(gm["abbr_away"])} @ {escape(gm["abbr_home"])}<br>{escape(gm["date"])}</div>'
-            f'<img src="{LOGO.format(id=h)}" alt="">{_f(gm["home_runs"], "{}", "")}</div></div></div>')
+            f'<img src="{LOGO.format(id=gm["home"])}" alt="">{_f(gm["home_runs"], "{}", "")}</div></div>')
 
 
-def line_html(line: dict) -> str:
-    cols = ["AB", "R", "H", "2B", "3B", "HR", "RBI", "BB", "K"]
-    return (CSS + '<div class="aar"><div class="card"><table class="line"><tr>'
-            + "".join(f"<th>{c}</th>" for c in cols) + "</tr><tr>"
-            + "".join(f"<td>{line.get(c, '–')}</td>" for c in cols) + "</tr></table></div></div>")
-
-
-def tiles_html(tiles: list[tuple[str, str]], metric_label: str) -> str:
-    return (CSS + '<div class="aar"><div class="tiles">'
-            + "".join(f'<div class="tile"><div class="l">{escape(lab)} {escape(metric_label)}</div>'
-                      f'<div class="v">{escape(v)}</div></div>' for lab, v in tiles) + "</div></div>")
-
-
-# ----------------------------------------------------------------------------- charts
-def _shape(kind: str, x: float, y: float, r: float, fill: str, stroke: str = "#fff") -> str:
+# ----------------------------------------------------------------------------- chart marks
+def _shape(kind: str, x: float, y: float, r: float, fill: str) -> str:
+    st = f'fill="{fill}" stroke="#fff" stroke-width=".9"'
     if kind in ("Breaking", "LD"):
-        return (f'<polygon points="{x},{y - r * 1.15} {x - r * 1.05},{y + r * .8} {x + r * 1.05},{y + r * .8}" '
-                f'fill="{fill}" stroke="{stroke}" stroke-width=".8"/>')
+        return f'<polygon class="m" points="{x:.1f},{y - r * 1.15:.1f} {x - r * 1.05:.1f},{y + r * .8:.1f} {x + r * 1.05:.1f},{y + r * .8:.1f}" {st}/>'
     if kind in ("Offspeed", "PU"):
-        return (f'<rect x="{x - r * .85}" y="{y - r * .85}" width="{r * 1.7}" height="{r * 1.7}" fill="{fill}" '
-                f'stroke="{stroke}" stroke-width=".8"/>')
+        return f'<rect class="m" x="{x - r * .85:.1f}" y="{y - r * .85:.1f}" width="{r * 1.7:.1f}" height="{r * 1.7:.1f}" {st}/>'
     if kind == "GB":
-        return (f'<polygon points="{x},{y + r * 1.15} {x - r * 1.05},{y - r * .8} {x + r * 1.05},{y - r * .8}" '
-                f'fill="{fill}" stroke="{stroke}" stroke-width=".8"/>')
+        return f'<polygon class="m" points="{x:.1f},{y + r * 1.15:.1f} {x - r * 1.05:.1f},{y - r * .8:.1f} {x + r * 1.05:.1f},{y - r * .8:.1f}" {st}/>'
     if kind == "FB":
-        return (f'<polygon points="{x},{y - r * 1.2} {x + r * 1.1},{y} {x},{y + r * 1.2} {x - r * 1.1},{y}" '
-                f'fill="{fill}" stroke="{stroke}" stroke-width=".8"/>')
-    return f'<circle cx="{x}" cy="{y}" r="{r}" fill="{fill}" stroke="{stroke}" stroke-width=".8"/>'
+        return f'<polygon class="m" points="{x:.1f},{y - r * 1.2:.1f} {x + r * 1.1:.1f},{y:.1f} {x:.1f},{y + r * 1.2:.1f} {x - r * 1.1:.1f},{y:.1f}" {st}/>'
+    return f'<circle class="m" cx="{x:.1f}" cy="{y:.1f}" r="{r}" {st}/>'
 
 
-def _label(n, x, y, size=7.5) -> str:
-    return (f'<text x="{x}" y="{y + size * .36}" text-anchor="middle" font-size="{size}" font-weight="700" '
-            f'fill="#fff" font-family="system-ui,sans-serif">{n}</text>')
+def _mark(r, kind: str, x: float, y: float, fill: str, rad: float = 8.5) -> str:
+    dy = 1.6 if kind in ("Breaking", "LD") else -1.3 if kind == "GB" else 0
+    return (f'<g class="pt" data-n="{r.n}" data-pa="{r.pa}">{_shape(kind, x, y, rad, fill)}'
+            f'<text x="{x:.1f}" y="{y + dy + 2.7:.1f}" text-anchor="middle">{r.n}</text></g>')
 
 
-def _result_color(play: str) -> str:
+def _res_color(play: str) -> str:
     return RES_COLOR.get(play, OUT_COLOR)
 
 
-def zone_svg(rows: pd.DataFrame) -> str:
-    """Catcher's view. Solid box = strike zone; dashed = heart; dotted = edge of the shadow (attack zones)."""
-    W, H = 260, 290
-    xs = lambda x: W / 2 + x * 62                              # feet -> px
-    top = rows["sz_top"].median() if rows["sz_top"].notna().any() else 3.4
-    bot = rows["sz_bot"].median() if rows["sz_bot"].notna().any() else 1.6
-    zs = lambda z: 250 - (z - 0.2) * 52
+def zone_svg(p: pd.DataFrame) -> str:
+    W, H = 270, 300
+    xs = lambda x: W / 2 + x * 62
+    top = p["sz_top"].median() if p["sz_top"].notna().any() else 3.4
+    bot = p["sz_bot"].median() if p["sz_bot"].notna().any() else 1.6
+    zs = lambda z: 258 - (z - 0.25) * 52
     hw, mid, hh = 17 / 24, (top + bot) / 2, (top - bot) / 2
-    box = lambda k, dash, w: (f'<rect x="{xs(-hw * k)}" y="{zs(mid + hh * k)}" width="{xs(hw * k) - xs(-hw * k)}" '
-                              f'height="{zs(mid - hh * k) - zs(mid + hh * k)}" fill="none" stroke="{TEAL if k == 1 else "#9fb9be"}" '
-                              f'stroke-width="{w}" stroke-dasharray="{dash}"/>')
-    g = [box(1.33, "2 3", 1), box(1, "", 1.8), box(0.67, "5 4", 1)]
-    g.append(f'<polygon points="{xs(-hw)},{262} {xs(hw)},{262} {xs(hw)},{268} {xs(0)},{276} {xs(-hw)},{268}" '
-             f'fill="#f1f4f5" stroke="#9fb9be"/>')
-    for r in rows.itertuples():
-        if r.px != r.px or r.pz != r.pz:
-            continue
-        x, y = max(8, min(W - 8, xs(r.px))), max(8, min(H - 20, zs(r.pz)))
-        g.append(_shape(r.pgroup, x, y, 8.5, SWING if r.swing else TAKE) + _label(r.n, x, y + (1.5 if r.pgroup == "Breaking" else 0)))
-    leg = (f'<span style="color:{SWING}">●</span> Swing &nbsp;<span style="color:{TAKE}">●</span> Take &nbsp;'
-           f'● FB &nbsp;▲ BB &nbsp;■ OS')
-    return _chart("Pitch location (catcher's view)", f'<svg viewBox="0 0 {W} {H}">{"".join(g)}</svg>', leg)
+
+    def box(k, dash, w, col):
+        return (f'<rect x="{xs(-hw * k):.1f}" y="{zs(mid + hh * k):.1f}" width="{xs(hw * k) - xs(-hw * k):.1f}" '
+                f'height="{zs(mid - hh * k) - zs(mid + hh * k):.1f}" fill="none" stroke="{col}" stroke-width="{w}" '
+                f'stroke-dasharray="{dash}"/>')
+    g = [box(1.33, "2 3", 1, "#9fb9be"), box(1, "", 1.8, TEAL), box(0.67, "5 4", 1, "#9fb9be"),
+         f'<text x="{xs(-hw * 1.33) - 4:.1f}" y="{zs(top) + 3:.1f}" text-anchor="end" class="ax">{top:.2f}\'</text>',
+         f'<text x="{xs(-hw * 1.33) - 4:.1f}" y="{zs(bot) + 3:.1f}" text-anchor="end" class="ax">{bot:.2f}\'</text>',
+         f'<polygon points="{xs(-hw):.1f},270 {xs(hw):.1f},270 {xs(hw):.1f},276 {xs(0):.1f},284 {xs(-hw):.1f},276" '
+         f'fill="#f1f4f5" stroke="#9fb9be"/>']
+    for r in p.itertuples():
+        if r.px == r.px and r.pz == r.pz:
+            x, y = max(9, min(W - 9, xs(r.px))), max(9, min(H - 22, zs(r.pz)))
+            g.append(_mark(r, r.pgroup, x, y, SWING if r.swing else TAKE))
+    leg = (f'<i style="color:{SWING}">●</i> Swing <i style="color:{TAKE}">●</i> Take &nbsp;● FB ▲ BB ■ OS'
+           f' &nbsp;<span class="faint">solid = zone · dashed = heart · dotted = shadow</span>')
+    return _chart("Pitch location", "catcher's view", f'<svg viewBox="0 0 {W} {H}">{"".join(g)}</svg>', leg)
 
 
-def spray_svg(rows: pd.DataFrame) -> str:
-    W, H = 280, 270
-    hx, hy, s = W / 2, 250, 0.52                          # home plate in px; px per foot
-    pt = lambda ft_x, ft_y: (hx + ft_x * s, hy - ft_y * s)
-    g = []
-    l1, r1, c1 = pt(-233, 233), pt(233, 233), pt(0, 405)
-    g.append(f'<path d="M{hx},{hy} L{l1[0]},{l1[1]} Q{c1[0]},{c1[1] - 95} {r1[0]},{r1[1]} Z" fill="#eef5ef" '
-             f'stroke="#9fb9be"/>')
+def spray_svg(p: pd.DataFrame) -> str:
+    W, H = 290, 300
+    hx, hy, s = W / 2, 282, 0.6
+    pt = lambda fx, fy: (hx + fx * s, hy - fy * s)
+    lf, rf, lc, rc, cf = pt(-233, 233), pt(233, 233), pt(-265, 315), pt(265, 315), pt(0, 405)
+    g = [f'<path d="M{hx},{hy} L{lf[0]:.1f},{lf[1]:.1f} Q{lc[0]:.1f},{lc[1] - 40:.1f} {cf[0]:.1f},{cf[1]:.1f} '
+         f'Q{rc[0]:.1f},{rc[1] - 40:.1f} {rf[0]:.1f},{rf[1]:.1f} Z" fill="#eef5ef" stroke="#9fb9be"/>']
     b1, b2, b3 = pt(63.6, 63.6), pt(0, 127.3), pt(-63.6, 63.6)
-    g.append(f'<polygon points="{hx},{hy} {b1[0]},{b1[1]} {b2[0]},{b2[1]} {b3[0]},{b3[1]}" fill="#f4ede2" '
-             f'stroke="#c9b48f"/>')
-    for r in rows.itertuples():
-        if not r.bip or r.hc_x != r.hc_x or r.hc_y != r.hc_y:
-            continue
-        fx, fy = (r.hc_x - 125.42) * 2.5, (198.27 - r.hc_y) * 2.5
-        x, y = pt(fx, fy)
-        x, y = max(8, min(W - 8, x)), max(8, min(H - 8, y))
-        g.append(_shape(r.bb or "GB", x, y, 8.5, _result_color(r.play)) + _label(r.n, x, y + (1.5 if r.bb == "LD" else -1.2 if r.bb == "GB" else 0)))
-    leg = ("▼ GB ▲ LD ◆ FB ■ PU &nbsp;" + " ".join(f'<span style="color:{c}">●</span> {k.replace("Home run", "HR")}'
-                                                 for k, c in RES_COLOR.items()) + f' <span style="color:{OUT_COLOR}">●</span> Out')
-    return _chart("Spray", f'<svg viewBox="0 0 {W} {H}">{"".join(g)}</svg>', leg)
+    g.append(f'<path d="M{hx},{hy} L{b1[0]:.1f},{b1[1]:.1f} L{b2[0]:.1f},{b2[1]:.1f} L{b3[0]:.1f},{b3[1]:.1f} Z" '
+             f'fill="#f4ede2" stroke="#c9b48f"/>')
+    for r in p.itertuples():
+        if r.bip and r.hc_x == r.hc_x and r.hc_y == r.hc_y:
+            x, y = pt((r.hc_x - 125.42) * 2.5, (198.27 - r.hc_y) * 2.5)
+            g.append(_mark(r, r.bb or "GB", max(9, min(W - 9, x)), max(9, min(H - 9, y)), _res_color(r.play)))
+    leg = ("▼ GB ▲ LD ◆ FB ■ PU &nbsp;" + " ".join(f'<i style="color:{c}">●</i> {k.replace("Home run", "HR")}'
+                                                 for k, c in RES_COLOR.items()) + f' <i style="color:{OUT_COLOR}">●</i> Out')
+    return _chart("Spray", "", f'<svg viewBox="0 0 {W} {H}">{"".join(g)}</svg>', leg)
 
 
-def contact_svg(rows: pd.DataFrame, orient: tuple[int, int] | None) -> str:
-    """Point of contact from Statcast bat tracking, relative to the hitter's body (measured, not estimated)."""
-    have = rows[rows["swing"] & rows["cx"].notna() & rows["cy"].notna()]
-    if have.empty or orient is None:
-        why = ("No measured contact here." if have.empty else
-               "Measured, but not enough of his season yet to confirm the axes.")
-        return _chart("Point of contact", f'<div class="none">{why}</div>', "")
-    sy, sx = orient
-    W, H = 260, 290
-    xs = lambda v: 40 + v * 5.0                           # inches from body -> px
-    ys = lambda v: 200 - v * 5.2                          # inches out front -> px
-    g = [f'<line x1="{xs(0)}" y1="14" x2="{xs(0)}" y2="276" stroke="#cfd8dc"/>',
-         f'<line x1="14" y1="{ys(0)}" x2="{W - 10}" y2="{ys(0)}" stroke="#cfd8dc"/>',
-         f'<text x="{xs(0) + 4}" y="22" font-size="9" fill="{MUTED}">out front ↑</text>',
-         f'<text x="{W - 12}" y="{ys(0) - 4}" font-size="9" fill="{MUTED}" text-anchor="end">away from body →</text>',
-         f'<circle cx="{xs(0)}" cy="{ys(0)}" r="5" fill="#cfd8dc"/>',
-         f'<text x="{xs(0) - 7}" y="{ys(0) + 14}" font-size="9" fill="{MUTED}" text-anchor="end">him</text>']
-    for v in (-10, 10, 20, 30):
-        g.append(f'<text x="{xs(0) - 4}" y="{ys(v) + 3}" font-size="8" fill="#9aa5ae" text-anchor="end">{v}</text>')
-    for v in (10, 20, 30, 40):
-        g.append(f'<text x="{xs(v)}" y="{ys(0) + 12}" font-size="8" fill="#9aa5ae" text-anchor="middle">{v}</text>')
+def contact_svg(p: pd.DataFrame, note: str) -> str:
+    """Point of contact on the plate (catcher's view): front-center of the plate = 0, 0; up = out in front."""
+    have = p[p["swing"] & p["pf"].notna() & p["pxc"].notna()]
+    if have.empty:
+        return _chart("Point of contact", "", f'<div class="none">{escape(note)}</div>', "")
+    W, H = 270, 300
+    xs = lambda v: W / 2 + v * 5.2
+    ys = lambda v: 165 - v * 5.2
+    g = []
+    for v in range(-20, 35, 5):
+        g.append(f'<line x1="22" y1="{ys(v):.1f}" x2="{W - 6}" y2="{ys(v):.1f}" stroke="#eef1f3" '
+                 f'stroke-dasharray="{"" if v == 0 else "3 3"}"/><text x="18" y="{ys(v) + 3:.1f}" class="ax" '
+                 f'text-anchor="end">{v}</text>')
+    for v in (-10, 0, 10):
+        g.append(f'<text x="{xs(v):.1f}" y="{H - 4}" class="ax" text-anchor="middle">{v}</text>')
+    h = PLATE_HALF
+    g.append(f'<polygon points="{xs(-h):.1f},{ys(0):.1f} {xs(h):.1f},{ys(0):.1f} {xs(h):.1f},{ys(-h):.1f} '
+             f'{xs(0):.1f},{ys(-17):.1f} {xs(-h):.1f},{ys(-h):.1f}" fill="#f6f8f9" stroke="{TEAL}" stroke-width="1.6"/>')
+    g.append(f'<text x="{W - 8}" y="{ys(30) + 9:.1f}" class="ax" text-anchor="end">out front ↑</text>')
     for r in have.itertuples():
-        side = 1 if r.stand == "R" else -1
-        x = max(8, min(W - 8, xs(sx * side * r.cx)))
-        y = max(8, min(H - 8, ys(sy * r.cy)))
-        color = _result_color(r.play) if r.bip else (SWING if "Foul" in r.result else "#b8322a")
-        g.append(_shape(r.bb if r.bip else "", x, y, 8, color) + _label(r.n, x, y))
-    leg = ("inches from his body · ● whiff (red) / foul (orange) / in play by result")
-    return _chart("Point of contact", f'<svg viewBox="0 0 {W} {H}">{"".join(g)}</svg>', leg)
+        color = _res_color(r.play) if r.bip else (SWING if "Foul" in r.result else "#b8322a")
+        x, y = max(9, min(W - 9, xs(r.pxc))), max(9, min(H - 16, ys(r.pf)))
+        g.append(_mark(r, r.bb if r.bip else "", x, y, color))
+    leg = (f'<i style="color:#b8322a">●</i> Whiff <i style="color:{SWING}">●</i> Foul &nbsp;in play: shape = BB type, '
+           f'color = result &nbsp;<span class="faint">inches · catcher\'s view</span>')
+    return _chart("Point of contact", "on the plate", f'<svg viewBox="0 0 {W} {H}">{"".join(g)}</svg>', leg,
+                  tip=note)
 
 
-def _chart(title: str, body: str, leg: str) -> str:
-    return f'<div class="chart"><div class="t">{title}</div>{body}<div class="leg">{leg}</div></div>'
+def _chart(title: str, sub: str, body: str, leg: str, tip: str = "") -> str:
+    return (f'<div class="chart" title="{escape(tip)}"><div class="t">{title}'
+            f'{f" <span class=faint>· {sub}</span>" if sub else ""}</div>{body}<div class="leg">{leg}</div></div>')
 
 
-def charts_html(rows: pd.DataFrame, orient, wrap: bool = True) -> str:
-    inner = f'<div class="charts">{zone_svg(rows)}{spray_svg(rows)}{contact_svg(rows, orient)}</div>'
-    return (CSS + f'<div class="aar"><div class="card">{inner}</div></div>') if wrap else inner
+# ----------------------------------------------------------------------------- the one table
+COLS = [("n", "#", "r"), ("video", "Video", "c"), ("inn", "Inn", "r"), ("count", "Count", "r"),
+        ("pitcher", "Pitcher", "l"), ("result", "Pitch Result", "l"), ("play", "Play Result", "l"),
+        ("ptype", "Type", "c"), ("velo", "Velo", "r"), ("hb", "HB", "r"), ("ivb", "IVB", "r"),
+        ("bb", "BB Type", "c"), ("ev", "EV", "r"), ("bat_speed", "Bat Speed", "r"), ("la", "LA", "r"),
+        ("dist", "Dist", "r"), ("xwoba", "xwOBA", "r"), ("zone", "Zone", "c"), ("dec", "Decision", "c"),
+        ("dec_runs", "Dec Runs", "r")]
 
 
-# ----------------------------------------------------------------------------- pitch table + PAs
-def _cols(p: pd.DataFrame) -> list[tuple[str, str, str]]:
-    cols = [("n", "#", "r"), ("video", "Video", "c"), ("inn", "Inn", "r"), ("count", "Count", "r"),
-            ("pitcher", "Pitcher", "l"), ("result", "Pitch Result", "l"), ("play", "Play Result", "l"),
-            ("ptype", "Type", "r"), ("velo", "Velo", "r"), ("hb", "HB", "r"), ("ivb", "IVB", "r"),
-            ("bb", "BB Type", "r"), ("ev", "EV", "r"), ("bat_speed", "Bat Speed", "r"), ("la", "LA", "r"),
-            ("dist", "Dist", "r"), ("xwoba", "xwOBA", "r"), ("zone", "Zone", "r"), ("dec", "Decision", "r"),
-            ("dec_runs", "Dec Runs", "r")]
+def _cols(p: pd.DataFrame) -> list:
+    cols = list(COLS)
     if "timing" in p and p["timing"].replace("", pd.NA).notna().any():
-        cols.append(("timing", "Timing", "r"))
+        cols.append(("timing", "Timing", "c"))
     if "miss" in p and p["miss"].notna().any():
         cols.append(("miss", "Miss (in)", "r"))
     return cols
@@ -248,7 +197,7 @@ def _cell(key: str, r) -> tuple[str, str]:
     v = getattr(r, key, None)
     if key == "video":
         return (f'<a class="vid" href="{SAVANT_VIDEO.format(v)}" target="_blank" rel="noopener" '
-                f'title="Play this pitch">&#127909;</a>' if v else "–"), ""
+                f'title="Play this pitch">{CAMERA}</a>' if v else "–"), ""
     if key == "inn":
         return f"{r.half}{r.inning}", ""
     if key == "ptype":
@@ -265,37 +214,142 @@ def _cell(key: str, r) -> tuple[str, str]:
         bg, fg = DEC_COLOR[v]
         return f'<span class="chip" style="background:{bg};color:{fg}">{v}</span>', ""
     if key == "dec_runs":
-        return _f(v, "{:+.2f}"), ""
-    return escape(str(v)) if v not in (None, "") and v == v else "–", ""
+        return (_f(v, "{:+.2f}").replace("-0.00", "0.00").replace("+0.00", "0.00")), ""
+    return (escape(str(v)) if v not in (None, "") and v == v else "–"), ""
 
 
-def pitch_table(rows: pd.DataFrame) -> str:
-    cols = _cols(rows)
-    head = "".join(f'<th class="{"l" if a == "l" else ""}">{lab}</th>' for _, lab, a in cols)
+def table_html(p: pd.DataFrame, pas: list[dict]) -> str:
+    cols = _cols(p)
+    head = "".join(f'<th class="{a}">{lab}</th>' for _, lab, a in cols)
     body = ""
-    for r in rows.itertuples():
-        tds = ""
-        for key, _, a in cols:
-            html, style = _cell(key, r)
-            tds += f'<td class="{"l" if a == "l" else ""}" style="{style}">{html}</td>'
-        body += f'<tr class="{"bip" if r.bip else ""}">{tds}</tr>'
-    return f'<div class="wrap"><table class="p"><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table></div>'
-
-
-def pa_html(pas: list[dict], orient, open_all: bool = False) -> str:
-    """Every plate appearance as its own collapsible section -- open as many as you like. Opening one shows its
-    pitches plus its own zone / spray / contact charts."""
-    out = []
     for pa in pas:
-        ex = f'<span class="ex">{escape(pa["extra"])}</span>' if pa["extra"] else ""
         dr = _f(pa["dec_runs"], "{:+.2f} dec runs", "")
         hand = f' ({pa["p_throws"]}HP)' if pa["p_throws"] else ""
-        out.append(
-            f'<details class="pa"{" open" if open_all else ""}><summary><span class="car">›</span>'
-            f'<span class="inn">{escape(pa["inning"])}</span>'
-            f'<span>PA {pa["i"]} · vs {escape(pa["pitcher"] or "—")}<span class="muted">{hand}</span></span>'
-            f'<span class="cnt muted">{pa["n_pitches"]} pitch{"es" if pa["n_pitches"] != 1 else ""} · {pa["final_count"]}</span>'
-            f'<span class="res">{escape(pa["result"])}{ex}</span><span class="dr">{dr}</span></summary>'
-            f'<div class="pa-body">{pitch_table(pa["rows"])}{charts_html(pa["rows"], orient, wrap=False)}</div>'
-            f'</details>')
-    return CSS + '<div class="aar">' + "".join(out) + "</div>"
+        ex = f' <span class="faint">{escape(pa["extra"])}</span>' if pa["extra"] else ""
+        body += (f'<tr class="pa-h" data-pa="{pa["i"]}"><td colspan="{len(cols)}"><div class="pah">'
+                 f'<span class="car">›</span><b class="inn">{escape(pa["inning"])}</b>'
+                 f'<span>PA {pa["i"]} · vs {escape(pa["pitcher"] or "—")}<span class="faint">{hand}</span></span>'
+                 f'<span class="faint">{pa["n_pitches"]} pitch{"es" if pa["n_pitches"] != 1 else ""}</span>'
+                 f'<b>{escape(pa["result"])}</b>{ex}<span class="dr">{dr}</span></div></td></tr>')
+        for r in pa["rows"].itertuples():
+            tds = "".join(f'<td class="{a}" style="{st}">{h}</td>' for (k, _, a) in cols for h, st in [_cell(k, r)])
+            body += f'<tr class="row{" bip" if r.bip else ""}" data-n="{r.n}" data-pa="{pa["i"]}">{tds}</tr>'
+    return f'<table class="p"><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table>'
+
+
+def line_html(line: dict) -> str:
+    cols = ["AB", "R", "H", "2B", "3B", "HR", "RBI", "BB", "K"]
+    return ('<table class="line"><tr>' + "".join(f"<th>{c}</th>" for c in cols) + "</tr><tr>"
+            + "".join(f"<td>{line.get(c, '–')}</td>" for c in cols) + "</tr></table>")
+
+
+# ----------------------------------------------------------------------------- the component
+CSS = f"""
+*{{box-sizing:border-box}} body{{margin:0;font:13px system-ui,-apple-system,sans-serif;color:{INK};background:transparent}}
+.top{{display:grid;grid-template-columns:minmax(300px,1fr) 2.4fr;gap:10px;align-items:stretch}}
+.card{{background:#fff;border:1px solid {LINE};border-radius:10px;padding:10px 12px}}
+.left{{display:flex;flex-direction:column;gap:10px}}
+table.line{{border-collapse:collapse;width:100%}} table.line th{{font:600 11px system-ui;color:{MUTED};padding:3px;
+  border-bottom:1.5px solid {TEAL}}} table.line td{{font:600 17px ui-monospace,monospace;text-align:center;padding:5px 2px}}
+.tiles .hd{{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}}
+.tiles .hd .lab{{font:600 12px system-ui;color:{MUTED}}}
+.tiles select{{font:13px system-ui;padding:4px 8px;border:1px solid {LINE};border-radius:7px;background:#fff}}
+.tiles .row{{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}}
+.tile{{text-align:center;border:1px solid {LINE};border-radius:8px;padding:8px 4px}}
+.tile .l{{font-size:11px;color:{MUTED}}} .tile .v{{font:700 19px ui-monospace,monospace;margin-top:2px}}
+.charts{{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}}
+.chart{{text-align:center;min-width:0}} .chart .t{{font:600 12px system-ui;color:{INK};margin-bottom:2px}}
+.chart svg{{width:100%;height:auto;display:block}} .chart .leg{{font-size:10.5px;color:{MUTED};line-height:1.5}}
+.chart .leg i{{font-style:normal}} .chart .none{{color:{MUTED};font-size:12px;padding:70px 10px}}
+.faint{{color:{MUTED};font-weight:400}}
+svg text{{font:700 7.5px system-ui;fill:#fff;pointer-events:none}} svg text.ax{{font:500 8.5px system-ui;fill:#8a96a0}}
+g.pt{{cursor:pointer;transition:opacity .15s}} g.pt.hide{{display:none}}
+.has-sel g.pt:not(.sel){{opacity:.22}}
+g.pt.sel .m{{stroke:#111;stroke-width:2.2;filter:drop-shadow(0 0 4px rgba(255,196,0,.95)) drop-shadow(0 0 2px #ffc400)}}
+.bar{{display:flex;align-items:center;gap:8px;margin:12px 0 6px;flex-wrap:wrap}}
+.bar .ttl{{font:700 15px system-ui;margin-right:auto}}
+.bar button{{font:600 12px system-ui;border:1px solid {LINE};background:#fff;border-radius:7px;padding:5px 10px;cursor:pointer}}
+.bar button:hover{{border-color:{TEAL};color:{TEAL}}} .bar .sel-n{{font:600 12px system-ui;color:{TEAL}}}
+.wrap{{overflow-x:auto;background:#fff;border:1px solid {LINE};border-radius:10px}}
+table.p{{border-collapse:collapse;width:100%;white-space:nowrap}}
+table.p th{{font:600 11px system-ui;color:{MUTED};padding:7px;border-bottom:1.5px solid {TEAL};position:sticky;top:0;background:#fff}}
+table.p td{{font:12.5px ui-monospace,"SF Mono",Menlo,monospace;padding:5px 7px;border-bottom:1px solid {LINE}}}
+.r{{text-align:right}} .l{{text-align:left;font-family:system-ui!important}} .c{{text-align:center}}
+tr.pa-h td{{background:#f7f9fa;cursor:pointer;padding:8px 10px;border-bottom:1px solid {LINE}}}
+tr.pa-h:hover td{{background:#eef4f5}}
+.pah{{display:flex;gap:14px;align-items:baseline;font:13px system-ui}}
+.pah .car{{color:{TEAL};font-weight:800;display:inline-block;transition:transform .15s;width:10px}}
+tr.pa-h.open .car{{transform:rotate(90deg)}} tr.pa-h.open td{{background:#eaf3f4}}
+.pah .inn{{font-family:ui-monospace,monospace;min-width:28px}} .pah .dr{{margin-left:auto;font:12px ui-monospace,monospace}}
+tr.row{{display:none;cursor:pointer}} tr.row.show{{display:table-row}} tr.row.bip td{{background:#fafcfc}}
+tr.row:hover td{{background:#f2f7f8}}
+tr.row.sel td{{background:#fff4c7!important;box-shadow:inset 0 1px 0 #ffd34d,inset 0 -1px 0 #ffd34d}}
+.has-sel tr.row:not(.sel) td{{opacity:.55}}
+.chip{{display:inline-block;padding:1px 8px;border-radius:9px;font:600 11px system-ui}}
+a.vid{{color:{TEAL};display:inline-flex}} a.vid:hover{{color:{INK}}}
+@media (max-width:900px){{.top{{grid-template-columns:1fr}}.charts{{grid-template-columns:1fr 1fr}}}}
+"""
+
+JS = """
+const root = document.getElementById('aar');
+const open = new Set(), sel = new Set();
+const allPA = [...document.querySelectorAll('tr.pa-h')].map(h => h.dataset.pa);
+function apply() {
+  document.querySelectorAll('tr.pa-h').forEach(h => h.classList.toggle('open', open.has(h.dataset.pa)));
+  document.querySelectorAll('tr.row').forEach(r => {
+    r.classList.toggle('show', open.has(r.dataset.pa));
+    r.classList.toggle('sel', sel.has(r.dataset.n));
+  });
+  document.querySelectorAll('g.pt').forEach(g => {
+    g.classList.toggle('hide', open.size > 0 && !open.has(g.dataset.pa));
+    g.classList.toggle('sel', sel.has(g.dataset.n));
+  });
+  root.classList.toggle('has-sel', sel.size > 0);
+  document.getElementById('seln').textContent = sel.size ? sel.size + ' selected' : '';
+  document.getElementById('scope').textContent = open.size ? 'charts: open PAs' : 'charts: whole game';
+  resize();
+}
+function toggle(set, k) { set.has(k) ? set.delete(k) : set.add(k); }
+document.querySelectorAll('tr.pa-h').forEach(h => h.addEventListener('click', () => { toggle(open, h.dataset.pa); apply(); }));
+document.querySelectorAll('tr.row').forEach(r => r.addEventListener('click', e => {
+  if (e.target.closest('a')) return; toggle(sel, r.dataset.n); apply(); }));
+document.querySelectorAll('g.pt').forEach(g => g.addEventListener('click', () => {
+  const was = sel.has(g.dataset.n); toggle(sel, g.dataset.n); if (!was) open.add(g.dataset.pa); apply(); }));
+document.getElementById('expand').onclick = () => { allPA.forEach(p => open.add(p)); apply(); };
+document.getElementById('collapse').onclick = () => { open.clear(); apply(); };
+document.getElementById('clear').onclick = () => { sel.clear(); apply(); };
+const tiles = JSON.parse(document.getElementById('tiles-data').textContent);
+const pick = document.getElementById('metric');
+function showTiles() {
+  document.getElementById('tiles').innerHTML = tiles[pick.value].map(([l, v]) =>
+    `<div class="tile"><div class="l">${l}</div><div class="v">${v}</div></div>`).join('');
+}
+pick.onchange = () => { showTiles(); resize(); };
+function resize() {
+  const h = document.documentElement.scrollHeight + 4;
+  window.parent.postMessage({isStreamlitMessage: true, type: 'streamlit:setFrameHeight', height: h}, '*');
+}
+showTiles(); apply(); window.addEventListener('load', resize);
+"""
+
+
+def component_html(p: pd.DataFrame, pas: list[dict], line: dict, tiles: dict, metric_names: dict,
+                   contact_note: str) -> str:
+    opts = "".join(f'<option value="{escape(k)}">{escape(v)}</option>' for k, v in metric_names.items())
+    left = (f'<div class="left"><div class="card">{line_html(line)}</div>'
+            f'<div class="card tiles"><div class="hd"><span class="lab">Compare</span>'
+            f'<select id="metric">{opts}</select></div><div class="row" id="tiles"></div></div></div>')
+    charts = f'<div class="card charts">{zone_svg(p)}{spray_svg(p)}{contact_svg(p, contact_note)}</div>'
+    bar = ('<div class="bar"><span class="ttl">Plate appearances</span><span class="sel-n" id="seln"></span>'
+           '<span class="faint" id="scope"></span><button id="expand">Open all</button>'
+           '<button id="collapse">Collapse all</button><button id="clear">Clear selection</button></div>')
+    data = json.dumps(tiles).replace("</", "<\\/")
+    return (f'<!doctype html><html><head><meta charset="utf-8"><style>{CSS}</style></head><body>'
+            f'<div id="aar"><div class="top">{left}{charts}</div>{bar}'
+            f'<div class="wrap">{table_html(p, pas)}</div></div>'
+            f'<script type="application/json" id="tiles-data">{data}</script><script>{JS}</script></body></html>')
+
+
+def estimate_height(n_pas: int) -> int:
+    """Starting height before the panel reports its own (all PAs collapsed)."""
+    return 470 + 40 * n_pas + 60

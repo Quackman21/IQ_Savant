@@ -90,12 +90,13 @@ if label == "Box Score":
             show(box_html(game_feed.batting(f, side), game_feed.pitching(f, side), teams.get(tid, {}), tid,
                           pk if hd["state"] in ("Live", "Final") else None))
     if hd["state"] in ("Live", "Final"):
-        st.caption("📋 next to a hitter opens his after-action report for this game.")
+        st.caption("The report icon next to a hitter opens his after-action report for this game.")
 elif label == "Lineup":
     left, right = st.columns(2)
     for col, side, tid in ((left, "away", away), (right, "home", home)):
         with col:
-            show(lineup_html(game_feed.lineup(f, side), teams.get(tid, {}), tid))
+            show(lineup_html(game_feed.lineup(f, side), teams.get(tid, {}), tid,
+                             pk if hd["state"] in ("Live", "Final") else None))
 else:
     scoring_only = st.toggle("Scoring plays only", value=False)
     st.caption("Click a play to see every pitch.")

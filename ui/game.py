@@ -21,8 +21,11 @@ CSS = """
 .iq-g th:first-child,.iq-g td:first-child{text-align:left;font-family:system-ui,sans-serif}
 .iq-g td.sub{padding-left:22px;color:#4b5560}
 .iq-g td .pos{color:#6a7681;font-size:11px;margin-left:6px}
-.iq-g a.aar-link{margin-left:7px;text-decoration:none;font-size:13px;opacity:.7}
+.iq-g td.gut,.iq-g th.gut{border:none!important;width:22px;min-width:22px;padding:0 6px 0 0;text-align:center}
+.iq-g a.aar-link{display:inline-flex;opacity:.55;transition:opacity .15s}
 .iq-g a.aar-link:hover{opacity:1}
+.iq-g a.aar-link img{width:16px;height:16px}
+.iq-g td.nm,.iq-g th.nm{text-align:left;font-family:system-ui,sans-serif}
 .iq-g.ls table{width:auto;min-width:420px}
 .iq-g.ls td,.iq-g.ls th{min-width:22px;text-align:center}
 .iq-g.ls td.tot,.iq-g.ls th.tot{font-weight:700;border-left:1px solid #e6eaed}
@@ -50,8 +53,9 @@ CSS = """
 LOGO = "https://www.mlbstatic.com/team-logos/{id}.svg"
 
 
-def _table(head: list[str], rows: list[list[str]], cls: str = "") -> str:
-    th = "".join(f"<th>{h}</th>" for h in head)
+def _table(head: list[str], rows: list[list[str]], cls: str = "", gutter: bool = False) -> str:
+    th = ('<th class="gut"></th>' if gutter else "") + "".join(
+        f'<th class="{"nm" if i == 0 and gutter else ""}">{h}</th>' for i, h in enumerate(head))
     body = "".join("<tr>" + "".join(rows_cell for rows_cell in r) + "</tr>" for r in rows)
     return f'<div class="wrap"><table class="{cls}"><thead><tr>{th}</tr></thead><tbody>{body}</tbody></table></div>'
 
@@ -67,8 +71,13 @@ def linescore_html(ls: dict, teams: dict, away: int, home: int) -> str:
     return CSS + f'<div class="iq-g ls">{_table(head, rows)}</div>'
 
 
+# report icon (outline clipboard), as an image so it survives the page's HTML cleaning
+_ICON_SVG = ("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234a8b96' "
+             "stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><rect x='5' y='4' width='14' "
+             "height='17' rx='2'/><path d='M9 4.5V3.5h6v1'/><path d='M8.5 10h7M8.5 13.5h7M8.5 17h4'/></svg>")
 AAR_ICON = ('<a class="aar-link" href="/aar?pk={pk}&pid={pid}" target="_blank" rel="noopener" '
-            'title="After-action report">&#128203;</a>')
+            'title="After-action report"><img src="data:image/svg+xml;utf8,' + _ICON_SVG + '" alt="AAR"></a>')
+GUT = '<td class="gut">{}</td>'
 
 
 def box_html(bat: list[dict], pit: list[dict], team: dict, tid: int, pk: int | None = None) -> str:
@@ -77,28 +86,30 @@ def box_html(bat: list[dict], pit: list[dict], team: dict, tid: int, pk: int | N
         return CSS + f'<div class="iq-g">{title}<div class="empty">Box score appears once the game starts.</div></div>'
     bcols = ["AB", "R", "H", "RBI", "BB", "SO", "HR", "AVG"]
     icon = lambda b: AAR_ICON.format(pk=pk, pid=b["id"]) if pk else ""
-    brows = [[f'<td class="{"sub" if b["sub"] else ""}">{escape(b["name"])}<span class="pos">{b["pos"]}</span>'
-              f'{icon(b)}</td>']
+    brows = [[GUT.format(icon(b)),
+              f'<td class="nm {"sub" if b["sub"] else ""}">{escape(b["name"])}<span class="pos">{b["pos"]}</span></td>']
              + [f"<td>{b[c]}</td>" for c in bcols] for b in bat]
-    tot = ["<td><b>Totals</b></td>"] + [f"<td><b>{sum(b[c] for b in bat)}</b></td>" for c in bcols[:-1]] + ["<td></td>"]
+    tot = [GUT.format(""), '<td class="nm"><b>Totals</b></td>'] + \
+        [f"<td><b>{sum(b[c] for b in bat)}</b></td>" for c in bcols[:-1]] + ["<td></td>"]
     pcols = ["IP", "H", "R", "ER", "BB", "SO", "HR", "P", "ERA"]
-    prows = [[f"<td>{escape(p['name'])}</td>"] + [f"<td>{p[c]}</td>" for c in pcols] for p in pit]
-    return (CSS + f'<div class="iq-g">{title}{_table(["Batters"] + bcols, brows + [tot])}'
-            f'<div style="height:10px"></div>{_table(["Pitchers"] + pcols, prows)}</div>')
+    prows = [[GUT.format(""), f'<td class="nm">{escape(p["name"])}</td>'] + [f"<td>{p[c]}</td>" for c in pcols]
+             for p in pit]
+    return (CSS + f'<div class="iq-g">{title}{_table(["Batters"] + bcols, brows + [tot], gutter=True)}'
+            f'<div style="height:10px"></div>{_table(["Pitchers"] + pcols, prows, gutter=True)}</div>')
 
 
-def lineup_html(lu: dict, team: dict, tid: int) -> str:
+def lineup_html(lu: dict, team: dict, tid: int, pk: int | None = None) -> str:
     title = f'<h4><img src="{LOGO.format(id=tid)}" alt="">{escape(team.get("name", ""))}</h4>'
-    rows = [[f'<td class="n">{b["spot"]}</td>',
+    rows = [[GUT.format(AAR_ICON.format(pk=pk, pid=b["id"]) if pk else ""), f'<td class="n">{b["spot"]}</td>',
              f'<td><div class="who"><img src="{HEADSHOT.format(id=b["id"])}" alt="">{escape(b["name"])}</div></td>',
              f'<td>{b["pos"]}</td>', f'<td>{b["bats"]}</td>'] for b in lu["nine"]]
     sp = lu.get("pitcher")
     if sp:
         tag = "Probable" if sp.get("probable") else "SP"
-        rows.append([f'<td class="n">{tag}</td>',
+        rows.append([GUT.format(""), f'<td class="n">{tag}</td>',
                      f'<td><div class="who"><img src="{HEADSHOT.format(id=sp["id"])}" alt="">{escape(sp["name"])}</div></td>',
                      "<td>P</td>", f'<td>Throws {sp["throws"]}</td>'])
-    body = _table(["#", "Player", "Pos", "B/T"], rows, "lu") if rows else ""
+    body = _table(["#", "Player", "Pos", "B/T"], rows, "lu", gutter=True) if rows else ""
     if not lu["nine"]:
         body = '<div class="empty">Lineup not posted yet.</div>' + body
     return CSS + f'<div class="iq-g">{title}{body}</div>'

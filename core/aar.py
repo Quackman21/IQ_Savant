@@ -106,6 +106,7 @@ def pitches(sc: pd.DataFrame, feed: dict | None = None) -> pd.DataFrame:
             out["miss"] = _num(d, c)
         elif "timing" in lc and "timing" not in out:
             out["timing"] = _txt(d, c).str.replace("_", " ").str.title()
+    out["pa"] = out["ab"].rank(method="dense").astype(int)
     try:
         from models.xwoba import expected_woba
         out["xwoba"] = expected_woba(d).reindex(d.index).where(out["bip"]).values
@@ -186,18 +187,94 @@ def contact_orientation(season: pd.DataFrame) -> tuple[int, int] | None:
     return (1 if ry >= 0 else -1, (1 if rx >= 0 else -1))
 
 
+PLATE_HALF = 8.5             # inches: plate is 17" wide
+
+
+def stance_for(board: pd.DataFrame, pid: int) -> dict | None:
+    """His average stance from Savant's batting stance board: {'depth': in. from the front of the plate,
+    'off': in. from the plate's inside edge} (center of mass, i.e. the midpoint of his hips)."""
+    if board is None or board.empty:
+        return None
+    low = {c.lower(): c for c in board.columns}
+    idc = next((c for lc, c in low.items() if "id" in lc and ("player" in lc or "batter" in lc)), None)
+    dc = next((c for lc, c in low.items() if ("depth" in lc or "batter_y" in lc) and "intercept" not in lc), None)
+    oc = next((c for lc, c in low.items() if (("off" in lc and "plate" in lc) or "batter_x" in lc)
+               and "intercept" not in lc), None)
+    if not (idc and dc and oc):
+        return None
+    row = board[pd.to_numeric(board[idc], errors="coerce") == pid]
+    if row.empty:
+        return None
+    d, o = pd.to_numeric(row[dc], errors="coerce").mean(), pd.to_numeric(row[oc], errors="coerce").mean()
+    return {"depth": float(d), "off": float(o)} if d == d and o == o else None
+
+
+def plate_calibration(season: pd.DataFrame, orient: tuple[int, int] | None, stance: dict | None) -> dict | None:
+    """How to move Statcast's contact point (from his center of mass) onto the plate (front-center of the plate =
+    0, 0; + = out front / + = toward the far side of the plate). Statcast gives the stance as distances, so its sign
+    is settled by his own season: contact has to land around the plate, not two feet off it."""
+    if orient is None or stance is None or season is None or season.empty or CONTACT_Y not in season:
+        return None
+    s = season[pd.to_numeric(season[CONTACT_Y], errors="coerce").notna()]
+    if len(s) < 25:
+        return None
+    sy, sx = orient
+    side = np.where(s["stand"].astype(str).eq("R"), 1, -1) if "stand" in s else 1
+    front = sy * pd.to_numeric(s[CONTACT_Y], errors="coerce")
+    away = sx * side * pd.to_numeric(s[CONTACT_X], errors="coerce")
+    pick = lambda options: min(options, key=lambda o: abs(o[1]))
+    d_sign, _ = pick([(sg, float((front - sg * stance["depth"]).median()) - 3) for sg in (1, -1)])
+    o_sign, _ = pick([(sg, float((away - PLATE_HALF - sg * stance["off"]).median())) for sg in (1, -1)])
+    return {"sy": sy, "sx": sx, "depth": d_sign * stance["depth"], "off": o_sign * stance["off"]}
+
+
+def on_plate(p: pd.DataFrame, cal: dict | None) -> pd.DataFrame:
+    """Contact point on the plate for each swing: pf = inches out in front of the plate's front edge (0 = front of
+    the plate), paway = inches toward the far side from the middle of the plate (0 = middle), catcher's-view x too."""
+    out = pd.DataFrame({"pf": np.nan, "paway": np.nan, "pxc": np.nan}, index=p.index)
+    if cal is None or p.empty:
+        return out
+    side = np.where(p["stand"].astype(str).eq("R"), 1, -1)
+    front = cal["sy"] * p["cy"]
+    away = cal["sx"] * side * p["cx"]
+    out["pf"] = front - cal["depth"]
+    out["paway"] = away - PLATE_HALF - cal["off"]
+    out["pxc"] = side * out["paway"]                     # catcher's view: a RHB's far side is the catcher's right
+    return out
+
+
+def last_pas(season: pd.DataFrame, n: int = 30) -> pd.DataFrame:
+    """His last n plate appearances (through this game)."""
+    if season is None or season.empty or "events" not in season:
+        return pd.DataFrame()
+    s = season.copy()
+    s["_d"] = pd.to_datetime(s["game_date"], errors="coerce")
+    s["_k"] = list(zip(s["game_pk"], s["at_bat_number"]))
+    ends = s[s["events"].notna() & s["events"].astype(str).ne("truncated_pa")].sort_values(["_d", "at_bat_number"])
+    keep = set(ends["_k"].tail(n))
+    return s[s["_k"].isin(keep)].drop(columns=["_d", "_k"])
+
+
 GAME_METRICS = {"O-SWING%": "Chase% (O-Swing%)", "Z-SWING%": "Z-Swing%", "WHIFF%": "Whiff%",
                 "DEC RUNS/100": "Decision runs / 100", "GD%": "Good decision %", "xwOBA": "xwOBA",
                 "EV": "Avg EV", "AVG BAT SPEED": "Avg bat speed"}
 
 
-def metric_tiles(game_sc: pd.DataFrame, season_sc: pd.DataFrame, league: dict, key: str) -> list[tuple[str, str]]:
-    """(label, value) for Game / Season / MLB average of one catalog stat."""
+def metric_values(last30: pd.DataFrame, season_sc: pd.DataFrame, league: dict) -> dict:
+    """{metric: [(label, value text), ...]} for Last 30 PA / Season / MLB season, every metric at once (the page
+    switches between them without reloading)."""
     from core import hit_metrics as hm
-    out = []
-    for lab, df in (("Game", game_sc), ("Season", season_sc)):
-        v = hm.compute(hm.prep(df), keys=[key]).iloc[0][key] if df is not None and not df.empty else math.nan
-        out.append((lab, hm.fmt(key, v)))
-    lg = league.get(("all", "All"), {}).get(key)
-    out.append(("MLB avg", hm.fmt(key, lg[0]) if lg else "-"))
+    keys = list(GAME_METRICS)
+    parts = []
+    for lab, df in (("Last 30 PA", last30), ("Season", season_sc)):
+        if df is not None and not df.empty:
+            parts.append((lab, hm.compute(hm.prep(df), keys=keys).iloc[0]))
+        else:
+            parts.append((lab, None))
+    lg = league.get(("all", "All"), {})
+    out = {}
+    for k in keys:
+        row = [(lab, hm.fmt(k, v[k]) if v is not None else "-") for lab, v in parts]
+        row.append(("MLB season", hm.fmt(k, lg[k][0]) if k in lg else "-"))
+        out[k] = row
     return out

@@ -1,16 +1,18 @@
-"""After-Action Report (opens in a new tab from the box score clipboard icon): /aar?pk=<gamePk>&pid=<player id>
+"""After-Action Report (opens in a new tab from a box score or lineup): /aar?pk=<gamePk>&pid=<player id>
 
-Hitter AAR: box line, game metric vs season vs MLB, whole-game zone / spray / point-of-contact charts, then every
-plate appearance as its own collapsible section (open several at once) with its pitches, its own three charts and a
-video link for every pitch. Pitcher / Catcher / Fielder AARs will be added with the same pieces (core/aar.py)."""
+Hitter AAR: header, then ONE interactive panel -- box line, Last 30 PA / Season / MLB season tiles (pick the
+metric), zone / spray / point-of-contact charts, and a single pitch table grouped by plate appearance (every PA
+starts collapsed). Click pitches on any chart or in the table and they light up everywhere; select as many as you
+want. Pitcher / Catcher / Fielder AARs will reuse the same pieces (core/aar.py, ui/aar.py)."""
 from __future__ import annotations
 
 from datetime import date
 
 import pandas as pd
 import streamlit as st
+import streamlit.components.v1 as components
 
-from core import aar, game_feed, league_ref, mlb_api
+from core import aar, game_feed, league_ref, mlb_api, savant
 from core.statcast_clean import clean
 from ui import aar as aar_ui
 from ui import data
@@ -34,10 +36,15 @@ def league(season: int) -> dict:
     return league_ref.load(season)
 
 
+@st.cache_data(ttl=24 * 3600, show_spinner=False)
+def stance_board(season: int) -> pd.DataFrame:
+    return savant.batting_stance(season)
+
+
 try:
     pk, pid = int(st.query_params.get("pk", "")), int(st.query_params.get("pid", ""))
 except ValueError:
-    st.info("Open an AAR from a game's box score (the clipboard next to a hitter's name).")
+    st.info("Open an AAR from a game's box score or lineup (the report icon next to a hitter).")
     st.stop()
 
 try:
@@ -61,43 +68,38 @@ show(aar_ui.header_html(pid, who, team, gm))
 if not line:
     st.info("This player didn't bat in this game.")
     st.stop()
-show(aar_ui.line_html(line))
 
 sc = statcast(pid, gday, gday)
 if not sc.empty and "game_pk" in sc:
     sc = sc[pd.to_numeric(sc["game_pk"], errors="coerce").eq(pk)]
 if sc.empty:
     st.info("Statcast hasn't posted this game's pitches yet -- they usually appear within an hour or two of the "
-            "final out. The box line above is live.")
+            "final out.")
     st.stop()
 
 season_sc = statcast(pid, f"{season}-03-01", gday)
 if not season_sc.empty and "game_type" in season_sc:
     season_sc = season_sc[season_sc["game_type"].astype(str).eq("R")]
+
 p = aar.pitches(sc, f)
 pas = aar.plate_appearances(p)
+
+# point of contact on the plate: Statcast measures it from his center of mass; his stance places that on the plate
 orient = aar.contact_orientation(season_sc)
+stance = aar.stance_for(stance_board(season), pid)
+cal = aar.plate_calibration(season_sc, orient, stance)
+p = p.join(aar.on_plate(p, cal))
+pas = aar.plate_appearances(p)
+if p["cx"].notna().any() and cal is None:
+    note = ("Contact measured, but his stance (Savant batting stance) isn't available to place it on the plate."
+            if stance is None else "Contact measured, but not enough of his season yet to place it on the plate.")
+else:
+    note = "No measured contact."
 
-# ---- game metric vs season vs MLB ---------------------------------------------------------------------------
-c = st.columns([1.3, 4])
-key = c[0].selectbox("Metric", list(aar.GAME_METRICS), format_func=aar.GAME_METRICS.get, key="aar_metric")
-with c[1]:
-    show(aar_ui.tiles_html(aar.metric_tiles(sc, season_sc, league(season), key), aar.GAME_METRICS[key]))
-
-# ---- whole game ------------------------------------------------------------------------------------------------
-st.markdown("##### Whole game")
-show(aar_ui.charts_html(p, orient))
-
-# ---- plate appearances -----------------------------------------------------------------------------------------
-h = st.columns([3, 1.2])
-h[0].markdown(f"##### Plate appearances ({len(pas)})")
-open_all = h[1].toggle("Open every PA", value=False, key="aar_open_all")
-st.caption("Click a plate appearance to open it -- open as many as you want. Each shows its pitches and its own "
-           "zone, spray and contact charts. 🎥 plays that pitch.")
-show(aar_ui.pa_html(pas, orient, open_all=open_all))
-
-with st.expander("Every pitch in one table"):
-    show(aar_ui.CSS + '<div class="aar">' + aar_ui.pitch_table(p) + "</div>")
-st.caption("Decision = our swing-decision model on that exact pitch (count, location, pitch): Great / Good = the "
-           "right call, Bad / Poor = the wrong one; Dec Runs = runs vs what an average hitter does with that pitch. "
-           "Zone = attack zone. Point of contact is Statcast bat tracking -- shown only when measured.")
+tiles = aar.metric_values(aar.last_pas(season_sc, 30), season_sc, league(season))
+components.html(aar_ui.component_html(p, pas, line, tiles, aar.GAME_METRICS, note),
+                height=aar_ui.estimate_height(len(pas)), scrolling=True)
+st.caption("Click any pitch on a chart or in the table to light it up everywhere; click more to compare. Opening "
+           "plate appearances narrows the charts to those PAs. Decision = our swing-decision model on that exact "
+           "pitch; Dec Runs = runs vs what an average hitter does with it. Point of contact: Statcast bat tracking "
+           "(from his center of mass) placed on the plate with his Statcast stance -- front-center of the plate = 0, 0.")

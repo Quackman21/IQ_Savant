@@ -164,3 +164,21 @@ def arm_strength(year: int) -> pd.DataFrame:
         if not df.empty and any("arm" in c.lower() for c in df.columns):
             return df
     return pd.DataFrame()
+
+
+STANCE_URLS = [
+    BASE.replace("/leaderboard", "") + "/visuals/batting-stance?csv=true&year={y}",
+    BASE + "/batting-stance?year={y}&csv=true",
+    BASE.replace("/leaderboard", "") + "/visuals/batting-stance?csv=true&season={y}",
+]
+
+
+def batting_stance(year: int) -> pd.DataFrame:
+    """Statcast batting stance board: where each hitter's center of mass stands (depth in the box from the FRONT of
+    the plate, distance off the plate from its INSIDE edge, inches) -- what turns Statcast's contact point (measured
+    from his center of mass) into a spot on the plate. Empty if Savant is down."""
+    for tpl in STANCE_URLS:
+        df, _ = _get(tpl.format(y=year), tries=2)
+        if not df.empty and any("depth" in c.lower() or "batter_y" in c.lower() for c in df.columns):
+            return df
+    return pd.DataFrame()

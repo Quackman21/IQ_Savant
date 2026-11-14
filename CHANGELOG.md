@@ -1,5 +1,21 @@
 # IQ Savant – version history
 
+## v21.1 – 2026-11-14
+- AAR rebuilt as ONE interactive panel (v21.0's charts never drew -- the page's HTML cleaner strips SVG -- and
+  the PAs came out as separate tables):
+  * One pitch table grouped by plate appearance; every PA starts collapsed. Open as many as you want (Open all /
+    Collapse all). Opening PAs narrows the zone / spray / contact charts to those PAs; none open = whole game.
+  * Click a pitch on ANY chart or in the table and it lights up everywhere at once (glow on all three charts +
+    highlighted row; everything else dims). Click more to select several; "Clear selection" resets. Selecting
+    from a chart opens that pitch's PA.
+  * Tiles: Last 30 PA / Season / MLB season, with the metric picker, next to the box line (like the org layout).
+  * Point of contact is now ON THE PLATE (front-center of the plate = 0, 0; catcher's view). Statcast measures
+    contact from the hitter's center of mass (midpoint of the hips); his Statcast batting stance (depth in the box
+    from the front of the plate, distance off the plate from the inside edge) places that on the plate. Stance
+    signs are checked against his own season so contact lands around the plate.
+  * Video = a camera icon (no emoji) linking that exact pitch.
+- Box score AND lineup: a line-art report icon in a gutter just outside the table (no emoji) opens the AAR.
+
 ## v21.0 – 2026-11-14
 - HITTER AARs (MLB). Box score: a clipboard next to every hitter opens his after-action report for that game
   (new tab, /aar?pk=<game>&pid=<player>). No player goals; everything else like the org's AAR, plus:

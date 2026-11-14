@@ -81,18 +81,20 @@ def test_box_line_and_contact_orientation():
     assert aar.contact_orientation(s.head(5)) is None
 
 
-def test_html_renders_every_piece():
+def test_component_renders_every_piece():
     p = aar.pitches(game(), feed())
+    p = p.assign(pf=[5.0 if c == c else float("nan") for c in p["cx"]],
+                 pxc=[1.0 if c == c else float("nan") for c in p["cx"]])
     pas = aar.plate_appearances(p)
-    html = aar_ui.pa_html(pas, (1, 1))
-    assert html.count('<details class="pa"') == 4 and " open" not in html.split("<details")[1][:20]
-    assert aar_ui.pa_html(pas, (1, 1), open_all=True).count("<details class=\"pa\" open>") == 4
-    assert "sporty-videos?playId=vid-3-1" in html
-    assert html.count("<svg") == 11            # zone + spray in each PA; contact only where he made contact
-    assert "No measured contact here." in html                # the strikeout PA
-    no_contact = aar_ui.charts_html(p, None)
-    assert "Point of contact" in no_contact and "Measured, but not enough" in no_contact
-    assert "No measured contact" in aar_ui.charts_html(p.assign(cx=np.nan, cy=np.nan), (1, 1))
+    tiles = {k: [("Last 30 PA", "1"), ("Season", "2"), ("MLB season", "3")] for k in aar.GAME_METRICS}
+    html = aar_ui.component_html(p, pas, aar.box_line(feed(), 1), tiles, aar.GAME_METRICS, "No measured contact.")
+    assert html.count('<tr class="pa-h"') == 4                         # one table, one header row per PA
+    assert html.count("<table class=\"p\">") == 1
+    assert html.count('<tr class="row') == 12 and "tr.row{display:none" in html     # every PA starts collapsed
+    assert html.count('<g class="pt"') == 12 + 3 + 4      # zone 12, spray 3 balls in play, contact 4 (fouls + in play)
+    assert 'data-n="1" data-pa="1"' in html and "sporty-videos?playId=vid-3-1" in html
+    assert "<svg viewBox=\"0 0 24 24\"" in html                        # camera is an icon, not an emoji
+    assert "Last 30 PA" in html and 'id="metric"' in html
 
 
 def test_decision_labels():
@@ -101,9 +103,45 @@ def test_decision_labels():
     assert aar.decision_label(-0.4) == "Poor" and aar.decision_label(float("nan")) == ""
 
 
+def test_plate_calibration_places_contact_on_the_plate():
+    rng = np.random.default_rng(3)
+    n = 120
+    # RHB, center of mass 30" behind the front of the plate and 26" off the inside edge (Statcast stance)
+    stance = {"depth": 30.0, "off": 26.0}
+    front_body, away_body = rng.normal(33, 4, n), rng.normal(34.5, 3, n)     # from his hips, out front / away
+    season = pd.DataFrame({"stand": "R", aar.CONTACT_Y: front_body, aar.CONTACT_X: away_body})
+    cal = aar.plate_calibration(season, (1, 1), stance)
+    assert cal["depth"] == 30 and cal["off"] == 26
+    p = pd.DataFrame({"stand": ["R", "L"], "cx": [34.5, 34.5], "cy": [33.0, 33.0], "pa": [1, 2]})
+    on = aar.on_plate(p, cal)
+    assert len(p.join(on).columns) == 7                                 # joins onto the pitch table cleanly
+    assert abs(on["pf"].iloc[0] - 3.0) < 1e-9 and abs(on["paway"].iloc[0]) < 1e-9     # 3" out front, middle
+    assert on["pxc"].iloc[0] == -on["pxc"].iloc[1] or abs(on["pxc"].iloc[0]) < 1e-9
+    # stance given with the opposite sign convention still lands on the plate
+    cal2 = aar.plate_calibration(season, (1, 1), {"depth": -30.0, "off": -26.0})
+    assert cal2["depth"] == 30 and cal2["off"] == 26
+    assert aar.plate_calibration(season, None, stance) is None
+
+
+def test_stance_lookup_and_last_30_pa():
+    board = pd.DataFrame({"player_id": [1, 2], "avg_batter_y_position": [29.5, 31.0],
+                          "avg_batter_x_position": [27.0, 25.0], "avg_intercept_y_vs_batter": [30, 31]})
+    assert aar.stance_for(board, 1) == {"depth": 29.5, "off": 27.0}
+    assert aar.stance_for(board, 9) is None and aar.stance_for(pd.DataFrame(), 1) is None
+    g = game()
+    many = pd.concat([g.assign(game_pk=k, game_date=f"2026-08-{k:02d}") for k in range(1, 11)])
+    last = aar.last_pas(many, 30)
+    assert last.groupby(["game_pk", "at_bat_number"]).ngroups == 30
+    assert last["game_pk"].min() >= 3                                    # the most recent games only
+
+
 def test_box_score_has_aar_links():
     from ui.game import box_html
     bat = [{"id": 1, "name": "Hitter One", "pos": "CF", "sub": False, "AB": 4, "R": 1, "H": 2, "RBI": 2, "BB": 0,
             "SO": 1, "HR": 1, "AVG": ".300"}]
-    assert "/aar?pk=777&amp;pid=1" in box_html(bat, [], {"name": "X"}, 111, 777).replace("&pid", "&amp;pid")
+    html = box_html(bat, [], {"name": "X"}, 111, 777)
+    assert "/aar?pk=777&pid=1" in html and 'class="gut"' in html and "\U0001f4cb" not in html
     assert 'class="aar-link"' not in box_html(bat, [], {"name": "X"}, 111)
+    from ui.game import lineup_html
+    lu = {"nine": [{"spot": 1, "id": 5, "name": "A", "pos": "CF", "bats": "R"}], "pitcher": None}
+    assert "/aar?pk=777&pid=5" in lineup_html(lu, {"name": "X"}, 111, 777)
