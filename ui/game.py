@@ -21,6 +21,8 @@ CSS = """
 .iq-g th:first-child,.iq-g td:first-child{text-align:left;font-family:system-ui,sans-serif}
 .iq-g td.sub{padding-left:22px;color:#4b5560}
 .iq-g td .pos{color:#6a7681;font-size:11px;margin-left:6px}
+.iq-g a.aar-link{margin-left:7px;text-decoration:none;font-size:13px;opacity:.7}
+.iq-g a.aar-link:hover{opacity:1}
 .iq-g.ls table{width:auto;min-width:420px}
 .iq-g.ls td,.iq-g.ls th{min-width:22px;text-align:center}
 .iq-g.ls td.tot,.iq-g.ls th.tot{font-weight:700;border-left:1px solid #e6eaed}
@@ -65,12 +67,18 @@ def linescore_html(ls: dict, teams: dict, away: int, home: int) -> str:
     return CSS + f'<div class="iq-g ls">{_table(head, rows)}</div>'
 
 
-def box_html(bat: list[dict], pit: list[dict], team: dict, tid: int) -> str:
+AAR_ICON = ('<a class="aar-link" href="/aar?pk={pk}&pid={pid}" target="_blank" rel="noopener" '
+            'title="After-action report">&#128203;</a>')
+
+
+def box_html(bat: list[dict], pit: list[dict], team: dict, tid: int, pk: int | None = None) -> str:
     title = f'<h4><img src="{LOGO.format(id=tid)}" alt="">{escape(team.get("name", ""))}</h4>'
     if not bat and not pit:
         return CSS + f'<div class="iq-g">{title}<div class="empty">Box score appears once the game starts.</div></div>'
     bcols = ["AB", "R", "H", "RBI", "BB", "SO", "HR", "AVG"]
-    brows = [[f'<td class="{"sub" if b["sub"] else ""}">{escape(b["name"])}<span class="pos">{b["pos"]}</span></td>']
+    icon = lambda b: AAR_ICON.format(pk=pk, pid=b["id"]) if pk else ""
+    brows = [[f'<td class="{"sub" if b["sub"] else ""}">{escape(b["name"])}<span class="pos">{b["pos"]}</span>'
+              f'{icon(b)}</td>']
              + [f"<td>{b[c]}</td>" for c in bcols] for b in bat]
     tot = ["<td><b>Totals</b></td>"] + [f"<td><b>{sum(b[c] for b in bat)}</b></td>" for c in bcols[:-1]] + ["<td></td>"]
     pcols = ["IP", "H", "R", "ER", "BB", "SO", "HR", "P", "ERA"]

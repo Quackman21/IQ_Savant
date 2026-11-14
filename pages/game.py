@@ -87,7 +87,10 @@ if label == "Box Score":
     left, right = st.columns(2)
     for col, side, tid in ((left, "away", away), (right, "home", home)):
         with col:
-            show(box_html(game_feed.batting(f, side), game_feed.pitching(f, side), teams.get(tid, {}), tid))
+            show(box_html(game_feed.batting(f, side), game_feed.pitching(f, side), teams.get(tid, {}), tid,
+                          pk if hd["state"] in ("Live", "Final") else None))
+    if hd["state"] in ("Live", "Final"):
+        st.caption("📋 next to a hitter opens his after-action report for this game.")
 elif label == "Lineup":
     left, right = st.columns(2)
     for col, side, tid in ((left, "away", away), (right, "home", home)):

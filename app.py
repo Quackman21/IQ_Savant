@@ -15,10 +15,11 @@ leaderboard = st.Page("pages/leaderboard.py", title="Leaderboard", icon=":materi
 player = st.Page("pages/player_profile.py", title="Player Profile", icon=":material/person:")
 team = st.Page("pages/team_profile.py", title="Team Profile", icon=":material/stadium:")
 game = st.Page("pages/game.py", title="Game", icon=":material/sports_baseball:", url_path="game")
+aar = st.Page("pages/aar.py", title="AAR", icon=":material/assignment:", url_path="aar")
 
 # Hidden built-in menu; we draw our own so Profile can be a dropdown
-# (the Game page isn't in the menu; it opens in a new tab from the Calendar)
-current = st.navigation([standings, calendar, leaderboard, player, team, game], position="hidden")
+# (the Game page isn't in the menu; it opens in a new tab from the Calendar; the AAR opens from a box score)
+current = st.navigation([standings, calendar, leaderboard, player, team, game, aar], position="hidden")
 
 with st.sidebar:
     st.page_link(standings)

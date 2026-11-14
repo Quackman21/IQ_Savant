@@ -1,5 +1,20 @@
 # IQ Savant – version history
 
+## v21.0 – 2026-11-14
+- HITTER AARs (MLB). Box score: a clipboard next to every hitter opens his after-action report for that game
+  (new tab, /aar?pk=<game>&pid=<player>). No player goals; everything else like the org's AAR, plus:
+  * Every plate appearance is its own collapsible section -- open as many as you want ("Open every PA" opens all).
+    An open PA shows its pitch rows AND its own zone / spray / point-of-contact charts, so the conversation stays
+    on one at-bat.
+  * Whole-game zone / spray / contact charts on top; metric tiles: game vs season vs MLB average (pick the metric).
+  * Pitch rows: count, pitcher, pitch / play result, type, velo, HB (arm side +), IVB, BB type, EV, bat speed, LA,
+    distance, xwOBA (our model), attack zone, our Decision grade (Great / Good / Neutral / Bad / Poor) and Dec Runs.
+    Savant's swing-timing and miss-distance columns appear automatically when the download has them.
+  * Video: the camera on any pitch opens that exact pitch's clip.
+  * Point of contact = Statcast bat tracking, shown only when measured. The axes' direction is checked on his own
+    season (pulled balls met farther out front, outside pitches farther from his body), not assumed.
+- Built in pieces (core/aar.py, ui/aar.py) so Pitcher / Catcher / Fielder AARs plug in next.
+
 ## v20.2 – 2026-11-13
 - Range grade rebuilt from the fielding comparison study:
   * Full seasons: 90% Statcast OAA + 10% ours (the study's best blend for both infield and outfield), regressed
