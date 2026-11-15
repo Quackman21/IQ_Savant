@@ -257,6 +257,86 @@ def on_plate(p: pd.DataFrame, cal: dict | None) -> pd.DataFrame:
     return out
 
 
+TEAM_KEY_ALIAS = {"guardians": "indians", "d-backs": "diamondbacks", "dbacks": "diamondbacks"}
+
+
+def team_key(team_name: str) -> str:
+    """'Boston Red Sox' -> 'red_sox' (the park key in the stadium outlines file)."""
+    n = (team_name or "").lower().replace(".", "")
+    for two in ("red sox", "white sox", "blue jays"):
+        if n.endswith(two):
+            return two.replace(" ", "_")
+    last = n.split()[-1] if n.split() else ""
+    return TEAM_KEY_ALIAS.get(last, last)
+
+
+def stadium_outlines() -> pd.DataFrame:
+    """Traced outlines of every MLB park (fence, infield dirt / grass, foul lines, plate) in Statcast's own hit
+    coordinates -- the file that ships with pybaseball (from the GeomMLBStadiums project). Columns team, x, y,
+    segment. A copy is kept in data/ in case the package moves it."""
+    from pathlib import Path
+    here = Path(__file__).resolve().parent.parent / "data" / "mlbstadiums.csv"
+    cands = [here]
+    try:
+        import pybaseball
+        cands.insert(0, Path(pybaseball.__file__).resolve().parent / "data" / "mlbstadiums.csv")
+    except Exception:
+        pass
+    for c in cands:
+        if c.exists():
+            d = pd.read_csv(c)
+            if {"team", "x", "y", "segment"} <= set(d.columns):
+                if c != here:
+                    try:
+                        here.parent.mkdir(parents=True, exist_ok=True)
+                        d[["team", "x", "y", "segment"]].to_csv(here, index=False)
+                    except Exception:
+                        pass
+                return d[["team", "x", "y", "segment"]]
+    return pd.DataFrame(columns=["team", "x", "y", "segment"])
+
+
+def to_feet(x, y):
+    """Statcast hit coordinates -> feet from home plate (x toward 1B side, y toward center)."""
+    return (np.asarray(x, float) - 125.42) * 2.5, (198.27 - np.asarray(y, float)) * 2.5
+
+
+def fence_distance(fx: np.ndarray, fy: np.ndarray, angle_deg: float) -> float:
+    """Distance (ft) of a fence outline at a spray angle (0 = center, -45 = left-field line)."""
+    ang = np.degrees(np.arctan2(fx, fy))
+    i = int(np.argmin(np.abs(ang - angle_deg)))
+    return float(np.hypot(fx[i], fy[i]))
+
+
+def park_outline(home_team_name: str, dims: dict | None, outlines: pd.DataFrame | None = None) -> dict:
+    """The park to draw: {'segments': {name: (fx, fy)}, 'source': 'outline' | 'distances', 'note': str}.
+    The traced outline is used only if it matches MLB's published distances for THIS venue (lines + center within
+    12 ft) -- teams move (A's to Sacramento, Rays' 2025 season), and an old outline would be the wrong park."""
+    d = stadium_outlines() if outlines is None else outlines
+    key = team_key(home_team_name)
+    t = d[d["team"].astype(str).eq(key)]
+    if not t.empty:
+        segs = {}
+        for seg, g in t.groupby("segment", sort=False):
+            segs[str(seg)] = to_feet(g["x"].values, g["y"].values)
+        fence = segs.get("outfield_outer")
+        if fence is not None:
+            if dims and {"leftLine", "center", "rightLine"} <= set(dims):
+                checks = {k: fence_distance(*fence, a) for k, a in (("leftLine", -45), ("center", 0), ("rightLine", 45))}
+                off = {k: abs(v - dims[k]) for k, v in checks.items()}
+                if max(off.values()) <= 12:
+                    return {"segments": segs, "source": "outline", "note": "traced park outline"}
+                why = ", ".join(f"{k} {checks[k]:.0f} vs {dims[k]:.0f}" for k in off if off[k] > 12)
+                note = f"outline on file doesn't match this venue ({why}) -- fence from published distances"
+            else:
+                return {"segments": segs, "source": "outline", "note": "traced park outline (no distances to check)"}
+        else:
+            note = "no traced outline -- fence from published distances"
+    else:
+        note = "no traced outline for this park -- fence from published distances"
+    return {"segments": {}, "source": "distances", "note": note}
+
+
 def field_dims(feed: dict) -> dict:
     """Fence distances (ft) of the park this game was played in, from MLB's game feed."""
     fi = feed.get("gameData", {}).get("venue", {}).get("fieldInfo", {}) if feed else {}

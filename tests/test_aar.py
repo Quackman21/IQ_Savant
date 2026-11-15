@@ -162,3 +162,36 @@ def test_box_score_has_aar_links():
     from ui.game import lineup_html
     lu = {"nine": [{"spot": 1, "id": 5, "name": "A", "pos": "CF", "bats": "R"}], "pitcher": None}
     assert "/aar?pk=777&pid=5" in lineup_html(lu, {"name": "X"}, 111, 777)
+
+
+def _outline(team="red_sox", lf=310, cf=420, rf=302):
+    """A made-up traced park in Statcast hit coordinates: fence from the LF pole to the RF pole + dirt."""
+    angs = np.radians(np.linspace(-45, 45, 31))
+    dist = np.interp(np.degrees(angs), [-45, -20, 0, 20, 45], [lf, 380, cf, 380, rf])
+    fx, fy = dist * np.sin(angs), dist * np.cos(angs)
+    rows = [{"team": team, "x": 125.42 + x / 2.5, "y": 198.27 - y / 2.5, "segment": "outfield_outer"}
+            for x, y in zip(fx, fy)]
+    a2 = np.radians(np.linspace(-45, 45, 9))
+    rows += [{"team": team, "x": 125.42 + 95 * np.sin(a) / 2.5, "y": 198.27 - 95 * np.cos(a) / 2.5,
+              "segment": "infield_outer"} for a in a2]
+    return pd.DataFrame(rows)
+
+
+def test_park_outline_used_only_when_it_matches_this_venue():
+    o = _outline()
+    dims = {"leftLine": 310.0, "center": 420.0, "rightLine": 302.0}
+    got = aar.park_outline("Boston Red Sox", dims, o)
+    assert got["source"] == "outline" and "outfield_outer" in got["segments"]
+    moved = aar.park_outline("Boston Red Sox", {"leftLine": 330.0, "center": 400.0, "rightLine": 325.0}, o)
+    assert moved["source"] == "distances" and "doesn't match" in moved["note"]
+    assert aar.park_outline("Athletics", dims, o)["source"] == "distances"           # no outline on file
+    assert abs(aar.fence_distance(*got["segments"]["outfield_outer"], 0) - 420) < 1
+
+
+def test_spray_draws_real_outline_or_labeled_fallback():
+    p = aar.pitches(game(), feed())
+    dims = {"leftLine": 310.0, "center": 420.0, "rightLine": 302.0}
+    html = aar_ui.spray_svg(p, dims, "Fenway Park", aar.park_outline("Boston Red Sox", dims, _outline()))
+    assert "approximate" not in html and ">420<" in html and html.count("<polygon") >= 2
+    fb = aar_ui.spray_svg(p, dims, "Some Park", aar.park_outline("Athletics", dims, _outline()))
+    assert "approximate fence" in fb

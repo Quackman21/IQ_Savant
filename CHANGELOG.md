@@ -1,5 +1,14 @@
 # IQ Savant – version history
 
+## v21.3 – 2026-11-14
+- Spray chart = the REAL park. v21.2 curved a line through MLB's ~7 published distances, which can't show walls
+  like the Green Monster / Fenway's triangle and overshot between points. Now it draws the traced outline of each
+  park (fence, infield dirt / grass, foul lines) in Statcast's own hit coordinates -- the GeomMLBStadiums file that
+  ships with pybaseball (copied to data/mlbstadiums.csv on first use so both computers have it).
+- Safety check: the outline is used only if it matches MLB's published line / center distances for THIS venue
+  (within 12 ft). Teams that have moved since the outline was traced (e.g. the A's in Sacramento) fall back to
+  straight lines between the published distances, labeled "approximate fence" (hover says why).
+
 ## v21.2 – 2026-11-14
 - Point of contact on the plate WITHOUT the stance download: contact happens where the ball is, and Statcast
   tracks the ball. Across his season's swings, how his contact point (measured from his hips) shifts with each

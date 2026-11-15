@@ -48,6 +48,11 @@ def venue_dims(venue_id: int) -> dict:
         return {}
 
 
+@st.cache_data(ttl=24 * 3600, show_spinner=False)
+def park_outline(home_name: str, dims_items: tuple) -> dict:
+    return aar.park_outline(home_name, dict(dims_items))
+
+
 try:
     pk, pid = int(st.query_params.get("pk", "")), int(st.query_params.get("pid", ""))
 except ValueError:
@@ -106,10 +111,12 @@ tip = "; ".join(f'{"RHB" if k == "R" else "LHB"}: placed from {c["n"]} of his sw
                 f'{-c["F0"]:.0f}" ± {c["se"]:.0f}" behind the front of the plate)' for k, c in (cal or {}).items())
 
 dims = aar.field_dims(f) or venue_dims(int(f.get("gameData", {}).get("venue", {}).get("id", 0) or 0))
+home_name = teams.get(hd["home"], {}).get("name", "") or f.get("gameData", {}).get("teams", {}).get("home", {}).get("name", "")
+outline = park_outline(home_name, tuple(sorted(dims.items())))
 
 tiles = aar.metric_values(aar.last_pas(season_sc, 30), season_sc, league(season))
 components.html(aar_ui.component_html(p, pas, line, tiles, aar.GAME_METRICS, note, dims, hd["venue"],
-                                      contact_tip=tip),
+                                      contact_tip=tip, outline=outline),
                 height=aar_ui.estimate_height(len(pas), len(p)), scrolling=True)
 st.caption("Click any pitch on a chart or in the table to light it up everywhere; click more to compare. Opening "
            "plate appearances narrows the charts to those PAs. Decision = our swing-decision model on that exact "

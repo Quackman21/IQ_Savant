@@ -12,6 +12,7 @@ import json
 import math
 from html import escape
 
+import numpy as np
 import pandas as pd
 
 from core.aar import PLATE_HALF, SAVANT_VIDEO
@@ -124,46 +125,59 @@ def zone_svg(p: pd.DataFrame) -> str:
 
 
 DEFAULT_DIMS = {"leftLine": 330, "leftCenter": 375, "center": 400, "rightCenter": 375, "rightLine": 330}
-ANGLES = {"leftLine": -45, "left": -33.75, "leftCenter": -22.5, "center": 0, "rightCenter": 22.5, "right": 33.75,
-          "rightLine": 45}
+LINE_ANGLES = {"leftLine": -45, "leftCenter": -22.5, "center": 0, "rightCenter": 22.5, "rightLine": 45}
 
 
-def _fence(dims: dict, pt) -> str:
-    """Smooth fence through the park's published distances (Catmull-Rom curve)."""
-    import math as m
-    pts = [pt(dims[k] * m.sin(m.radians(a)), dims[k] * m.cos(m.radians(a))) for k, a in ANGLES.items() if k in dims]
-    d = f"L{pts[0][0]:.1f},{pts[0][1]:.1f}"
-    for i in range(len(pts) - 1):
-        p0, p1, p2 = pts[max(i - 1, 0)], pts[i], pts[i + 1]
-        p3 = pts[min(i + 2, len(pts) - 1)]
-        c1 = (p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6)
-        c2 = (p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6)
-        d += f" C{c1[0]:.1f},{c1[1]:.1f} {c2[0]:.1f},{c2[1]:.1f} {p2[0]:.1f},{p2[1]:.1f}"
-    return d
+def _poly(pts) -> str:
+    return " ".join(f"{x:.1f},{y:.1f}" for x, y in pts)
 
 
-def spray_svg(p: pd.DataFrame, dims: dict | None = None, park: str = "") -> str:
+def spray_svg(p: pd.DataFrame, dims: dict | None = None, park: str = "", outline: dict | None = None) -> str:
+    """Spray chart on the actual park: the traced outline (fence, dirt, grass, lines) when it matches this venue's
+    published distances; otherwise straight lines between the published distances (labeled approximate)."""
     W, H = 290, 300
     dims = dims or DEFAULT_DIMS
-    far = max(dims.values())
-    s = 268 / (far + 15)
-    hx, hy = W / 2, 288
-    pt = lambda fx, fy: (hx + fx * s, hy - fy * s)
-    g = [f'<path d="M{hx},{hy} {_fence(dims, pt)} Z" fill="#eef5ef" stroke="#7fa3a9" stroke-width="1.3"/>']
-    b1, b2, b3 = pt(63.6, 63.6), pt(0, 127.3), pt(-63.6, 63.6)
-    g.append(f'<path d="M{hx},{hy} L{b1[0]:.1f},{b1[1]:.1f} L{b2[0]:.1f},{b2[1]:.1f} L{b3[0]:.1f},{b3[1]:.1f} Z" '
-             f'fill="#f4ede2" stroke="#c9b48f"/>')
+    segs = (outline or {}).get("segments") or {}
+    far = max([max(dims.values())] + [float(np.max(np.hypot(*v))) for v in segs.values()] if segs else
+              [max(dims.values())])
+    sc = 262 / (far + 12)
+    hx, hy = W / 2, 290
+    pt = lambda fx, fy: (hx + fx * sc, hy - fy * sc)
+    g = []
+    if segs:
+        fx, fy = segs["outfield_outer"]
+        fence = [pt(a, b) for a, b in zip(fx, fy)]
+        g.append(f'<polygon points="{hx:.1f},{hy:.1f} {_poly(fence)}" fill="#eef5ef" stroke="#5f8f96" '
+                 f'stroke-width="1.6" stroke-linejoin="round"/>')
+        for seg, fill, stroke in (("infield_outer", "#f4ede2", "#c9b48f"), ("infield_inner", "#e8f1e8", "#c9b48f")):
+            if seg in segs:
+                g.append(f'<polygon points="{_poly(pt(a, b) for a, b in zip(*segs[seg]))}" fill="{fill}" '
+                         f'stroke="{stroke}" stroke-width=".8"/>')
+        if "foul_lines" in segs:
+            g.append(f'<polyline points="{_poly(pt(a, b) for a, b in zip(*segs["foul_lines"]))}" fill="none" '
+                     f'stroke="#b9c7cb" stroke-width=".8"/>')
+        note = ""
+    else:
+        pts = [pt(dims[k] * math.sin(math.radians(a)), dims[k] * math.cos(math.radians(a)))
+               for k, a in LINE_ANGLES.items() if k in dims]
+        g.append(f'<polygon points="{hx:.1f},{hy:.1f} {_poly(pts)}" fill="#eef5ef" stroke="#7fa3a9" '
+                 f'stroke-width="1.3" stroke-dasharray="5 3"/>')
+        b1, b2, b3 = pt(63.6, 63.6), pt(0, 127.3), pt(-63.6, 63.6)
+        g.append(f'<polygon points="{hx},{hy} {_poly([b1, b2, b3])}" fill="#f4ede2" stroke="#c9b48f"/>')
+        note = " (approximate fence)"
     for k, anchor, dx in (("leftLine", "start", 5), ("center", "middle", 0), ("rightLine", "end", -5)):
-        a = ANGLES[k]
-        x, y = pt(dims[k] * math.sin(math.radians(a)), dims[k] * math.cos(math.radians(a)))
-        g.append(f'<text x="{x + dx:.1f}" y="{y - 4:.1f}" class="ax" text-anchor="{anchor}">{dims[k]:.0f}</text>')
+        if k in dims:
+            a = LINE_ANGLES[k]
+            x, y = pt(dims[k] * math.sin(math.radians(a)), dims[k] * math.cos(math.radians(a)))
+            g.append(f'<text x="{x + dx:.1f}" y="{y - 5:.1f}" class="ax" text-anchor="{anchor}">{dims[k]:.0f}</text>')
     for r in p.itertuples():
         if r.bip and r.hc_x == r.hc_x and r.hc_y == r.hc_y:
             x, y = pt((r.hc_x - 125.42) * 2.5, (198.27 - r.hc_y) * 2.5)
             g.append(_mark(r, r.bb or "GB", max(9, min(W - 9, x)), max(9, min(H - 9, y)), _res_color(r.play)))
     leg = ("▼ GB ▲ LD ◆ FB ■ PU &nbsp;" + " ".join(f'<i style="color:{c}">●</i> {k.replace("Home run", "HR")}'
                                                  for k, c in RES_COLOR.items()) + f' <i style="color:{OUT_COLOR}">●</i> Out')
-    return _chart("Spray", escape(park), f'<svg viewBox="0 0 {W} {H}">{"".join(g)}</svg>', leg)
+    return _chart("Spray", escape(park + note), f'<svg viewBox="0 0 {W} {H}">{"".join(g)}</svg>', leg,
+                  tip=(outline or {}).get("note", ""))
 
 
 def contact_svg(p: pd.DataFrame, note: str, tip: str = "") -> str:
@@ -384,13 +398,13 @@ showTiles(); apply(); window.addEventListener('load', resize);
 
 def component_html(p: pd.DataFrame, pas: list[dict], line: dict, tiles: dict, metric_names: dict,
                    contact_note: str, dims: dict | None = None, park: str = "", default_metric: str = "GD%",
-                   contact_tip: str = "") -> str:
+                   contact_tip: str = "", outline: dict | None = None) -> str:
     opts = "".join(f'<option value="{escape(k)}"{" selected" if k == default_metric else ""}>{escape(v)}</option>'
                    for k, v in metric_names.items())
     left = (f'<div class="left"><div class="card">{line_html(line)}</div>'
             f'<div class="card tiles"><div class="hd"><span class="lab">Compare</span>'
             f'<select id="metric">{opts}</select></div><div class="row" id="tiles"></div></div></div>')
-    charts = f'<div class="card charts">{zone_svg(p)}{spray_svg(p, dims, park)}{contact_svg(p, contact_note, contact_tip)}</div>'
+    charts = f'<div class="card charts">{zone_svg(p)}{spray_svg(p, dims, park, outline)}{contact_svg(p, contact_note, contact_tip)}</div>'
     types = [t for t in pd.unique(p["ptype"]) if t]
     chips = "".join(f'<button class="chip-f on" data-f="{escape(t)}" style="--c:{PT_COLOR.get(t, INK)}">'
                     f'{escape(t)}</button>' for t in types)
