@@ -261,9 +261,13 @@ def _chart(title: str, sub: str, body: str, leg: str, tip: str = "") -> str:
 COLS = [("n", "#", "r"), ("video", "Video", "c"), ("inn", "Inn", "r"), ("count", "Count", "r"),
         ("pitcher", "Pitcher", "l"), ("result", "Pitch Result", "l"), ("play", "Play Result", "l"),
         ("ptype", "Type", "c"), ("velo", "Velo", "r"), ("hb", "HB", "r"), ("ivb", "IVB", "r"),
-        ("bb", "BB Type", "c"), ("ev", "EV", "r"), ("bat_speed", "Bat Speed", "r"), ("la", "LA", "r"),
+        ("bb", "BB Type", "c"), ("spin", "Contact", "c"), ("ev", "EV", "r"), ("bat_speed", "Bat Speed", "r"), ("la", "LA", "r"),
         ("dist", "Dist", "r"), ("xwoba", "xwOBA", "r"), ("zone", "Zone", "c"), ("dec", "Decision", "c"),
         ("dec_runs", "Dec Runs", "r")]
+
+
+SPIN_COLOR = {"Optimal": ("#cdebd6", "#14532d"), "Backspin": ("#dbe7f6", "#1e3a6b"), "Topspin": ("#f6e3cf", "#7a3e0c"),
+              "Hook": ("#efdcf3", "#5b2470"), "Slice": ("#f7dde4", "#7a1f3d"), "Knuckle": ("#eef1f3", "#3d4650")}
 
 
 def _cols(p: pd.DataFrame) -> list:
@@ -285,6 +289,12 @@ def _cell(key: str, r) -> tuple[str, str]:
         return (f'<span class="vcell">{cam}{s3}</span>' if (cam or s3) else "–"), ""
     if key == "inn":
         return f"{r.half}{r.inning}", ""
+    if key == "spin":
+        if not v:
+            return "–", ""
+        bg, fg = SPIN_COLOR.get(v, ("#eef1f3", INK))
+        return (f'<span class="chip" style="background:{bg};color:{fg}" '
+                f'title="{escape(getattr(r, "spin_why", ""))}">{v}</span>'), ""
     if key == "ptype":
         return f'<b style="color:{PT_COLOR.get(v, INK)}">{escape(str(v))}</b>', ""
     if key in ("velo", "hb", "ivb", "ev", "bat_speed", "la", "miss"):
@@ -510,7 +520,7 @@ function line(pts, mat) {
 function readouts(sc) {
   const r = sc.read, m = '<span class="tag">measured</span>', i = '<span class="tag inf">inferred</span>';
   const row = (k, v, t = '') => `<tr><td>${k}${t}</td><td>${v}</td></tr>`;
-  const smash = r.ev && r.bat_speed && r.velo ? ((r.ev - 0.2 * r.velo) / (1.2 * r.bat_speed)) : null;
+  const smash = r.smash, sqp = r.squared_up_pct;
   document.getElementById('rd').innerHTML =
     '<h5>Swing</h5><table>' + row('Bat speed', fmt(r.bat_speed) + ' mph', m) + row('Swing length', fmt(r.swing_length) + ' ft', m) +
     row('Attack angle', fmt(r.attack_angle) + '°', m) + row('Attack direction', fmt(r.attack_direction) + '° ' +
@@ -523,10 +533,13 @@ function readouts(sc) {
     row('Coming down at', fmt(-r.vaa) + '°', m) + row('Swing vs pitch plane', (r.plane_gap > 0 ? '+' : '') + fmt(r.plane_gap) + '°',
       '') + '</table>' +
     (r.ev ? '<h5>Ball off the bat</h5><table>' + row('Exit velo', fmt(r.ev) + ' mph', m) + row('Launch angle', fmt(r.la, 0) + '°', m) +
-      (smash ? row('Smash factor', fmt(smash, 2)) : '') + '</table>' : '') +
+      (sqp ? row('Squared-up', fmt(sqp, 0) + '% of max' + (sqp >= 80 ? ' ✓' : ''), m) : '') +
+      (smash ? row('Smash factor', fmt(smash, 2), m) : '') +
+      (r.spin ? row('Contact', '<b>' + r.spin + '</b>', i) + `<tr><td colspan="2" style="color:#6a7681;font-size:11px">${r.spin_why}</td></tr>` : '') +
+      '</table>' : '') +
     '<div class="lg"><i style="color:#e07b24">━</i> pitch (measured) &nbsp; <i style="color:#2f5fb3">━</i> bat, last 40 ms ' +
     'before contact (measured) &nbsp; <i style="color:#7b5cc4">┅ ●</i> path back to bat parallel -- inferred from the ' +
-    'measured tilt, attack angle + direction (the bat lies across its path in that plane) &nbsp; ' +
+    'measured tilt, attack angle + direction (the bat lies across its path in that plane), and the follow-through &nbsp; ' +
     '<i style="color:#c0392b">●</i> contact &nbsp; <i style="color:#2e9d5b">━</i> ball off the bat' +
     (sc.exit ? '' : ' (fouls: direction not tracked)') + '<br>Swing vs pitch plane = attack angle minus how steeply ' +
     'the pitch is coming down (0 = matched).</div>';
@@ -554,9 +567,11 @@ function build(sc) {
     new THREE.LineDashedMaterial({color: 0x16202b, dashSize: 2, gapSize: 1.5})));
   // ghosts of the whole thing
   scene.add(line(sc.pitch, new THREE.LineBasicMaterial({color: 0xe07b24, transparent: true, opacity: .25})));
-  const inf = sc.arc.filter(q => q[3] === 2);
-  if (inf.length > 1) scene.add(line(inf.concat([sc.arc.find(q => q[3] === 1)]),
-    new THREE.LineDashedMaterial({color: 0x7b5cc4, dashSize: 2.2, gapSize: 1.6})));
+  const dashed = new THREE.LineDashedMaterial({color: 0x7b5cc4, dashSize: 2.2, gapSize: 1.6});
+  const pre = sc.arc.filter(q => q[3] === 2 && q[4] < 0), post = sc.arc.filter(q => q[3] === 2 && q[4] > 0);
+  const m0 = sc.arc.find(q => q[3] === 1), m1 = [...sc.arc].reverse().find(q => q[3] === 1);
+  if (pre.length) scene.add(line(pre.concat([m0]), dashed));
+  if (post.length) scene.add(line([m1].concat(post), dashed));
   if (sc.bp) { const m = new THREE.Mesh(new THREE.SphereGeometry(1.8, 16, 12), new THREE.MeshBasicMaterial({color: 0x7b5cc4}));
     m.position.copy(V(sc.bp.at)); scene.add(m); }
   const meas = sc.arc.filter(q => q[3] === 1);
@@ -601,7 +616,7 @@ function build(sc) {
   place();
   // time
   const T = q => q[q.length - 1];
-  const t0 = T(sc.pitch[0]), t1 = sc.exit ? 0.12 : 0.02;
+  const t0 = T(sc.pitch[0]), t1 = Math.max(sc.exit ? 0.12 : 0.02, T(sc.arc[sc.arc.length - 1]));
   const S = {t: t0, playing: true, last: null, raf: 0};
   function frame(t) {
     const bt = upto(sc.pitch, t).map(V);
@@ -610,8 +625,8 @@ function build(sc) {
     etrail.geometry.dispose(); etrail.geometry = new THREE.BufferGeometry().setFromPoints(et.length > 1 ? et : [V(sc.contact), V(sc.contact)]);
     const B = t <= 0 ? at(sc.pitch, t) : (sc.exit ? at(sc.exit, t) : null);
     ball.visible = !!B; if (B) ball.position.copy(V(B));
-      const inWin = t >= T(sc.arc[0]) && t <= T(sc.arc[sc.arc.length - 1]);    // only along the drawn path
-    const P = inWin ? at(sc.arc, t) : null;
+      const tEnd = T(sc.arc[sc.arc.length - 1]);
+    const P = t < T(sc.arc[0]) ? null : at(sc.arc, Math.min(t, tEnd));        // holds the finish of the follow-through
     bat.visible = !!P;
     if (P) {
       const u = new THREE.Vector3(sc.O[0] - P[0], sc.O[2] - P[2], -(sc.O[1] - P[1])).normalize();   // sweet spot -> hands
@@ -620,7 +635,7 @@ function build(sc) {
     }
     hit.visible = t >= 0;
     const pre = sc.arc.find(q => q[3] === 1), winStart = pre ? T(pre) : 0;
-    document.getElementById('s3c').textContent = (sc.bp && t < winStart && t >= T(sc.arc[0]))
+    document.getElementById('s3c').textContent = ((sc.bp && t < winStart && t >= T(sc.arc[0])) || (t > 0 && !sc.exit))
       ? 'inferred path · time not measured' : `${t >= 0 ? '+' : ''}${(t * 1000).toFixed(0)} ms from contact`;
     ren.render(scene, cam);
   }

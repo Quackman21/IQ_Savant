@@ -31,13 +31,14 @@ def test_bat_moves_through_contact_at_the_measured_angles():
     s = swing3d.scene(_row(), depth=28.0, stance_x=27.0)
     arc = np.array([a[:3] for a in s["arc"]])
     t = np.array([a[4] for a in s["arc"]])
-    assert abs(t[-1]) < 1e-9 and np.allclose(arc[-1], s["contact"], atol=0.01)   # ends at the ball, at contact
+    i0 = int(np.argmin(np.abs(t)))
+    assert abs(t[i0]) < 1e-9 and np.allclose(arc[i0], s["contact"], atol=0.01)  # at the ball at contact
     assert min(a[4] for a in s["arc"] if a[3] == 1) >= -0.0405                  # measured part = last 40 ms
     v = np.array(s["aim"])                                               # direction of travel at contact
     assert abs(math.degrees(math.atan2(v[2], math.hypot(v[0], v[1]))) - 10.0) < 1.0     # attack angle
     assert abs(math.degrees(math.atan2(v[0], v[1])) - (-5.0)) < 1.0                       # RHB: -5 = pull = 3B side
     assert O_above(s)
-    assert all(a[4] <= 0 for a in s["arc"])                              # nothing after contact
+    assert all(a[3] == 2 for a in s["arc"] if a[4] > 0)                 # follow-through: inferred, never "measured"
 
 
 def O_above(s):
@@ -75,6 +76,19 @@ def test_bat_angle_and_bat_parallel_are_inferred_from_the_measured_plane():
     assert bp and abs(bp["at"][2] - s["O"][2]) < 0.05                    # bat parallel: barrel level with the hands
     assert bp["inches_before"] <= 7.2 * 12 and bp["t"] < -0.04           # inside his swing, before the 40 ms window
     assert {a[3] for a in s["arc"]} == {1, 2}                            # measured window + inferred lead-in
-    assert all(a[4] <= 0 for a in s["arc"])                              # nothing after contact
+    assert all(a[3] == 2 for a in s["arc"] if a[4] > 0)                 # follow-through: inferred, never "measured"
     short = swing3d.scene(_row(swing_length=3.0), depth=28.0)            # a swing too short to reach bat parallel
-    assert short["bp"] is None and {a[3] for a in short["arc"]} == {1}
+    assert short["bp"] is None and not any(a[3] == 2 and a[4] < 0 for a in short["arc"])
+
+
+def test_contact_labels():
+    from core import batted_ball as bb
+    base = dict(_row())
+    lab = lambda **kw: bb.spin_label(pd.Series({**base, **kw}))["label"]
+    assert lab(launch_speed=108.0, launch_angle=24.0, attack_angle=18.0, launch_speed_angle=6) == "Optimal"
+    assert lab(launch_speed=80.0, launch_angle=55.0, attack_angle=10.0, hc_x=None, hc_y=None) == "Backspin"
+    assert lab(launch_speed=85.0, launch_angle=-20.0, attack_angle=10.0) == "Topspin"
+    # RHB, barrel aimed at -5 (pull) but the ball went way to right field -> slice
+    assert lab(launch_speed=85.0, launch_angle=30.0, attack_angle=20.0, attack_direction=-5.0, hc_x=200.0, hc_y=120.0) == "Slice"
+    q = bb.contact_quality(pd.Series({**base, "launch_speed": 100.0, "bat_speed": 72.0, "release_speed": 92.0}))
+    assert q["smash"] == round(1 + (100 - 72) / (92 + 72), 2) and q["squared_up"]

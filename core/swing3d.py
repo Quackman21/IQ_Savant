@@ -11,7 +11,8 @@ plate (0 = front edge, -17 = back point), z = up. Times in seconds from contact 
     attack angle + attack direction, in a plane tilted at the measured swing-path tilt (leaning toward his measured
     stance position, centre above the ball). The bat lies across that path in the plane, so its angle is known
     everywhere on it: BAT PARALLEL (barrel level with the hands) is inferred from those measured angles and the path
-    is drawn back to it, styled as inferred. Nothing after contact, and no body.
+    is drawn back to it, styled as inferred; the follow-through continues the plane a quarter turn past contact,
+    also inferred. No body.
   * BALL OFF THE BAT (balls in play only): measured launch angle + exit velo, aimed at where it was fielded. Statcast
     doesn't track where fouls go, so fouls get no flight.
 """
@@ -115,13 +116,14 @@ def scene(row, depth: float | None, stance_x: float | None = None) -> dict | Non
     bp_ok = swing_len <= 0 or -s_bp <= swing_len                         # within his measured swing length
     measured = min(v * 0.040, R * 1.2)
     start = min(-measured, s_bp) if bp_ok else -measured
+    follow = R * math.pi / 2                                             # follow-through: a quarter turn, inferred
     arc = []
-    for s_ in sorted(set(np.linspace(start, 0, 90).tolist() + [-measured])):
+    for s_ in sorted(set(np.linspace(start, 0, 90).tolist() + [-measured] + np.linspace(0, follow, 30)[1:].tolist())):
         phi = s_ / R
         P = O + R * (-w * math.cos(phi) + dvec * math.sin(phi))
         # 1 = Statcast's measured last 40 ms; 2 = inferred from the measured plane + angles (bat parallel -> there)
         arc.append([round(float(P[0]), 2), round(float(P[1]), 2), round(float(P[2]), 2),
-                    1 if s_ >= -measured - 1e-9 else 2, round(s_ / v, 5)])
+                    1 if -measured - 1e-9 <= s_ <= 1e-9 else 2, round(s_ / v, 5)])
     bp = None
     if bp_ok:
         P = O + R * (-w * math.cos(phi_bp) + dvec * math.sin(phi_bp))
@@ -142,6 +144,9 @@ def scene(row, depth: float | None, stance_x: float | None = None) -> dict | Non
             if P[2] < 0:
                 break
             exit_.append([round(float(P[0]), 2), round(float(P[1]), 2), round(float(P[2]), 2), round(float(tt), 4)])
+    from core import batted_ball
+    lab = batted_ball.spin_label(row) or {}
+    q = batted_ball.contact_quality(row)
     return {
         "side": side, "contact": [round(float(c), 2) for c in C], "O": [round(float(o), 2) for o in O],
         "pitch": pitch, "arc": arc, "exit": exit_, "bp": bp,
@@ -152,7 +157,8 @@ def scene(row, depth: float | None, stance_x: float | None = None) -> dict | Non
                  "vba": round(vba, 1), "bp_in": bp["inches_before"] if bp else None,
                  "side_in": round(float(C[0]), 1), "height": round(float(C[2]), 1), "vaa": round(vaa, 1),
                  "haa": round(haa, 1), "plane_gap": round(aa + vaa, 1), "ev": ev, "la": la,
-                 "velo": _num(row, "release_speed")},
+                 "velo": _num(row, "release_speed"), "spin": lab.get("label"), "spin_why": lab.get("why"),
+                 "squared_up_pct": q.get("squared_up_pct"), "smash": q.get("smash")},
     }
 
 

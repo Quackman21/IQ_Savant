@@ -128,6 +128,14 @@ def pitches(sc: pd.DataFrame, feed: dict | None = None) -> pd.DataFrame:
         out["dec_runs"] = s["runs_vs_avg"].values
     except Exception:
         out["dec"], out["dec_runs"] = "", np.nan
+    try:                                    # what kind of contact (label, not rpm) -- core/batted_ball.py
+        from core import batted_ball
+        lab = [batted_ball.spin_label(r) if str(r.get("description")) in ("hit_into_play", "foul") else None
+               for _, r in d.iterrows()]
+        out["spin"] = [x["label"] if x else "" for x in lab]
+        out["spin_why"] = [x["why"] if x else "" for x in lab]
+    except Exception:
+        out["spin"], out["spin_why"] = "", ""
     if feed:
         vid, who = play_ids(feed), names(feed)
         out["video"] = [vid.get((int(a), int(p)), "") if pd.notna(a) and pd.notna(p) else ""
@@ -519,13 +527,16 @@ GAME_METRICS = {"GD%": "Good decision %", "O-SWING%": "Chase% (O-Swing%)", "Z-SW
                 "EV": "Avg EV", "AVG BAT SPEED": "Avg bat speed"}
 
 
-def metric_values(last30: pd.DataFrame, season_sc: pd.DataFrame, league: dict) -> dict:
-    """{metric: [(label, value text), ...]} for Last 30 PA / Season / MLB season, every metric at once (the page
-    switches between them without reloading)."""
+def metric_values(last30: pd.DataFrame, season_sc: pd.DataFrame, league: dict,
+                  game: pd.DataFrame | None = None) -> dict:
+    """{metric: [(label, value text, cell style), ...]} for This game / Last 30 PA / Season / MLB season, every metric
+    at once (the page switches between them without reloading). Colored red-white-green vs the MLB average the same
+    way the site does everywhere (z = (value - MLB avg) / MLB spread; green = good for that metric)."""
     from core import hit_metrics as hm
+    from ui.hitting import color as _color
     keys = list(GAME_METRICS)
     parts = []
-    for lab, df in (("Last 30 PA", last30), ("Season", season_sc)):
+    for lab, df in (("This game", game), ("Last 30 PA", last30), ("Season", season_sc)):
         if df is not None and not df.empty:
             parts.append((lab, hm.compute(hm.prep(df), keys=keys).iloc[0]))
         else:
@@ -533,7 +544,17 @@ def metric_values(last30: pd.DataFrame, season_sc: pd.DataFrame, league: dict) -
     lg = league.get(("all", "All"), {})
     out = {}
     for k in keys:
-        row = [(lab, hm.fmt(k, v[k]) if v is not None else "-") for lab, v in parts]
-        row.append(("MLB season", hm.fmt(k, lg[k][0]) if k in lg else "-"))
+        ref = lg.get(k)
+        row = []
+        for lab, v in parts:
+            val = v[k] if v is not None else None
+            st = ""
+            try:
+                if val is not None and ref and ref[1] and not math.isnan(float(val)):
+                    st = _color(k, (float(val) - float(ref[0])) / float(ref[1]))
+            except Exception:
+                st = ""
+            row.append((lab, hm.fmt(k, val) if val is not None else "-", st))
+        row.append(("MLB season", hm.fmt(k, ref[0]) if ref else "-", ""))
         out[k] = row
     return out

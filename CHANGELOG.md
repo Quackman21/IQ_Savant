@@ -1,5 +1,18 @@
 # IQ Savant – version history
 
+## v22.8 – 2026-11-15
+- Contact type for every ball in play / foul (core/batted_ball.py) -- a label, not an rpm, from measured gaps:
+  Optimal (barrel, or squared-up >= 90% at 8-32 deg), Backspin (left >= 10 deg above the bat's path = hit under),
+  Topspin (>= 10 deg below = over the top), Hook / Slice (balls in the air >= 20 deg off the barrel's aim, pull / oppo
+  side), Knuckle (near-centre, not squared up). Centred on how squared-up balls behave (LA 3.8 deg above attack angle,
+  spray 9.7 deg pull of attack direction). Fouls get Backspin / Topspin only (Statcast doesn't track where fouls go).
+  Checked against Ivan's WS G5 notes: Contreras hook, Williamson / Turang / Hamilton slices, Hicks + Mesa topped,
+  Chourio's 105 single optimal, every "straight back" foul backspin.
+- AAR table: "Contact" column (colored chip, hover for why); 3D readouts: contact type, squared-up % of max (MLB),
+  smash factor (Savant's definition: 1 + (EV - bat speed) / (pitch speed + bat speed)).
+- 3D: follow-through -- the plane continued a quarter turn past contact (purple dashed, inferred); the bat holds the
+  finish.
+
 ## v22.7 – 2026-11-15
 - 3D swing view: BAT PARALLEL checkpoint + the bat's angle, inferred from the measured plane. With the measured
   swing-path tilt, attack angle and attack direction, the bat lies across its path in that plane, so its angle is
