@@ -89,7 +89,13 @@ if sc.empty:
             "final out.")
     st.stop()
 
-season_sc = statcast(pid, f"{season}-03-01", gday)
+season_all = statcast(pid, f"{season}-03-01", gday)
+# regular season + playoffs for where his hips are at contact (hitters move in the box -- the swings right before
+# this game matter most); this game itself is left out. Tiles stay regular season.
+hip_sc = season_all
+if not hip_sc.empty and "game_pk" in hip_sc:
+    hip_sc = hip_sc[pd.to_numeric(hip_sc["game_pk"], errors="coerce").ne(pk)]
+season_sc = season_all
 if not season_sc.empty and "game_type" in season_sc:
     season_sc = season_sc[season_sc["game_type"].astype(str).eq("R")]
 
@@ -98,7 +104,7 @@ pas = aar.plate_appearances(p)
 
 # point of contact on the plate: Statcast measures it from his hips; his own season's swings (where the ball was vs
 # where he met it) place his hips in the box, so every contact point lands on the plate -- no stance download
-cal = aar.plate_calibration(season_sc)
+cal = aar.plate_calibration(hip_sc, asof=gday, group=aar.hip_group(season))
 p = p.join(aar.on_plate(p, cal))
 pas = aar.plate_appearances(p)
 if p["cx"].notna().any() and not cal:
@@ -106,8 +112,10 @@ if p["cx"].notna().any() and not cal:
 else:
     note = "No measured contact."
 
-tip = "; ".join(f'{"RHB" if k == "R" else "LHB"}: placed from {c["n"]} of his swings this season (his hips sit '
-                f'{-c["F0"]:.0f}" ± {c["se"]:.0f}" behind the front of the plate)' for k, c in (cal or {}).items())
+tip = "; ".join(f'{"RHB" if k == "R" else "LHB"}: his hips are ~{-c["F0"]:.0f}" (± {2 * c["se"]:.0f}") behind the front '
+                f'of the plate at contact -- {c["n"]} of his swings ({c["weight"]:.0%}) blended with the MLB average '
+                f'({c["group"]:.0f}"); side to side + height are where the ball was'
+                for k, c in (cal or {}).items())
 
 dims = aar.field_dims(f) or venue_dims(int(f.get("gameData", {}).get("venue", {}).get("id", 0) or 0))
 home_name = teams.get(hd["home"], {}).get("name", "") or f.get("gameData", {}).get("teams", {}).get("home", {}).get("name", "")

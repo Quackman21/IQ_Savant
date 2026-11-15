@@ -1,0 +1,298 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Swing Map prototype</title>
+<style>
+*{box-sizing:border-box} body{margin:0;font:13px system-ui,-apple-system,sans-serif;color:#16202b;background:#f6f8f9}
+header{padding:12px 18px;background:#16202b;color:#fff;display:flex;align-items:baseline;gap:14px}
+header b{font-size:16px} header span{color:#9fb0bb;font-size:12px}
+.wrap{display:grid;grid-template-columns:340px 1fr;height:calc(100vh - 44px)}
+.list{overflow:auto;border-right:1px solid #e1e6e9;background:#fff}
+.sw{padding:7px 12px;border-bottom:1px solid #eef1f3;cursor:pointer;display:grid;grid-template-columns:34px 1fr auto;gap:6px}
+.sw:hover{background:#f2f7f8} .sw.on{background:#e3f0f2;box-shadow:inset 3px 0 0 #4a8b96}
+.sw .i{color:#6a7681;font:12px ui-monospace,monospace} .sw .r{color:#6a7681;font-size:11px;text-align:right}
+.main{overflow:auto;padding:14px 18px}
+.views{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.view{background:#fff;border:1px solid #e1e6e9;border-radius:10px;padding:8px}
+.view .t{font:600 12px system-ui;margin-bottom:4px} .view .t span{color:#6a7681;font-weight:400}
+svg{width:100%;height:auto;display:block;overflow:visible} text{font:9px system-ui;fill:#8a96a0}
+.info{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.card{background:#fff;border:1px solid #e1e6e9;border-radius:10px;padding:10px 12px}
+.card h4{margin:0 0 6px;font:700 13px system-ui}
+table{border-collapse:collapse;width:100%} td{padding:3px 4px;border-bottom:1px solid #f0f2f4}
+td:last-child{text-align:right;font-family:ui-monospace,monospace}
+.tag{display:inline-block;font-size:10px;padding:1px 6px;border-radius:8px;margin-left:6px}
+.m{background:#dbeef1;color:#2c6670} .x{background:#eef1f3;color:#6a7681}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.dot.g{background:#2e9d5b} .dot.y{background:#e2a72e} .dot.r{background:#d1453b} .dot.i{background:#c3cbd1} .dot.s{background:#7b5cc4}
+.note{color:#8a96a0;font-size:11px}
+.bar{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.bar button{width:34px;height:28px;border:1px solid #cfd8dd;border-radius:6px;background:#fff;cursor:pointer}
+.bar select{font:inherit} #scrub{flex:1}
+#video{display:inline-flex;gap:6px;align-items:center;padding:5px 10px;border-radius:6px;background:#16202b;color:#fff;text-decoration:none;font-weight:600}
+#video.approx{background:#6a7681}
+.review{display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px 10px;background:#fff;border:1px solid #e1e6e9;border-radius:10px}
+.review button{border:1px solid #cfd8dd;background:#fff;border-radius:6px;padding:5px 10px;cursor:pointer;font:600 12px system-ui}
+.review button.on.yes{background:#2e9d5b;color:#fff;border-color:#2e9d5b}
+.review button.on.no{background:#d1453b;color:#fff;border-color:#d1453b}
+.review button.on.unsure{background:#e2a72e;color:#fff;border-color:#e2a72e}
+.review input{flex:1;padding:5px 8px;border:1px solid #cfd8dd;border-radius:6px;font:inherit}
+.review .prog{color:#6a7681;font-size:12px;white-space:nowrap}
+.filters{display:flex;gap:4px;padding:6px 8px;border-bottom:1px solid #e1e6e9;position:sticky;top:0;background:#fff;z-index:1;flex-wrap:wrap}
+.filters button{border:1px solid #cfd8dd;background:#fff;border-radius:12px;padding:2px 8px;font-size:11px;cursor:pointer}
+.filters button.on{background:#16202b;color:#fff;border-color:#16202b}
+.v{font-weight:700;width:14px;display:inline-block;text-align:center}
+.v.yes{color:#2e9d5b} .v.no{color:#d1453b} .v.unsure{color:#e2a72e}
+kbd{font:11px ui-monospace,monospace;border:1px solid #cfd8dd;border-bottom-width:2px;border-radius:4px;padding:0 4px;color:#6a7681}
+.legend{font-size:11px;color:#6a7681;margin-top:8px}
+</style></head><body>
+<header><b>Swing Map — prototype</b><span>World Series Game 5 · every swing · inches · front-center of the plate = 0,0,0</span></header>
+<div class="wrap"><div class="list"><div class="filters" id="filters"></div><div id="list"></div></div><div class="main">
+<div class="review"><b>Your call:</b>
+<button class="yes" data-v="yes">✓ Looks right <kbd>Y</kbd></button>
+<button class="no" data-v="no">✗ Doesn't add up <kbd>N</kbd></button>
+<button class="unsure" data-v="unsure">? Not sure <kbd>U</kbd></button>
+<input id="note" placeholder="What looks off? (optional — Enter = save + next)">
+<span class="prog" id="prog"></span><span class="prog" title="Y / N / U = your call (moves to the next swing) · ↑ ↓ = previous / next · Space = play / pause · V = video">⌨︎ keys</span>
+<button id="export" title="Download your calls to send back">Export CSV</button>
+<label class="prog" style="cursor:pointer">Import <input id="import" type="file" accept=".csv" style="display:none"></label></div>
+<div class="bar"><button id="play">❚❚</button>
+<label>Speed <select id="speed"><option value="20">1/20</option><option value="40" selected>1/40</option><option value="100">1/100</option></select></label>
+<input id="scrub" type="range" min="0" max="1000" value="0"><span id="clock" class="note"></span>
+<a id="video" target="_blank" rel="noopener" title="Watch it on Baseball Savant"><svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M4 6h11a2 2 0 0 1 2 2v1.5l3.4-2.3A1 1 0 0 1 22 8v8a1 1 0 0 1-1.6.8L17 14.5V16a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"/></svg><span>Video</span></a></div>
+<div class="views">
+ <div class="view"><div class="t">Side <span id="sidelbl"></span></div><svg id="side" viewBox="0 0 320 240"></svg></div>
+ <div class="view"><div class="t">Catcher <span>· behind the plate</span></div><svg id="catch" viewBox="0 0 320 240"></svg></div>
+ <div class="view"><div class="t">Top <span>· from above, pitcher ↑</span></div><svg id="top" viewBox="0 0 320 240"></svg></div>
+</div>
+<div class="legend"><b style="color:#e07b24">━</b> pitch flight (measured) &nbsp; <b style="color:#2f5fb3">━</b> sweet-spot path, last 40 ms (measured direction + plane) &nbsp;
+<b style="color:#8fa6c9">┅</b> rest of the swing + follow-through (modeled arc) &nbsp; <b style="color:#2e9d5b">━</b> ball off the bat (measured; untracked fouls not drawn) &nbsp; <b style="color:#9a7b52">━</b> bat (modeled) &nbsp; <b style="color:#c0392b">●</b> contact / closest point &nbsp; <b style="color:#555">◆</b> his hips at contact (fit)</div>
+<div class="info"><div class="card"><h4 id="title"></h4><table id="meas"></table></div>
+<div class="card"><h4>How it's placed</h4><table id="place"></table></div></div>
+<div class="card" style="margin-top:10px"><h4>Fit check <span class="note">· placement: green = trust the spot, yellow = a bit loose, red = don't trust it · purple = unusual swing for him (late, early, check swing) · gray = info</span></h4><table id="checks"></table></div>
+</div></div>
+<script>
+const S = /*DATA*/;
+// side view looks at his chest: RHH from the 1B side (pitcher on the right), LHH from the 3B side (pitcher on the left)
+const SIDE_R = {u: p => p[1], v: p => p[2], ur: [-45, 75], vr: [-5, 85]};
+const SIDE_L = {u: p => -p[1], v: p => p[2], ur: [-75, 45], vr: [-5, 85]};
+const VIEW = {
+  side:  SIDE_R,
+  catch: {u: p => p[0], v: p => p[2], ur: [-60, 60], vr: [-5, 85]},
+  top:   {u: p => p[0], v: p => p[1], ur: [-75, 75], vr: [-48, 61.5]},   // equal scale both ways, so 45° looks like 45°
+};
+function sx(V, u) { return 12 + (u - V.ur[0]) / (V.ur[1] - V.ur[0]) * 296; }
+function sy(V, v) { return 228 - (v - V.vr[0]) / (V.vr[1] - V.vr[0]) * 216; }
+function poly(V, pts) { return pts.map(p => `${sx(V, V.u(p)).toFixed(1)},${sy(V, V.v(p)).toFixed(1)}`).join(' '); }
+function plate(name, V) {
+  if (name === 'top') {
+    // the home-plate area as it's actually chalked: dirt, white batter's boxes (4 x 6 ft, 6" off the plate, centered
+    // on the middle of the plate), foul lines from the back point of the plate, chalked from the front of the boxes out
+    const chalk = 'stroke="#16202b" stroke-width="1.2" fill="none"';
+    let g = '';
+    for (const sg of [-1, 1]) {
+      const B = [[sg*14.5,-44.5,0],[sg*62.5,-44.5,0],[sg*62.5,27.5,0],[sg*14.5,27.5,0],[sg*14.5,-44.5,0]];
+      g += `<polyline points="${poly(V, B)}" ${chalk}/>`;
+      g += `<polyline points="${poly(V, [[sg*44.5,27.5,0],[sg*400,-17+400,0]])}" ${chalk}/>`;
+    }
+    const P = [[-8.5,0],[8.5,0],[8.5,-8.5],[0,-17],[-8.5,-8.5]].map(([x,y]) => [x,y,0]);
+    g += `<polygon points="${poly(V, P)}" fill="#f1f4f5" stroke="#16202b" stroke-width="1.2"/>`;
+    g += `<text x="${sx(V,-70)}" y="${sy(V,56)}" style="fill:#6a7681;font-weight:600">3B</text>`;
+    g += `<text x="${sx(V,70)}" y="${sy(V,56)}" text-anchor="end" style="fill:#6a7681;font-weight:600">1B</text>`;
+    return g;
+  }
+  const a = name === 'side' ? [[0,-17,0],[0,0,0]] : [[-8.5,0,0],[8.5,0,0]];
+  return `<polyline points="${poly(V, a)}" stroke="#16202b" stroke-width="3"/>`;
+}
+function grid(name, V) {
+  let g = '';
+  const [u0, u1] = V.ur, [v0, v1] = V.vr;
+  for (let u = Math.ceil(u0 / 20) * 20; u <= u1; u += 20)
+    g += `<line x1="${sx(V,u)}" y1="12" x2="${sx(V,u)}" y2="228" stroke="#f0f2f4"/><text x="${sx(V,u)}" y="238" text-anchor="middle">${V === SIDE_L ? -u : u}</text>`;
+  for (let v = Math.ceil(v0 / 20) * 20; v <= v1; v += 20)
+    g += `<line x1="12" y1="${sy(V,v)}" x2="308" y2="${sy(V,v)}" stroke="#f0f2f4"/><text x="10" y="${sy(V,v)+3}" text-anchor="end">${v}</text>`;
+  return g;
+}
+function at(pts, t) {                      // position along a timed path ([x,y,z,...,t]) at time t
+  const T = p => p[p.length - 1];
+  if (!pts || !pts.length || t < T(pts[0])) return null;
+  for (let k = 1; k < pts.length; k++) if (T(pts[k]) >= t) {
+    const a = pts[k-1], b = pts[k], f = (t - T(a)) / ((T(b) - T(a)) || 1);
+    return [0,1,2].map(i => a[i] + (b[i] - a[i]) * f);
+  }
+  return null;
+}
+function upto(pts, t) { return pts ? pts.filter(p => p[p.length - 1] <= t) : []; }
+let cur = null, t = 0, playing = true, last = null;
+function frame(sw, t) {
+  for (const name of ['side', 'catch', 'top']) {
+    const V = VIEW[name];
+    const meas = sw.arc.filter(p => p[3] === 'm'), all = sw.arc;
+    const C = sw.contact, H = [sw.hip[0], sw.hip[1], C[2]];
+    let g = `<defs><clipPath id="cp_${name}"><rect x="12" y="12" width="296" height="216"/></clipPath></defs>` +
+      grid(name, V) + `<g clip-path="url(#cp_${name})">` + plate(name, V);
+    if (name === 'catch') {
+      const Z = [[-8.5,0,sw.sz[0]],[8.5,0,sw.sz[0]],[8.5,0,sw.sz[1]],[-8.5,0,sw.sz[1]],[-8.5,0,sw.sz[0]]];
+      g += `<polyline points="${poly(V, Z)}" fill="rgba(22,32,43,.04)" stroke="#16202b" stroke-width="1" stroke-dasharray="3 2"/>`;
+      g += `<text x="${sx(V,-8.5)}" y="${sy(V,sw.sz[1])-3}">his zone ${sw.sz[0].toFixed(0)}–${sw.sz[1].toFixed(0)}"</text>`;
+    }
+    // ghosts of the whole thing
+    g += `<polyline points="${poly(V, sw.ball)}" fill="none" stroke="#e07b24" stroke-width="1.4" opacity=".25"/>`;
+    g += `<polyline points="${poly(V, all)}" fill="none" stroke="#8fa6c9" stroke-width="1.4" stroke-dasharray="4 3" opacity=".45"/>`;
+    g += `<polyline points="${poly(V, meas)}" fill="none" stroke="#2f5fb3" stroke-width="2" opacity=".25"/>`;
+    if (sw.exit) g += `<polyline points="${poly(V, sw.exit)}" fill="none" stroke="#2e9d5b" stroke-width="1.4" opacity=".25" ${sw.exit_how === 'estimated' ? 'stroke-dasharray="4 3"' : ''}/>`;
+    // what has happened by time t
+    const bt = upto(sw.ball, t), at_ = upto(all, t), mt = upto(meas, t), et = upto(sw.exit, t);
+    if (bt.length > 1) g += `<polyline points="${poly(V, bt)}" fill="none" stroke="#e07b24" stroke-width="2.4"/>`;
+    if (at_.length > 1) g += `<polyline points="${poly(V, at_)}" fill="none" stroke="#8fa6c9" stroke-width="2" stroke-dasharray="4 3"/>`;
+    if (mt.length > 1) g += `<polyline points="${poly(V, mt)}" fill="none" stroke="#2f5fb3" stroke-width="3.4"/>`;
+    if (et.length > 1) g += `<polyline points="${poly(V, et)}" fill="none" stroke="#2e9d5b" stroke-width="2.4" ${sw.exit_how === 'estimated' ? 'stroke-dasharray="4 3"' : ''}/>`;
+    // the bat: sweet spot -> toward the arc's center (his hands), ~27" of barrel + handle (modeled)
+    const P = at(all, t);
+    if (P) {
+      const d = [0,1,2].map(i => sw.O[i] - P[i]), n = Math.hypot(...d), L = Math.min(27, n);
+      const K = [0,1,2].map(i => P[i] + d[i] / n * L), E = [0,1,2].map(i => P[i] - d[i] / n * 6);
+      g += `<line x1="${sx(V,V.u(E))}" y1="${sy(V,V.v(E))}" x2="${sx(V,V.u(K))}" y2="${sy(V,V.v(K))}" stroke="#9a7b52" stroke-width="4" stroke-linecap="round" opacity=".85"/>`;
+      g += `<circle cx="${sx(V,V.u(P))}" cy="${sy(V,V.v(P))}" r="3" fill="#2f5fb3"/>`;
+    }
+    const B = t <= 0 || !sw.exit ? at(sw.ball, t) : at(sw.exit, t);
+    if (B) g += `<circle cx="${sx(V,V.u(B))}" cy="${sy(V,V.v(B))}" r="3.6" fill="#fff" stroke="#e07b24" stroke-width="1.6"/>`;
+    if (t >= 0) g += `<circle cx="${sx(V,V.u(C))}" cy="${sy(V,V.v(C))}" r="${t < 0.004 ? 7 : 4}" fill="#c0392b" stroke="#fff"/>`;
+    if (name === 'top') g += `<rect x="${sx(V,V.u(H))-4}" y="${sy(V,V.v(H))-4}" width="8" height="8" fill="#555" transform="rotate(45 ${sx(V,V.u(H))} ${sy(V,V.v(H))})"/>`;
+    document.getElementById(name).innerHTML = g + '</g>';
+  }
+  document.getElementById('clock').textContent = `${t >= 0 ? '+' : ''}${(t * 1000).toFixed(0)} ms from contact`;
+}
+function span(sw) {
+  const T = p => p[p.length - 1];
+  const t0 = Math.min(T(sw.ball[0]), T(sw.arc[0]));
+  const t1 = Math.max(T(sw.arc[sw.arc.length - 1]), sw.exit ? 0.05 : T(sw.ball[sw.ball.length - 1]));
+  return [t0, t1];
+}
+function tick(now) {
+  if (cur && playing && last !== null) {
+    const [t0, t1] = span(cur), slow = +document.getElementById('speed').value;
+    t += (now - last) / 1000 / slow;
+    if (t > t1 + 0.012) t = t0;            // short hold at the end, then loop
+    document.getElementById('scrub').value = Math.round((Math.min(t, t1) - t0) / (t1 - t0) * 1000);
+    frame(cur, Math.min(t, t1));
+  }
+  last = now; requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+document.getElementById('play').onclick = e => { playing = !playing; e.target.textContent = playing ? '❚❚' : '▶'; };
+document.getElementById('scrub').oninput = e => {
+  playing = false; document.getElementById('play').textContent = '▶';
+  const [t0, t1] = span(cur); t = t0 + (t1 - t0) * e.target.value / 1000; frame(cur, t);
+};
+function draw(sw) {
+  cur = sw; t = span(sw)[0];
+  VIEW.side = sw.stand === 'L' ? SIDE_L : SIDE_R;
+  document.getElementById('sidelbl').textContent = sw.stand === 'L'
+    ? '· from the 3B side, facing him · pitcher ←' : '· from the 1B side, facing him · pitcher →';
+  const v = document.getElementById('video'); v.href = sw.video;
+  v.className = sw.video_exact ? '' : 'approx';
+  v.title = sw.video_exact ? 'Watch this pitch on Baseball Savant' : 'Video id not found here -- opens the game on Savant';
+  frame(sw, t);
+  const f = (v, d = 1) => v === null || v === undefined ? '–' : (+v).toFixed(d);
+  document.getElementById('title').innerHTML = `${sw.batter} (${sw.stand}) · ${sw.inning} · ${sw.count} ${sw.pitch} ${f(sw.velo)} · ${sw.event || sw.result}`;
+  const M = [['Bat speed (mph)', f(sw.bat_speed), 'm'], ['Swing length (ft)', f(sw.swing_length), 'm'],
+    ['Swing tilt (°)', f(sw.tilt), 'm'], ['Attack angle (°)', f(sw.attack_angle), 'm'],
+    ['Attack direction (°, − = pull)', f(sw.attack_dir), 'm'], ['Exit velo / launch angle', sw.ev === null ? '–' : `${f(sw.ev)} / ${f(sw.la,0)}°`, 'm'],
+    ['Miss distance (in)', f(sw.miss), 'm']];
+  document.getElementById('meas').innerHTML = M.map(([k, v, t]) => `<tr><td>${k}<span class="tag ${t}">${t === 'm' ? 'measured' : 'modeled'}</span></td><td>${v}</td></tr>`).join('');
+  const C = sw.contact;
+  const P = [['Contact: in front of the plate (in)', f(C[1])], ['Contact: side (in, + = 1B side)', f(C[0])], ['Contact: height (in)', f(C[2])],
+    ['His hips at contact: behind the front of the plate', `${f(-sw.hip[1])} ± ${f(sw.hip_se)}`], ['…fit from his swings', sw.hip_n],
+    ['Side + height of contact', 'where the ball was'], ['Path before the last 40 ms + follow-through', 'modeled arc'],
+    ['Ball off the bat', sw.exit ? `launch angle + direction ${sw.exit_how === 'measured' ? '(where it was fielded)' : '(MLB feed)'}` : (sw.exit_how === 'untracked' ? 'foul — direction not tracked, not drawn' : '–')]];
+  document.getElementById('checks').innerHTML = sw.checks.map(([k, v, gr, note]) =>
+    `<tr><td><span class="dot ${gr}"></span>${k} <span class="note">· ${note}</span></td><td>${v}</td></tr>`).join('');
+  document.getElementById('place').innerHTML = P.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('');
+}
+// ---------------------------------------------------------------- review: your calls, saved in this browser
+const KEY = 'swingmap:' + (S[0] ? S[0].game_pk : 'x') + ':' + S.length;   // a re-review page (fewer swings) starts fresh
+let R = {};
+try { R = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) {}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(R)); } catch (e) {} }
+const MARK = {yes: '✓', no: '✗', unsure: '?'};
+let idx = 0, filt = 'all';
+const FILTERS = [['all', 'All'], ['todo', 'To review'], ['no', '✗ Flagged'], ['unsure', '? Unsure'], ['red', 'Red placement'], ['odd', 'Unusual swings'], ['sav', 'Savant disagrees'], ['yes', '✓ OK']];
+function keep(sw) {
+  const v = (R[sw.id] || {}).v;
+  return filt === 'all' || (filt === 'todo' && !v) || (filt === 'red' && sw.overall === 'r') || (filt === 'odd' && sw.unusual) || (filt === 'sav' && (sw.savant === 'r' || sw.savant === 'y')) || v === filt;
+}
+function renderFilters() {
+  document.getElementById('filters').innerHTML = FILTERS.map(([k, l]) =>
+    `<button data-f="${k}" class="${k === filt ? 'on' : ''}">${l}</button>`).join('');
+  document.querySelectorAll('#filters button').forEach(b => b.onclick = () => { filt = b.dataset.f; renderFilters(); renderList(); });
+}
+function renderList() {
+  const list = document.getElementById('list'); list.innerHTML = '';
+  S.forEach((sw, i) => {
+    if (!keep(sw)) return;
+    const v = (R[sw.id] || {}).v || '';
+    const d = document.createElement('div'); d.className = 'sw' + (i === idx ? ' on' : ''); d.dataset.i = i;
+    d.innerHTML = `<span class="i">${sw.inning}</span><span><span class="dot ${sw.overall}"></span><b>${sw.batter}</b>${sw.unusual ? ' <span class="dot s" title="unusual swing for him"></span>' : ''} <span style="color:#6a7681">${sw.count} ${sw.pitch}</span></span><span class="r"><span class="v ${v}">${MARK[v] || ''}</span> ${sw.event || sw.result}</span>`;
+    d.onclick = () => select(i);
+    list.appendChild(d);
+  });
+  const n = Object.values(R).filter(x => x.v).length;
+  document.getElementById('prog').textContent = `${n} / ${S.length} reviewed · ${Object.values(R).filter(x => x.v === 'no').length} flagged`;
+}
+function select(i) {
+  idx = i; draw(S[i]);
+  document.querySelectorAll('.sw').forEach(x => x.classList.toggle('on', +x.dataset.i === i));
+  const el = document.querySelector(`.sw[data-i="${i}"]`); if (el) el.scrollIntoView({block: 'nearest'});
+  const r = R[S[i].id] || {};
+  document.getElementById('note').value = r.note || '';
+  document.querySelectorAll('.review button[data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === r.v));
+}
+function step(dir) {                        // next / previous swing that's visible under the current filter
+  for (let k = idx + dir; k >= 0 && k < S.length; k += dir) if (keep(S[k])) return select(k);
+}
+function call(v) {
+  const id = S[idx].id;
+  R[id] = {...(R[id] || {}), v, note: document.getElementById('note').value, at: new Date().toISOString()};
+  save(); const cur_ = idx; renderList(); idx = cur_; step(1);
+  if (idx === cur_) select(cur_);
+}
+document.querySelectorAll('.review button[data-v]').forEach(b => b.onclick = () => call(b.dataset.v));
+document.getElementById('note').addEventListener('keydown', e => {
+  e.stopPropagation();
+  if (e.key === 'Enter') { const id = S[idx].id; R[id] = {...(R[id] || {}), note: e.target.value}; save(); step(1); }
+});
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+  const k = e.key.toLowerCase();
+  if (k === 'y') call('yes'); else if (k === 'n') call('no'); else if (k === 'u') call('unsure');
+  else if (k === 'arrowdown' || k === 'j') { e.preventDefault(); step(1); }
+  else if (k === 'arrowup' || k === 'k') { e.preventDefault(); step(-1); }
+  else if (k === ' ') { e.preventDefault(); document.getElementById('play').click(); }
+  else if (k === 'v') window.open(S[idx].video, '_blank');
+});
+// export: your call + everything the model said about that swing, so the two can be compared
+const q = x => `"${String(x ?? '').replace(/"/g, '""')}"`;
+document.getElementById('export').onclick = () => {
+  const head = ['game_pk','at_bat_number','pitch_number','batter_id','batter','stand','inning','count','pitch','result','event',
+    'verdict','note','reviewed_at','overall_check','checks','contact_side_in','contact_front_in','contact_height_in',
+    'hip_behind_front_in','hip_se_in','bat_speed','swing_length','tilt','attack_angle','attack_dir','ev','la','miss','ball_dir_source','video'];
+  const rows = S.map(sw => { const r = R[sw.id] || {}; return [sw.game_pk, sw.ab, sw.pn, sw.bid, sw.batter, sw.stand, sw.inning, sw.count,
+    sw.pitch, sw.result, sw.event, r.v || '', r.note || '', r.at || '', sw.overall,
+    sw.checks.map(c => `${c[0]}: ${c[1]} [${c[2]}]`).join(' | '), ...sw.contact, -sw.hip[1], sw.hip_se,
+    sw.bat_speed, sw.swing_length, sw.tilt, sw.attack_angle, sw.attack_dir, sw.ev, sw.la, sw.miss, sw.exit_how || '', sw.video].map(q).join(','); });
+  const blob = new Blob([[head.join(','), ...rows].join('\n')], {type: 'text/csv'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `swing_review_${S[0].game_pk}_${new Date().toISOString().slice(0,10)}.csv`; a.click();
+};
+// import: pick up where you left off on another computer / browser
+document.getElementById('import').onchange = async e => {
+  const txt = await e.target.files[0].text(), lines = txt.trim().split(/\r?\n/);
+  const parse = l => (l.match(/("([^"]|"")*"|[^,]*)(,|$)/g) || []).map(c => c.replace(/,$/, '').replace(/^"|"$/g, '').replace(/""/g, '"'));
+  const h = parse(lines[0]);
+  for (const l of lines.slice(1)) {
+    const c = parse(l), o = Object.fromEntries(h.map((k, i) => [k, c[i]]));
+    if (o.verdict || o.note) R[`${o.at_bat_number}-${o.pitch_number}`] = {v: o.verdict, note: o.note, at: o.reviewed_at};
+  }
+  save(); renderList(); select(idx);
+};
+renderFilters(); renderList(); if (S.length) select(0);
+</script></body></html>

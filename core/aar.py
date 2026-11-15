@@ -210,46 +210,95 @@ def plate_slope(df: pd.DataFrame) -> pd.Series:
     return (vx0 + ax * t) / (vy0 + ay * t)
 
 
-def plate_calibration(season: pd.DataFrame, orient: tuple[int, int] | None = None) -> dict | None:
-    """Where his contact point sits on the plate, learned from his own swings -- no stance download.
+# ---------------------------------------------------------------- hip position at contact (point of contact model)
+# Built + checked in prototypes/swing_map on World Series Game 5 (Ivan's swing-by-swing review + Savant's batting-stance
+# leaderboard as the referee -- Savant is never an input):
+#   * his swings place his hips: contact happens where the BALL is, the ball drifts sideways at a known rate, so
+#     (where the ball was) - (Statcast's contact-from-hips) traces a line in drift whose tilt = hip depth;
+#   * his hips get their own side-to-side spot vs LHP and vs RHP (drift flips with the pitcher's hand; without this
+#     Hicks / Palacios came out BEHIND their own stance);
+#   * recent swings count more (weight halves every 90 days; hitters move in the box);
+#   * each hitter is pulled toward the MLB average, harder when his own swings are noisy (Savant's at-contact feet put
+#     everyone in a narrow band -- raw fits spread far wider). Average miss vs Savant: 9.4" -> 5.5".
+HIP_HALF_LIFE = 90.0
+HIP_GROUP_DEFAULT = {"mu": 19.4, "tau": 4.1}      # MLB average hips-at-contact (in behind the front) + real spread
 
-    Statcast measures contact from his center of mass (hips). Contact happens where the BALL is, and Statcast
-    tracks the ball: at f inches in front of the plate it's at plate_x + slope x f sideways. Pitches come in at
-    different angles (slopes), so across his swings
-        plate_x + slope x (depth from hips) - (side-to-side from hips)  =  X0 - slope x F0
-    is a straight line in slope: its tilt gives F0 (where his hips are, inches in front of the plate's front edge --
-    negative = behind it), its height X0 (how far off the plate). Fitted per batting side; the axis directions are
-    picked by which way fits his swings and puts him in a real batter's box."""
+
+def hip_group(season: int | None = None) -> dict:
+    """MLB-wide average + spread of hip depth (pipeline/hip_group.py writes data/hip_group_<season>.json)."""
+    import json
+    from pathlib import Path
+    for yr in ([season, season - 1] if season else []):
+        f = Path(__file__).resolve().parents[1] / "data" / f"hip_group_{yr}.json"
+        if f.exists():
+            try:
+                return json.loads(f.read_text())
+            except Exception:
+                pass
+    return dict(HIP_GROUP_DEFAULT)
+
+
+def _hip_line(s_, z, L, w):
+    """Weighted fit z = X0 + dL*L + slope*s (trimmed); returns (slope, X0, dL, se, n) or None."""
+    use_L = min(L.sum(), (1 - L).sum()) >= 15
+
+    def solve(k):
+        cols = [np.ones(k.sum()), s_[k]] + ([L[k]] if use_L else [])
+        X, zk, wk = np.column_stack(cols), z[k], w[k]
+        ws = wk * ((wk.sum() ** 2 / (wk ** 2).sum()) / wk.sum())        # weights scaled to the effective n
+        A = X.T @ (X * ws[:, None])
+        b = np.linalg.solve(A, X.T @ (ws * zk))
+        r = zk - X @ b
+        sig2 = float((ws * r * r).sum() / max(ws.sum() - X.shape[1], 1))
+        return b, float(math.sqrt(sig2 * np.linalg.inv(A)[1, 1]))
+
+    k = np.ones(len(z), bool)
+    b, _ = solve(k)
+    r = z - (b[0] + b[1] * s_ + (b[2] * L if use_L else 0))
+    k = np.abs(r - np.median(r)) <= max(3 * np.median(np.abs(r - np.median(r))), 1.5)
+    if k.sum() < 30:
+        return None
+    b, se = solve(k)
+    return float(b[1]), float(b[0]), float(b[2]) if use_L else 0.0, se, int(k.sum())
+
+
+def plate_calibration(season: pd.DataFrame, asof: str | None = None, group: dict | None = None) -> dict | None:
+    """Where his hips are at contact (per batting side), learned from his own swings -- no stance download.
+
+    Returns {side: {"F0": inches in front of the plate's front edge (negative = behind), "X0", "se", "n", "raw",
+    "group", "sx", "sy"}}. Contact axes are what the data shows: Y = inches out in front of his hips, X = inches from
+    his hips toward the plate."""
     if season is None or season.empty or CONTACT_Y not in season or CONTACT_X not in season:
         return None
     s = season[made_contact(season)].copy() if "description" in season else season.copy()   # contact swings only
+    if "game_type" in s:
+        s = s[~s["game_type"].astype(str).isin(["S", "E"])]                                  # no spring training
     s["_cx"], s["_cy"] = _num(s, CONTACT_X), _num(s, CONTACT_Y)
     s["_s"], s["_px"] = plate_slope(s), _num(s, "plate_x") * 12
     s = s.dropna(subset=["_cx", "_cy", "_s", "_px"])
+    g_ = group or HIP_GROUP_DEFAULT
+    mu, tau2 = float(g_["mu"]), float(g_["tau"]) ** 2
     out = {}
     for side, g in s.groupby(s["stand"].astype(str) if "stand" in s else pd.Series("R", index=s.index)):
         if len(g) < 40 or g["_s"].std() < 0.01:
             continue
-        best = None
-        # axes confirmed from the data (avg Y = +30 in = MLB's published "30 inches in front of his hips"; X is always
-        # positive): Y = inches OUT FRONT of his hips, X = inches from his hips TOWARD THE PLATE. Toward the plate is
-        # the catcher's right for a RHB and left for a LHB.
-        for sx in ((1,) if side == "R" else (-1,)):
-            for sy in (1,):
-                z = g["_px"] + g["_s"] * sy * g["_cy"] - sx * g["_cx"]
-                slope, x0 = np.polyfit(g["_s"], z, 1)                  # fit, drop bad tracks by residual, refit
-                res = z - (x0 + slope * g["_s"])
-                keep = (res - res.median()).abs() <= max(3 * (res - res.median()).abs().median(), 1.5)
-                slope, x0 = np.polyfit(g.loc[keep, "_s"], z[keep], 1)
-                f0 = -slope
-                resid = float((z[keep] - (x0 + slope * g.loc[keep, "_s"])).std())
-                box_ok = -60 <= f0 <= 10 and 12 <= abs(x0) <= 60 and np.sign(x0) == (-1 if side == "R" else 1)
-                if box_ok and (best is None or resid < best["resid"]):
-                    se = resid / (float(g.loc[keep, "_s"].std()) * max(int(keep.sum()), 1) ** 0.5)
-                    best = {"sx": sx, "sy": sy, "F0": float(f0), "X0": float(x0), "n": int(keep.sum()), "resid": resid,
-                            "se": float(se)}
-        if best:
-            out[side] = best
+        sx = 1 if side == "R" else -1
+        z = (g["_px"] + g["_s"] * g["_cy"] - sx * g["_cx"]).to_numpy()
+        L = (g["p_throws"].astype(str).eq("L") if "p_throws" in g else pd.Series(False, index=g.index)).to_numpy(float)
+        if asof and "game_date" in g:
+            days = (pd.Timestamp(asof) - pd.to_datetime(g["game_date"], errors="coerce")).dt.days.clip(lower=0).fillna(0)
+            w = (0.5 ** (days / HIP_HALF_LIFE)).to_numpy()
+        else:
+            w = np.ones(len(g))
+        fit = _hip_line(g["_s"].to_numpy(), z, L, w)
+        if fit is None:
+            continue
+        slope, x0, dL, se, n = fit
+        raw = slope                                               # inches behind the front of the plate
+        k = tau2 / (tau2 + se ** 2)
+        est = mu + k * (raw - mu)                                 # pulled toward MLB, harder when he's noisy
+        out[side] = {"sx": sx, "sy": 1, "F0": -est, "X0": x0, "dL": dL, "n": n, "raw": raw, "group": mu,
+                     "se": float(math.sqrt(1 / (1 / tau2 + 1 / se ** 2))), "weight": float(k)}
     return out or None
 
 

@@ -107,10 +107,12 @@ def test_decision_labels():
     assert aar.decision_label(-0.4) == "Poor" and aar.decision_label(float("nan")) == ""
 
 
-def _season_swings(n=300, X0=-30.0, F0=-28.0, sx=1, seed=4, stand="R"):
-    """A RHB whose hips sit 30" off the middle of the plate and 28" behind its front edge (catcher's view)."""
+def _season_swings(n=300, X0=-30.0, F0=-28.0, sx=1, seed=4, stand="R", noise=0.8, hand_shift=0.0):
+    """A RHB whose hips sit 30" off the middle of the plate and 28" behind its front edge (catcher's view).
+    hand_shift: his hips sit this many inches further from the plate vs LHP (whose pitches drift the other way)."""
     rng = np.random.default_rng(seed)
-    slope = rng.normal(0, 0.06, n)
+    lefty = rng.random(n) < 0.35
+    slope = rng.normal(0, 0.05, n) + np.where(lefty, 0.04, -0.03)   # drift mostly flips with the pitcher's hand
     vy0, ay = -130.0, 28.0
     a, b, c = 0.5 * ay, vy0, 50 - aar.FRONT_Y
     t = (-b - np.sqrt(b * b - 4 * a * c)) / (2 * a)
@@ -119,25 +121,54 @@ def _season_swings(n=300, X0=-30.0, F0=-28.0, sx=1, seed=4, stand="R"):
     cy = rng.normal(31, 5, n)                                     # contact, inches out front of his hips
     f = F0 + cy                                                   # ... = inches in front of the plate
     x_ball = px * 12 + slope * f                                  # where the ball is when he hits it
-    cx = sx * (x_ball - X0) + rng.normal(0, 0.8, n)
-    return pd.DataFrame({"stand": stand, "plate_x": px, "vx0": vx0, "vy0": vy0, "ax": 0.0, "ay": ay,
-                         aar.CONTACT_X: cx, aar.CONTACT_Y: cy})
+    hips_x = X0 + np.where(lefty, -sx * hand_shift, 0.0)
+    cx = sx * (x_ball - hips_x) + rng.normal(0, noise, n)
+    return pd.DataFrame({"stand": stand, "p_throws": np.where(lefty, "L", "R"), "plate_x": px, "vx0": vx0,
+                         "vy0": vy0, "ax": 0.0, "ay": ay, aar.CONTACT_X: cx, aar.CONTACT_Y: cy})
 
 
-def test_plate_calibration_learns_where_he_stands_from_his_swings():
+def test_plate_calibration_learns_where_his_hips_are_from_his_swings():
     season = _season_swings()
-    cal = aar.plate_calibration(season, (1, 1))
+    cal = aar.plate_calibration(season)
     r = cal["R"]
-    assert abs(r["F0"] + 28) < 2.5 and abs(r["X0"] + 30) < 1.5 and r["sx"] == 1 and r["n"] > 250
+    assert abs(r["F0"] + 28) < 1.5 and abs(r["X0"] + 30) < 1.5 and r["n"] > 250 and r["weight"] > 0.85
     # Statcast X = inches from his hips TOWARD THE PLATE (always positive): a LHB stands on the catcher's right
     lhb = aar.plate_calibration(_season_swings(X0=30.0, sx=-1, stand="L"))["L"]
-    assert lhb["sx"] == -1 and abs(lhb["F0"] + 28) < 2.5 and abs(lhb["X0"] - 30) < 1.5
-    assert aar.plate_calibration(season.head(20), (1, 1)) is None              # too few swings
+    assert abs(lhb["F0"] + 28) < 1.5 and abs(lhb["X0"] - 30) < 1.5
+    assert aar.plate_calibration(season.head(20)) is None                      # too few swings
     # place one swing: 3" out front of the plate, ball over the middle
     one = pd.DataFrame({"stand": ["R"], "cx": [30.0], "cy": [31.0], "px": [0.0], "slope": [0.0], "pa": [1]})
     on = aar.on_plate(one, cal)
     assert abs(on["pf"].iloc[0] - (r["F0"] + 31)) < 1e-9 and abs(on["pxc"].iloc[0]) < 1e-9
     assert len(one.join(on).columns) == 8
+
+
+def test_hips_get_their_own_spot_vs_lefties():
+    # his hips sit 4" further off the plate vs LHP; drift flips with the hand -- without the pitcher-hand term that
+    # 4" would leak into his depth (what put Hicks / Palacios behind their own stance)
+    cal = aar.plate_calibration(_season_swings(hand_shift=4.0))["R"]
+    assert abs(cal["raw"] - 28) < 1.5 and abs(abs(cal["dL"]) - 4) < 1.0
+
+
+def test_noisy_hitters_lean_on_the_mlb_average():
+    group = {"mu": 19.0, "tau": 4.0}
+    tight = aar.plate_calibration(_season_swings(), group=group)["R"]
+    noisy = aar.plate_calibration(_season_swings(n=60, noise=8.0, seed=9), group=group)["R"]
+    assert tight["weight"] > 0.85 and noisy["weight"] < tight["weight"]
+    assert abs(-noisy["F0"] - 19.0) < abs(noisy["raw"] - 19.0)                  # pulled toward the average
+    assert noisy["se"] < 4.0                                                     # never less sure than the average
+
+
+def test_recent_swings_count_more():
+    old = _season_swings(F0=-34.0, seed=11).assign(game_date="2026-04-15")
+    new = _season_swings(F0=-22.0, seed=12).assign(game_date="2026-09-25")
+    cal = aar.plate_calibration(pd.concat([old, new], ignore_index=True), asof="2026-10-01")["R"]
+    assert cal["raw"] < 26                                                       # closer to where he is now (22")
+
+
+def test_hip_group_falls_back_to_default():
+    g = aar.hip_group(1999)
+    assert g["mu"] == aar.HIP_GROUP_DEFAULT["mu"] and g["tau"] == aar.HIP_GROUP_DEFAULT["tau"]
 
 
 def test_field_dims_and_last_30_pa():

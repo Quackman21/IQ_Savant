@@ -1,5 +1,23 @@
 # IQ Savant – version history
 
+## v22.0 – 2026-11-15
+- Point of contact: new hip-position model (built + checked in prototypes/swing_map on World Series Game 5, with
+  Ivan's swing-by-swing review and Savant's batting-stance leaderboard as the referee -- Savant is never an input):
+  * his hips get their own side-to-side spot vs LHP and vs RHP (the ball's drift flips with the pitcher's hand; that
+    difference was leaking into the depth and put Hicks / Palacios BEHIND their own stance);
+  * recent swings count more (weight halves every 90 days) and playoff swings are included -- hitters move in the box;
+    the game being reviewed is left out;
+  * every hitter is pulled toward the MLB average, harder when his own swings are noisy (new players start at the
+    average and earn their own spot as swings come in). Average miss vs Savant's at-contact foot positions:
+    9.4" -> 5.5"; nobody lands behind his own stance any more.
+  * hover the chart: his hip depth, the ± (shown at 2x the model's own figure until the league-wide check
+    calibrates it), how much is his own swings vs the MLB average.
+- pipeline/fetch_league_swings.py: every MLB contact swing for a season (resumable, ~30-60 min).
+- pipeline/hip_group.py: MLB average + real hitter-to-hitter spread -> data/hip_group_<season>.json (the AAR uses
+  it; falls back to 19.4" ± 4.1" until it's run), and the Savant check for every hitter on the stance leaderboard.
+- Spring training swings no longer count toward hip position. The asterisk stays until the league-wide check.
+- Swing map animation stays in the prototype for now (coming to the AAR later).
+
 ## v21.9 – 2026-11-14
 - Point of contact* now carries an asterisk + note: side to side is where the ball actually was; front to back
   uses his ESTIMATED hip position (Statcast measures contact from the hips and never publishes where the hips are
