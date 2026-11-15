@@ -188,6 +188,21 @@ def test_outline_slid_onto_statcast_home_plate():
     assert abs(got["poles"][0] - 310) < 3 and abs(got["poles"][1] - 302) < 3
 
 
+def test_fence_path_that_runs_down_the_foul_lines():
+    """The real file's fence path goes home -> LF line -> wall -> RF line -> home."""
+    o = _outline(lf=310, cf=390, rf=302)
+    fence = o[o.segment.eq("outfield_outer")]
+    line = lambda ang, far: pd.DataFrame({"team": "red_sox", "segment": "outfield_outer",
+                                          "x": 125.42 + np.linspace(5, far, 25) * np.sin(np.radians(ang)) / 2.5,
+                                          "y": 198.27 - np.linspace(5, far, 25) * np.cos(np.radians(ang)) / 2.5})
+    path = pd.concat([line(-45, 309), fence, line(45, 301).iloc[::-1], o[o.segment.ne("outfield_outer")]])
+    got = aar.park_outline("Boston Red Sox", {"leftLine": 310.0, "center": 420.0, "rightLine": 302.0}, path)
+    assert got["source"] == "outline", got["note"]
+    assert abs(got["poles"][0] - 310) < 3 and abs(got["poles"][1] - 302) < 3
+    fx, fy = got["segments"]["outfield_outer"]
+    assert np.hypot(fx, fy).min() > 290                                # no foul-line points left in the wall
+
+
 def test_park_outline_used_only_when_it_matches_this_venue():
     o = _outline()
     dims = {"leftLine": 310.0, "center": 420.0, "rightLine": 302.0}

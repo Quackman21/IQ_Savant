@@ -319,6 +319,20 @@ def fence_distance(fx: np.ndarray, fy: np.ndarray, angle_deg: float) -> float:
 HOME_HC = (125.42, 198.27)        # where Statcast's hit coordinates put home plate
 
 
+def wall_only(fx, fy, window: float = 1.0):
+    """Just the wall, pole to pole, in order. The traced 'outfield_outer' path also runs down both foul lines to
+    home plate, so many points share the same angle; keep only the outermost point near each angle (the wall),
+    then order them from the left-field line to the right-field line."""
+    fx, fy = np.asarray(fx, float), np.asarray(fy, float)
+    ok = np.isfinite(fx) & np.isfinite(fy)
+    fx, fy = fx[ok], fy[ok]
+    ang, dist = np.degrees(np.arctan2(fx, fy)), np.hypot(fx, fy)
+    keep = np.array([dist[i] >= 0.97 * dist[np.abs(ang - ang[i]) <= window].max() for i in range(len(fx))],
+                    dtype=bool)
+    o = np.argsort(ang[keep])
+    return fx[keep][o], fy[keep][o]
+
+
 def park_outline(home_team_name: str, dims: dict | None, outlines: pd.DataFrame | None = None) -> dict:
     """The park to draw: {'segments': {name: (fx, fy) in feet}, 'source': 'outline' | 'distances', 'note': str,
     'poles': (lf, rf)}.
@@ -340,11 +354,15 @@ def park_outline(home_team_name: str, dims: dict | None, outlines: pd.DataFrame 
     fence = segs.get("outfield_outer")
     if fence is None:
         return {"segments": {}, "source": "distances", "note": "no traced fence -- fence from published distances"}
-    fx, fy = fence
-    ok = np.isfinite(fx) & np.isfinite(fy) & (np.hypot(fx, fy) > 50)
-    ang = np.degrees(np.arctan2(fx[ok], fy[ok]))
-    dist = np.hypot(fx[ok], fy[ok])
-    poles = (float(dist[np.argmin(ang)]), float(dist[np.argmax(ang)]))
+    fx, fy = wall_only(*fence)
+    if len(fx) < 5:
+        return {"segments": {}, "source": "distances", "note": "traced fence unusable -- fence from published "
+                                                               "distances"}
+    segs["outfield_outer"] = (fx, fy)
+    if "infield_outer" in segs:
+        segs["infield_outer"] = wall_only(*segs["infield_outer"])
+    ang, dist = np.degrees(np.arctan2(fx, fy)), np.hypot(fx, fy)
+    poles = (float(dist[ang <= ang.min() + 1.5].max()), float(dist[ang >= ang.max() - 1.5].max()))
     if dims and {"leftLine", "rightLine"} <= set(dims):
         off = {"leftLine": abs(poles[0] - dims["leftLine"]), "rightLine": abs(poles[1] - dims["rightLine"])}
         if max(off.values()) > 15:

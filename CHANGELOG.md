@@ -1,5 +1,10 @@
 # IQ Savant – version history
 
+## v21.6 – 2026-11-14
+- Park outlines: the traced fence path also runs down both foul lines to home plate, so the "poles" were being
+  read off points ~50-75 ft from home and every park failed the venue check (and some drew scrambled). Now only
+  the outermost point at each angle is kept -- the wall itself, pole to pole -- before checking and drawing.
+
 ## v21.5 – 2026-11-14
 - Real park outlines now actually used (v21.3 / v21.4 rejected every park):
   * each traced park is slid so its own home plate sits where Statcast puts home plate (the file's plates are
