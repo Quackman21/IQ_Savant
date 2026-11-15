@@ -1,5 +1,10 @@
 # IQ Savant – version history
 
+## v21.7 – 2026-11-14
+- Park walls: points by home plate land at odd angles once a park is lined up on Statcast's plate, so they were
+  still being read as the "poles" (every park ~50-75 ft). Points inside 250 ft are now dropped before finding the
+  wall -- no MLB wall is closer than ~300 ft.
+
 ## v21.6 – 2026-11-14
 - Park outlines: the traced fence path also runs down both foul lines to home plate, so the "poles" were being
   read off points ~50-75 ft from home and every park failed the venue check (and some drew scrambled). Now only

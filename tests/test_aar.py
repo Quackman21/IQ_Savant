@@ -195,7 +195,10 @@ def test_fence_path_that_runs_down_the_foul_lines():
     line = lambda ang, far: pd.DataFrame({"team": "red_sox", "segment": "outfield_outer",
                                           "x": 125.42 + np.linspace(5, far, 25) * np.sin(np.radians(ang)) / 2.5,
                                           "y": 198.27 - np.linspace(5, far, 25) * np.cos(np.radians(ang)) / 2.5})
-    path = pd.concat([line(-45, 309), fence, line(45, 301).iloc[::-1], o[o.segment.ne("outfield_outer")]])
+    near_home = pd.DataFrame({"team": "red_sox", "segment": "outfield_outer",       # points by the plate land at
+                              "x": 125.42 + np.array([-20, 22]) / 2.5, "y": 198.27 - np.array([12, 11]) / 2.5})  # odd angles
+    path = pd.concat([near_home.iloc[:1], line(-45, 309), fence, line(45, 301).iloc[::-1], near_home.iloc[1:],
+                      o[o.segment.ne("outfield_outer")]])
     got = aar.park_outline("Boston Red Sox", {"leftLine": 310.0, "center": 420.0, "rightLine": 302.0}, path)
     assert got["source"] == "outline", got["note"]
     assert abs(got["poles"][0] - 310) < 3 and abs(got["poles"][1] - 302) < 3
