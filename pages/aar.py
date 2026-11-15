@@ -36,9 +36,15 @@ def league(season: int) -> dict:
     return league_ref.load(season)
 
 
-@st.cache_data(ttl=24 * 3600, show_spinner=False)
+@st.cache_data(ttl=6 * 3600, show_spinner=False)
 def stance_board(season: int) -> dict:
     return aar.stance_depths(season)
+
+
+@st.cache_data(ttl=6 * 3600, show_spinner=False)
+def stance_views(season: int) -> dict:
+    from core import stance_feed
+    return stance_feed.views(season)
 
 
 @st.cache_data(ttl=7 * 24 * 3600, show_spinner=False)
@@ -111,6 +117,8 @@ pas = aar.plate_appearances(p)
 # where he met it) place his hips in the box, so every contact point lands on the plate -- no stance download
 stance = {sd: d for (b, sd), d in stance_board(season).items() if b == pid}
 cal = aar.plate_calibration(hip_sc, asof=gday, group=aar.hip_group(season), stance=stance)
+playoff = str(f.get("gameData", {}).get("game", {}).get("type", "R")) in ("F", "D", "L", "W")
+p = p.join(aar.pitch_stance(p, pid, stance_views(season), playoff))
 p = p.join(aar.on_plate(p, cal))
 pas = aar.plate_appearances(p)
 if p["cx"].notna().any() and not cal:
@@ -118,8 +126,17 @@ if p["cx"].notna().any() and not cal:
 else:
     note = "No measured contact."
 
+SRC = {"playoff": "his playoff stance", "vs_L": "his stance vs LHP", "vs_R": "his stance vs RHP",
+       "season": "his season stance"}
+
+
 def _tip(k, c):
     hand = "RHB" if k == "R" else "LHB"
+    used = p.loc[p["stand"].astype(str).eq(k) & p["depth"].notna(), ["depth_src", "depth"]] if "depth" in p else None
+    if used is not None and not used.empty:
+        parts = ", ".join(f'{SRC.get(src, src)} {g["depth"].iloc[0]:.1f}"' for src, g in used.groupby("depth_src"))
+        return (f'{hand}: MLB\'s contact point vs the plate -- Statcast\'s contact (from his hips) minus his stance '
+                f'depth from Savant\'s board, pitch by pitch ({parts}); side to side + height = where the ball was')
     if c["source"] == "mlb":
         return (f'{hand}: MLB\'s contact point vs the plate -- Statcast\'s contact (from his hips) minus his stance '
                 f'depth ({c["depth"]:.1f}" from the front of the plate, Savant stance board); side to side + height = '
@@ -129,7 +146,8 @@ def _tip(k, c):
 
 
 tip = "; ".join(_tip(k, c) for k, c in (cal or {}).items())
-estimated = any(c["source"] != "mlb" for c in (cal or {}).values())
+estimated = bool(p["pf"].notna().any() and (p.loc[p["pf"].notna(), "depth"].isna().any() if "depth" in p else True)
+                 and any(c["source"] != "mlb" for c in (cal or {}).values()))
 
 dims = aar.field_dims(f) or venue_dims(int(f.get("gameData", {}).get("venue", {}).get("id", 0) or 0))
 home_name = teams.get(hd["home"], {}).get("name", "") or f.get("gameData", {}).get("teams", {}).get("home", {}).get("name", "")

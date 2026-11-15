@@ -341,18 +341,43 @@ def plate_calibration(season: pd.DataFrame, asof: str | None = None, group: dict
     return out or None
 
 
+def pitch_stance(p: pd.DataFrame, pid: int, views: dict, playoff: bool = False) -> pd.DataFrame:
+    """His stance depth for each pitch, from the most specific view of Savant's board that has him:
+    playoff game -> his playoff stance; then his stance vs this pitcher's hand; then his season stance.
+    Returns columns depth (inches, front of the plate -> center of mass) and depth_src."""
+    out = pd.DataFrame({"depth": np.nan, "depth_src": ""}, index=p.index)
+    if p.empty or not views:
+        return out
+    order = (["playoff"] if playoff else []) + ["vs_{hand}", "season"]
+    for i, r in p.iterrows():
+        side, hand = str(r.get("stand", "")), str(r.get("p_throws", ""))
+        for v in order:
+            name = v.format(hand=hand)
+            d = views.get(name, {}).get((int(pid), side))
+            if d is not None:
+                out.at[i, "depth"], out.at[i, "depth_src"] = d, name
+                break
+    return out
+
+
 def on_plate(p: pd.DataFrame, cal: dict | None) -> pd.DataFrame:
     """Contact point on the plate for each measured swing: pf = inches in front of the plate's front edge
-    (0 = front of the plate), pxc = inches from the middle of the plate, catcher's view -- where the ball was."""
+    (0 = front of the plate), pxc = inches from the middle of the plate, catcher's view -- where the ball was.
+    A per-pitch stance depth (column 'depth', see pitch_stance) wins; otherwise his side's calibration."""
     out = pd.DataFrame({"pf": np.nan, "pxc": np.nan}, index=p.index)
-    if not cal or p.empty:
+    if p.empty:
         return out
-    for side, c in cal.items():
-        m = p["stand"].astype(str).eq(side) & p["cy"].notna()
+    has = p["cy"].notna()
+    if "depth" in p:
+        m = has & p["depth"].notna()
+        out.loc[m, "pf"] = p.loc[m, "cy"] - p.loc[m, "depth"]
+        has = has & ~m
+    for side, c in (cal or {}).items():
+        m = p["stand"].astype(str).eq(side) & has
         if m.any():
-            pf = c["F0"] + c["sy"] * p.loc[m, "cy"]
-            out.loc[m, "pf"] = pf
-            out.loc[m, "pxc"] = p.loc[m, "px"] * 12 + p.loc[m, "slope"] * pf
+            out.loc[m, "pf"] = c["F0"] + c["sy"] * p.loc[m, "cy"]
+    m = out["pf"].notna()
+    out.loc[m, "pxc"] = p.loc[m, "px"] * 12 + p.loc[m, "slope"] * out.loc[m, "pf"]
     return out
 
 

@@ -40,9 +40,30 @@ def _git(*args) -> int:
     return subprocess.call(["git", *args])
 
 
+def refresh_stance() -> None:
+    """Savant's batting-stance board (point of contact vs the plate): re-downloaded daily during the season."""
+    try:
+        from core import stance_feed
+        season = date.today().year if date.today().month >= 3 else date.today().year - 1
+        if not stance_feed.FEED.exists():
+            print("Stance board: finding Savant's download options (one time)...", flush=True)
+            stance_feed.discover(season)
+        if stance_feed.stale(season):
+            print(f"Stance board {season}:", flush=True)
+            stance_feed.refresh(season)
+            _git("add", "data/stance", f"data/batting_stance_{season}.csv")
+    except Exception as e:
+        print(f"Stance board refresh skipped: {e}", flush=True)
+
+
 def main(argv: list[str]) -> None:
+    if "--check" not in argv:
+        refresh_stance()
     todo = plan()
     if not todo:
+        if "--no-push" not in argv and "--check" not in argv and _git("diff", "--cached", "--quiet") != 0:
+            _git("commit", "-m", "Data update: stance board")
+            _git("push")
         print("Everything is up to date. Nothing to do.")
         return
     print("Out of date:", ", ".join(f"{y} ({why})" for y, why in todo), flush=True)

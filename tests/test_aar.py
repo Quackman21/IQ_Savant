@@ -140,6 +140,17 @@ def test_contact_vs_plate_is_mlbs_definition_when_hes_on_the_stance_board():
     assert aar.stance_depths(2026)[(694192, "R")] == pytest.approx(25.85, abs=0.01)  # Chourio, Savant board
 
 
+def test_each_pitch_uses_the_most_specific_stance():
+    views = {"season": {(7, "R"): 28.0}, "vs_L": {(7, "R"): 26.0}, "playoff": {(7, "R"): 25.0}}
+    p = pd.DataFrame({"stand": ["R", "R", "R"], "p_throws": ["L", "R", "L"], "cy": [31.0, 31.0, None],
+                      "cx": [30.0] * 3, "px": [0.0] * 3, "slope": [0.0] * 3})
+    st = aar.pitch_stance(p, 7, views)
+    assert st["depth"].tolist()[:2] == [26.0, 28.0] and st["depth_src"].tolist()[:2] == ["vs_L", "season"]
+    assert aar.pitch_stance(p, 7, views, playoff=True)["depth"].tolist()[0] == 25.0
+    on = aar.on_plate(p.join(st), None)
+    assert on["pf"].tolist()[:2] == [5.0, 3.0] and pd.isna(on["pf"].iloc[2])          # 31 - 26, 31 - 28; no contact
+
+
 def test_not_on_the_board_falls_back_to_his_swings():
     cal = aar.plate_calibration(_season_swings())["R"]
     g = aar.HIP_GROUP_DEFAULT

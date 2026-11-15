@@ -1,5 +1,32 @@
 # IQ Savant – version history
 
+## v22.4 – 2026-11-15
+- Point of contact, pitch by pitch: each dot uses the most specific stance depth Savant's board has for him --
+  his playoff stance in a playoff game, then his stance vs that pitcher's hand (LHP / RHP), then his season stance
+  (hover the chart to see which was used). Hitters not on the board still fall back to the estimate (asterisk).
+- Stance discovery fixes: 'leaderboardType' was Savant's site-wide menu (v22.3's 58 "views" were junk -- deleted on
+  the next refresh); a season is now seasonStart + seasonEnd together; game type uses Regular / Playoff; the
+  Season/Month and "2 strikes vs < 2" toggles are probed through the page's 'group' parameter.
+- python -m core.stance_feed report 2026: how much each split moves stance depth vs the season number.
+
+## v22.3 – 2026-11-15
+- Stance board discovery reads Savant's dropdowns directly (id="ddlXxx" -> download parameter "xxx", e.g.
+  ddlMinSwings -> minSwings, ddlPitchHand -> pitchHand) with every option, tries each option and records which change
+  the data and what columns appear (month / strike views). The first run found minSwings=1 (231 -> 709 hitter-sides)
+  and pitchHand; this one also covers the season, month / strike views (leaderboardType + minGroupSwings) and the rest.
+- Refresh downloads the season view plus every split view that changes the data.
+
+## v22.2 – 2026-11-15
+- The site keeps Savant's batting-stance board current by itself (core/stance_feed.py):
+  * discovers the board's download options on its own -- reads the page's code for parameter names, then tries each
+    and keeps only the ones that actually change the data (year, minimum 1, month view, two strikes vs fewer,
+    pitcher hand, game type) -> data/stance/feed.json;
+  * re-downloads every view it found each day during the season (pipeline.update runs it, including --light) into
+    data/stance/<season>/ and keeps data/batting_stance_<season>.csv (what the AAR reads) current -- with a minimum
+    of 1, a new player is on it the day after his debut.
+- Next: once discovery shows which views exist, each AAR dot uses the most specific stance depth (that month and
+  strike situation -> that month -> season -> estimated).
+
 ## v22.1 – 2026-11-15
 - Point of contact vs the plate now uses MLB's own definition: Statcast's contact point (inches in front of his
   center of mass) minus his stance depth from Savant's batting-stance board -- exactly how Savant builds "intercept Y

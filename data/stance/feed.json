@@ -1,0 +1,585 @@
+{
+ "selects": {
+  "leaderboardType": [
+   [
+    "top-performers",
+    "Top Performers"
+   ],
+   [
+    "custom",
+    "Custom Leaderboards"
+   ],
+   [
+    "hot-stove",
+    "Hot Stove"
+   ],
+   [
+    "park_factors",
+    "Park Factors"
+   ],
+   [
+    "pitch-timer-infractions",
+    "Timer Infractions"
+   ],
+   [
+    "abs-challenges",
+    "ABS Challenges"
+   ],
+   [
+    "bat-tracking",
+    "Bat Tracking"
+   ],
+   [
+    "batted-ball",
+    "Batted Ball Profile"
+   ],
+   [
+    "hitting",
+    "Exit Velocity & Barrels"
+   ],
+   [
+    "expected",
+    "Expected Statistics"
+   ],
+   [
+    "home_runs",
+    "Home Runs"
+   ],
+   [
+    "percentile_rankings",
+    "Percentile Rankings"
+   ],
+   [
+    "batter_pitch_arsenal_stats",
+    "Pitch Arsenal Stats"
+   ],
+   [
+    "pitch_tempo_batter",
+    "Pitch Tempo"
+   ],
+   [
+    "rolling",
+    "Rolling Windows"
+   ],
+   [
+    "batting_run_value",
+    "Run Value"
+   ],
+   [
+    "birthdays",
+    "Sarah Langs Birthday Index"
+   ],
+   [
+    "bat-tracking-swing-path",
+    "Swing Path/Attack Angle"
+   ],
+   [
+    "year_to_year",
+    "Year to Year Changes"
+   ],
+   [
+    "active_spin",
+    "Active Spin"
+   ],
+   [
+    "pitcher-arm-angle",
+    "Arm Angle"
+   ],
+   [
+    "pitching-bat-tracking",
+    "Bat Tracking"
+   ],
+   [
+    "pitching",
+    "Exit Velocity & Barrels"
+   ],
+   [
+    "pitching_expected",
+    "Expected Statistics"
+   ],
+   [
+    "pitching_home_runs",
+    "Home Runs"
+   ],
+   [
+    "pitching_percentile_rankings",
+    "Percentile Rankings"
+   ],
+   [
+    "pitch_arsenal_stats",
+    "Pitch Arsenal Stats"
+   ],
+   [
+    "pitch_arsenals",
+    "Pitch Arsenals"
+   ],
+   [
+    "pitch_movement",
+    "Pitch Movement"
+   ],
+   [
+    "pitch_tempo",
+    "Pitch Tempo"
+   ],
+   [
+    "pitcher_running_game",
+    "Running Game"
+   ],
+   [
+    "pitching_run_value",
+    "Run Value"
+   ],
+   [
+    "spin_direction_compare",
+    "Spin Direction - Comparison"
+   ],
+   [
+    "spin_direction_pitches",
+    "Spin Direction - Pitches"
+   ],
+   [
+    "bat-tracking-swing-timing",
+    "Swing Timing + Miss Distance"
+   ],
+   [
+    "pitching_year_to_year",
+    "Year to Year Changes"
+   ],
+   [
+    "fielding-run-value",
+    "Fielding Run Value"
+   ],
+   [
+    "arm-strength",
+    "Arm Strength"
+   ],
+   [
+    "arm-value",
+    "Arm Value"
+   ],
+   [
+    "catcher-blocking",
+    "Catcher Blocking"
+   ],
+   [
+    "catcher-framing",
+    "Catcher Framing"
+   ],
+   [
+    "poptime",
+    "Catcher Pop Time"
+   ],
+   [
+    "catcher-stance",
+    "Catcher Stance"
+   ],
+   [
+    "catcher-throwing",
+    "Catcher Throwing"
+   ],
+   [
+    "first-base-receiving",
+    "First Base Receiving"
+   ],
+   [
+    "catch-prob",
+    "Outfield Catch Probability"
+   ],
+   [
+    "direct_oaa",
+    "Outfield Directional OAA"
+   ],
+   [
+    "jump",
+    "Outfielder Jump"
+   ],
+   [
+    "oaa",
+    "Outs Above Average"
+   ],
+   [
+    "baserunning-run-value",
+    "Baserunning Run Value"
+   ],
+   [
+    "basestealing-running-game",
+    "Basestealing"
+   ],
+   [
+    "baserunning",
+    "Extra Bases Taken"
+   ],
+   [
+    "sprint-speed",
+    "Sprint Speed"
+   ],
+   [
+    "running-splits",
+    "90ft Running Splits"
+   ],
+   [
+    "batter-positioning",
+    "Batter Positioning"
+   ],
+   [
+    "batting-stance",
+    "Batting Stance"
+   ],
+   [
+    "fielding-situational-all",
+    "Fielder - All"
+   ],
+   [
+    "fielding-situational",
+    "Fielder - Situational"
+   ],
+   [
+    "pitcher-positioning",
+    "Pitcher Positioning"
+   ],
+   [
+    "team-positioning",
+    "Team Positioning"
+   ]
+  ],
+  "seasonStart": [
+   [
+    "2026",
+    "2026"
+   ],
+   [
+    "2025",
+    "2025"
+   ],
+   [
+    "2024",
+    "2024"
+   ],
+   [
+    "2023",
+    "2023"
+   ]
+  ],
+  "seasonEnd": [
+   [
+    "2026",
+    "2026"
+   ],
+   [
+    "2025",
+    "2025"
+   ],
+   [
+    "2024",
+    "2024"
+   ],
+   [
+    "2023",
+    "2023"
+   ]
+  ],
+  "gameType": [
+   [
+    "Any",
+    "Any"
+   ],
+   [
+    "Regular",
+    "Regular"
+   ],
+   [
+    "Playoff",
+    "Playoff"
+   ],
+   [
+    "",
+    "All"
+   ],
+   [
+    "R",
+    "Regular Season"
+   ],
+   [
+    "P",
+    "Playoffs"
+   ]
+  ],
+  "batSide": [
+   [
+    "",
+    "Any"
+   ],
+   [
+    "L",
+    "Left"
+   ],
+   [
+    "R",
+    "Right"
+   ]
+  ],
+  "pitchHand": [
+   [
+    "",
+    "All"
+   ],
+   [
+    "L",
+    "Left"
+   ],
+   [
+    "R",
+    "Right"
+   ]
+  ],
+  "contactType": [
+   [
+    "",
+    "Any"
+   ],
+   [
+    "2",
+    "Hit in Play"
+   ],
+   [
+    "4",
+    "Foul"
+   ],
+   [
+    "9",
+    "Whiff"
+   ]
+  ],
+  "isHardHit": [
+   [
+    "",
+    "Any"
+   ],
+   [
+    "1",
+    "Yes"
+   ],
+   [
+    "0",
+    "No"
+   ]
+  ],
+  "minSwings": [
+   [
+    "q",
+    "Qualified"
+   ],
+   [
+    "1",
+    "1"
+   ],
+   [
+    "5",
+    "5"
+   ],
+   [
+    "10",
+    "10"
+   ],
+   [
+    "25",
+    "25"
+   ],
+   [
+    "50",
+    "50"
+   ],
+   [
+    "100",
+    "100"
+   ],
+   [
+    "200",
+    "200"
+   ],
+   [
+    "500",
+    "500"
+   ],
+   [
+    "1000",
+    "1000"
+   ]
+  ],
+  "minGroupSwings": [
+   [
+    "1",
+    "1"
+   ],
+   [
+    "5",
+    "5"
+   ],
+   [
+    "10",
+    "10"
+   ],
+   [
+    "25",
+    "25"
+   ],
+   [
+    "50",
+    "50"
+   ],
+   [
+    "100",
+    "100"
+   ],
+   [
+    "200",
+    "200"
+   ],
+   [
+    "500",
+    "500"
+   ],
+   [
+    "1000",
+    "1000"
+   ]
+  ]
+ },
+ "tried": {
+  "seasonStart": [
+   {
+    "value": "2026",
+    "label": "2026",
+    "rows": 709,
+    "changed": false,
+    "new_columns": []
+   },
+   {
+    "value": "2025",
+    "label": "2025",
+    "rows": 714,
+    "changed": true,
+    "new_columns": []
+   },
+   {
+    "value": "2024",
+    "label": "2024",
+    "rows": 691,
+    "changed": true,
+    "new_columns": []
+   },
+   {
+    "value": "2023",
+    "label": "2023",
+    "rows": 601,
+    "changed": true,
+    "new_columns": []
+   }
+  ],
+  "gameType": [
+   {
+    "value": "Regular",
+    "label": "Regular",
+    "rows": 709,
+    "changed": false,
+    "new_columns": []
+   },
+   {
+    "value": "Playoff",
+    "label": "Playoff",
+    "rows": 127,
+    "changed": true,
+    "new_columns": []
+   },
+   {
+    "value": "R",
+    "label": "Regular Season",
+    "rows": 709,
+    "changed": true,
+    "new_columns": []
+   },
+   {
+    "value": "P",
+    "label": "Playoffs",
+    "rows": 709,
+    "changed": true,
+    "new_columns": []
+   }
+  ],
+  "batSide": [
+   {
+    "value": "L",
+    "label": "Left",
+    "rows": 299,
+    "changed": true,
+    "new_columns": []
+   },
+   {
+    "value": "R",
+    "label": "Right",
+    "rows": 410,
+    "changed": true,
+    "new_columns": []
+   }
+  ],
+  "pitchHand": [
+   {
+    "value": "L",
+    "label": "Left",
+    "rows": 594,
+    "changed": true,
+    "new_columns": []
+   },
+   {
+    "value": "R",
+    "label": "Right",
+    "rows": 623,
+    "changed": true,
+    "new_columns": []
+   }
+  ],
+  "contactType": [
+   {
+    "value": "2",
+    "label": "Hit in Play",
+    "rows": 657,
+    "changed": true,
+    "new_columns": []
+   },
+   {
+    "value": "4",
+    "label": "Foul",
+    "rows": 668,
+    "changed": true,
+    "new_columns": []
+   },
+   {
+    "value": "9",
+    "label": "Whiff",
+    "rows": 648,
+    "changed": true,
+    "new_columns": []
+   }
+  ],
+  "isHardHit": [
+   {
+    "value": "1",
+    "label": "Yes",
+    "rows": 573,
+    "changed": true,
+    "new_columns": []
+   },
+   {
+    "value": "0",
+    "label": "No",
+    "rows": 703,
+    "changed": true,
+    "new_columns": []
+   }
+  ]
+ },
+ "base": {
+  "minSwings": "1"
+ },
+ "checked": "2026-11-15"
+}

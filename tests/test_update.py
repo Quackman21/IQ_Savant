@@ -47,6 +47,7 @@ def test_light_update_only_adds_new_games(monkeypatch, capsys):
     import pipeline.build_league_reference as b
     monkeypatch.setattr(b, "main", lambda a: ran.append(a[0]))
     monkeypatch.setattr(update, "_git", lambda *a: 0)
+    monkeypatch.setattr(update, "refresh_stance", lambda: None)          # no Savant download in tests
     update.main(["--light"])
     out = capsys.readouterr().out
     assert ran == ["2026"] and "HEAVY: 1 season(s)" in out and "2019" in out
