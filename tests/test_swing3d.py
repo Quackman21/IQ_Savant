@@ -31,14 +31,13 @@ def test_bat_moves_through_contact_at_the_measured_angles():
     s = swing3d.scene(_row(), depth=28.0, stance_x=27.0)
     arc = np.array([a[:3] for a in s["arc"]])
     t = np.array([a[4] for a in s["arc"]])
-    i = int(np.argmin(np.abs(t)))
-    assert np.allclose(arc[i], s["contact"], atol=0.6)                   # sweet spot is at the ball at contact
-    v = arc[i + 1] - arc[i - 1]
+    assert abs(t[-1]) < 1e-9 and np.allclose(arc[-1], s["contact"], atol=0.01)   # ends at the ball, at contact
+    assert min(a[4] for a in s["arc"] if a[3] == 1) >= -0.0405                  # measured part = last 40 ms
+    v = np.array(s["aim"])                                               # direction of travel at contact
     assert abs(math.degrees(math.atan2(v[2], math.hypot(v[0], v[1]))) - 10.0) < 1.0     # attack angle
     assert abs(math.degrees(math.atan2(v[0], v[1])) - (-5.0)) < 1.0                       # RHB: -5 = pull = 3B side
     assert O_above(s)
-    meas = [a for a in s["arc"] if a[3] == 1]
-    assert meas and all(-0.0405 <= a[4] <= 0 for a in meas)            # solid = Statcast's last 40 ms
+    assert all(a[4] <= 0 for a in s["arc"])                              # nothing after contact
 
 
 def O_above(s):
@@ -67,3 +66,15 @@ def test_aar_puts_a_3d_button_on_contact_swings():
     html = aar_ui.component_html(p, aar.plate_appearances(p), {"AB": 4}, {k: [] for k in aar.GAME_METRICS},
                                  aar.GAME_METRICS, "", scenes3d=s3, header="<div id='hdr'>Hitter</div>")
     assert html.count('class="s3d"') == len(s3) and 'id="ovl"' in html and "id='hdr'" in html
+
+
+def test_bat_angle_and_bat_parallel_are_inferred_from_the_measured_plane():
+    s = swing3d.scene(_row(), depth=28.0, stance_x=27.0)
+    assert -45 < s["read"]["vba"] < 0                                   # barrel below the hands at contact
+    bp = s["bp"]
+    assert bp and abs(bp["at"][2] - s["O"][2]) < 0.05                    # bat parallel: barrel level with the hands
+    assert bp["inches_before"] <= 7.2 * 12 and bp["t"] < -0.04           # inside his swing, before the 40 ms window
+    assert {a[3] for a in s["arc"]} == {1, 2}                            # measured window + inferred lead-in
+    assert all(a[4] <= 0 for a in s["arc"])                              # nothing after contact
+    short = swing3d.scene(_row(swing_length=3.0), depth=28.0)            # a swing too short to reach bat parallel
+    assert short["bp"] is None and {a[3] for a in short["arc"]} == {1}

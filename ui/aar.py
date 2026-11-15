@@ -340,7 +340,7 @@ table.line{{border-collapse:collapse;width:100%}} table.line th{{font:600 11px s
 .tiles .hd{{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}}
 .tiles .hd .lab{{font:600 12px system-ui;color:{MUTED}}}
 .tiles select{{font:13px system-ui;padding:4px 8px;border:1px solid {LINE};border-radius:7px;background:#fff}}
-.tiles .row{{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}}
+.tiles .row{{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}}
 .tile{{text-align:center;border:1px solid {LINE};border-radius:8px;padding:8px 4px}}
 .tile .l{{font-size:11px;color:{MUTED}}} .tile .v{{font:700 19px ui-monospace,monospace;margin-top:2px}}
 .charts{{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}}
@@ -400,7 +400,9 @@ button.s3d:hover{{color:{INK}}}
 #cams button,#ctl button{{font:600 11.5px system-ui;border:1px solid {LINE};background:#fff;border-radius:6px;
   padding:4px 8px;cursor:pointer}} #cams button.on{{background:{TEAL};color:#fff;border-color:{TEAL}}}
 #ctl{{display:flex;align-items:center;gap:8px;padding:8px 12px;border-top:1px solid {LINE}}}
-#ctl select{{font:12px system-ui}} #ctl input[type=range]{{flex:1}} #ctl .clk{{font:12px ui-monospace,monospace;
+#ctl select{{font:12px system-ui}} #ctl .scw{{flex:1;position:relative;display:flex}} #ctl input[type=range]{{flex:1}}
+#ctl .tick{{position:absolute;top:-6px;width:2px;height:8px;background:#c0392b;transform:translateX(-1px);pointer-events:none}}
+#ctl .tick.bp{{background:#7b5cc4}} #ctl #s3bp{{color:#5b3fa8}} #ctl .clk{{font:12px ui-monospace,monospace;
   color:{MUTED};min-width:120px;text-align:right}}
 #ctl a{{font:600 12px system-ui;color:#fff;background:{INK};border-radius:6px;padding:5px 10px;text-decoration:none;
   display:inline-flex;gap:5px;align-items:center}}
@@ -410,7 +412,7 @@ button.s3d:hover{{color:{INK}}}
 #rd td:last-child{{text-align:right;font-family:ui-monospace,monospace}}
 #rd .lg{{font-size:11px;color:{MUTED};line-height:1.6;margin-top:8px}} #rd .lg i{{font-style:normal;font-weight:800}}
 .tag{{font-size:9.5px;padding:0 5px;border-radius:7px;margin-left:5px;background:#dbeef1;color:#2c6670}}
-.tag.x{{background:#eef1f3;color:{MUTED}}}
+.tag.x{{background:#eef1f3;color:{MUTED}}} .tag.inf{{background:#ece6f8;color:#5b3fa8}}
 @media (max-width:900px){{.top{{grid-template-columns:1fr}}.charts{{grid-template-columns:1fr 1fr}}}}
 """
 
@@ -459,8 +461,8 @@ document.querySelectorAll('#hand button').forEach(b => b.onclick = () => {
 const tiles = JSON.parse(document.getElementById('tiles-data').textContent);
 const pick = document.getElementById('metric');
 function showTiles() {
-  document.getElementById('tiles').innerHTML = tiles[pick.value].map(([l, v]) =>
-    `<div class="tile"><div class="l">${l}</div><div class="v">${v}</div></div>`).join('');
+  document.getElementById('tiles').innerHTML = tiles[pick.value].map(([l, v, st]) =>
+    `<div class="tile" style="${st || ''}"><div class="l">${l}</div><div class="v">${v}</div></div>`).join('');
 }
 pick.onchange = () => { showTiles(); resize(); };
 function resize() {
@@ -475,8 +477,8 @@ OVERLAY = """<div id="ovl"><div id="dlg"><div class="dh"><b id="s3t"></b><span c
 <button class="x" id="s3x" title="Close (Esc)">&times;</button></div><div class="db"><div><div id="stage">
 <div id="cams"></div><div class="msg" id="s3msg">Loading 3D…</div></div><div id="ctl"><button id="s3p">❚❚</button>
 <select id="s3sp"><option value="4">1/4 speed</option><option value="10" selected>1/10</option>
-<option value="25">1/25</option><option value="60">1/60</option></select><input id="s3sc" type="range" min="0"
-max="1000" value="0"><span class="clk" id="s3c"></span><a id="s3v" target="_blank" rel="noopener">Video</a></div></div>
+<option value="25">1/25</option><option value="60">1/60</option></select><span class="scw"><input id="s3sc" type="range" min="0"
+max="1000" value="0"><span id="s3tickbp" class="tick bp" title="Bat parallel (inferred)"></span><span id="s3tick" class="tick" title="Contact"></span></span><button id="s3bp" title="Jump to bat parallel (inferred)">Bat parallel</button><button id="s3k" title="Jump to contact">Contact</button><span class="clk" id="s3c"></span><a id="s3v" target="_blank" rel="noopener">Video</a></div></div>
 <div id="rd"></div></div></div></div>"""
 
 S3D_JS = r"""
@@ -506,13 +508,15 @@ function line(pts, mat) {
   if (mat.isLineDashedMaterial) l.computeLineDistances(); return l;
 }
 function readouts(sc) {
-  const r = sc.read, m = '<span class="tag">measured</span>', x = '<span class="tag x">reconstructed</span>';
+  const r = sc.read, m = '<span class="tag">measured</span>', i = '<span class="tag inf">inferred</span>';
   const row = (k, v, t = '') => `<tr><td>${k}${t}</td><td>${v}</td></tr>`;
   const smash = r.ev && r.bat_speed && r.velo ? ((r.ev - 0.2 * r.velo) / (1.2 * r.bat_speed)) : null;
   document.getElementById('rd').innerHTML =
     '<h5>Swing</h5><table>' + row('Bat speed', fmt(r.bat_speed) + ' mph', m) + row('Swing length', fmt(r.swing_length) + ' ft', m) +
     row('Attack angle', fmt(r.attack_angle) + '°', m) + row('Attack direction', fmt(r.attack_direction) + '° ' +
-      (r.attack_direction < 0 ? 'pull' : 'oppo'), m) + row('Swing tilt', fmt(r.tilt) + '°', m) + '</table>' +
+      (r.attack_direction < 0 ? 'pull' : 'oppo'), m) + row('Swing tilt', fmt(r.tilt) + '°', m) +
+    row('Vertical bat angle at contact', fmt(r.vba) + '°', i) +
+    row('Bat parallel', r.bp_in ? fmt(r.bp_in, 0) + '″ of path before contact' : 'past his swing length', i) + '</table>' +
     '<h5>Contact (vs the plate)</h5><table>' + row('Out front', fmt(r.front) + '″', m) +
     row('Side (+ = 1B side)', fmt(r.side_in) + '″', m) + row('Height', fmt(r.height) + '″', m) + '</table>' +
     '<h5>Pitch at contact</h5><table>' + row(r.ptype + ' velo', fmt(r.velo) + ' mph', m) +
@@ -521,7 +525,8 @@ function readouts(sc) {
     (r.ev ? '<h5>Ball off the bat</h5><table>' + row('Exit velo', fmt(r.ev) + ' mph', m) + row('Launch angle', fmt(r.la, 0) + '°', m) +
       (smash ? row('Smash factor', fmt(smash, 2)) : '') + '</table>' : '') +
     '<div class="lg"><i style="color:#e07b24">━</i> pitch (measured) &nbsp; <i style="color:#2f5fb3">━</i> bat, last 40 ms ' +
-    '(measured direction + plane) &nbsp; <i style="color:#8fa6c9">┅</i> rest of the swing (reconstructed) &nbsp; ' +
+    'before contact (measured) &nbsp; <i style="color:#7b5cc4">┅ ●</i> path back to bat parallel -- inferred from the ' +
+    'measured tilt, attack angle + direction (the bat lies across its path in that plane) &nbsp; ' +
     '<i style="color:#c0392b">●</i> contact &nbsp; <i style="color:#2e9d5b">━</i> ball off the bat' +
     (sc.exit ? '' : ' (fouls: direction not tracked)') + '<br>Swing vs pitch plane = attack angle minus how steeply ' +
     'the pitch is coming down (0 = matched).</div>';
@@ -549,7 +554,11 @@ function build(sc) {
     new THREE.LineDashedMaterial({color: 0x16202b, dashSize: 2, gapSize: 1.5})));
   // ghosts of the whole thing
   scene.add(line(sc.pitch, new THREE.LineBasicMaterial({color: 0xe07b24, transparent: true, opacity: .25})));
-  scene.add(line(sc.arc, new THREE.LineDashedMaterial({color: 0x8fa6c9, dashSize: 2, gapSize: 1.5})));
+  const inf = sc.arc.filter(q => q[3] === 2);
+  if (inf.length > 1) scene.add(line(inf.concat([sc.arc.find(q => q[3] === 1)]),
+    new THREE.LineDashedMaterial({color: 0x7b5cc4, dashSize: 2.2, gapSize: 1.6})));
+  if (sc.bp) { const m = new THREE.Mesh(new THREE.SphereGeometry(1.8, 16, 12), new THREE.MeshBasicMaterial({color: 0x7b5cc4}));
+    m.position.copy(V(sc.bp.at)); scene.add(m); }
   const meas = sc.arc.filter(q => q[3] === 1);
   if (meas.length > 1) scene.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(meas.map(V)), 40, 0.6, 8),
     new THREE.MeshLambertMaterial({color: 0x2f5fb3})));
@@ -592,7 +601,7 @@ function build(sc) {
   place();
   // time
   const T = q => q[q.length - 1];
-  const t0 = Math.min(T(sc.pitch[0]), T(sc.arc[0])), t1 = Math.max(T(sc.arc[sc.arc.length - 1]), sc.exit ? 0.12 : 0.03);
+  const t0 = T(sc.pitch[0]), t1 = sc.exit ? 0.12 : 0.02;
   const S = {t: t0, playing: true, last: null, raf: 0};
   function frame(t) {
     const bt = upto(sc.pitch, t).map(V);
@@ -601,7 +610,8 @@ function build(sc) {
     etrail.geometry.dispose(); etrail.geometry = new THREE.BufferGeometry().setFromPoints(et.length > 1 ? et : [V(sc.contact), V(sc.contact)]);
     const B = t <= 0 ? at(sc.pitch, t) : (sc.exit ? at(sc.exit, t) : null);
     ball.visible = !!B; if (B) ball.position.copy(V(B));
-    const P = at(sc.arc, Math.max(T(sc.arc[0]), Math.min(t, T(sc.arc[sc.arc.length - 1]))));  // waits at the start, holds the finish
+      const inWin = t >= T(sc.arc[0]) && t <= T(sc.arc[sc.arc.length - 1]);    // only along the drawn path
+    const P = inWin ? at(sc.arc, t) : null;
     bat.visible = !!P;
     if (P) {
       const u = new THREE.Vector3(sc.O[0] - P[0], sc.O[2] - P[2], -(sc.O[1] - P[1])).normalize();   // sweet spot -> hands
@@ -609,7 +619,9 @@ function build(sc) {
       bat.position.copy(mid); bat.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), u);
     }
     hit.visible = t >= 0;
-    document.getElementById('s3c').textContent = `${t >= 0 ? '+' : ''}${(t * 1000).toFixed(0)} ms from contact`;
+    const pre = sc.arc.find(q => q[3] === 1), winStart = pre ? T(pre) : 0;
+    document.getElementById('s3c').textContent = (sc.bp && t < winStart && t >= T(sc.arc[0]))
+      ? 'inferred path · time not measured' : `${t >= 0 ? '+' : ''}${(t * 1000).toFixed(0)} ms from contact`;
     ren.render(scene, cam);
   }
   function tick(now) {
@@ -622,6 +634,17 @@ function build(sc) {
   }
   S.raf = requestAnimationFrame(tick);
   document.getElementById('s3p').onclick = e => { S.playing = !S.playing; e.target.textContent = S.playing ? '❚❚' : '▶'; };
+  const toContact = () => { S.playing = false; document.getElementById('s3p').textContent = '▶'; S.t = 0;
+    document.getElementById('s3sc').value = Math.round((0 - t0) / (t1 - t0) * 1000); };
+  document.getElementById('s3k').onclick = toContact;
+  document.getElementById('s3tick').style.left = (100 * (0 - t0) / (t1 - t0)) + '%';
+  const bpb = document.getElementById('s3bp'), bpt = document.getElementById('s3tickbp');
+  if (sc.bp) {
+    bpb.style.display = bpt.style.display = '';
+    bpt.style.left = (100 * (sc.bp.t - t0) / (t1 - t0)) + '%';
+    bpb.onclick = () => { S.playing = false; document.getElementById('s3p').textContent = '▶'; S.t = sc.bp.t;
+      document.getElementById('s3sc').value = Math.round((sc.bp.t - t0) / (t1 - t0) * 1000); };
+  } else { bpb.style.display = bpt.style.display = 'none'; }
   document.getElementById('s3sc').oninput = e => {
     S.playing = false; document.getElementById('s3p').textContent = '▶'; S.t = t0 + (t1 - t0) * e.target.value / 1000; };
   return {stop() { cancelAnimationFrame(S.raf); ren.dispose(); ren.domElement.remove(); }};

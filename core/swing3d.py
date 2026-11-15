@@ -7,11 +7,11 @@ plate (0 = front edge, -17 = back point), z = up. Times in seconds from contact 
     from release to the contact point.
   * CONTACT: MLB's definition -- Statcast's contact (inches in front of his center of mass) minus his stance depth
     (Savant's board; p['depth']) -> how far in front of the plate; side to side + height = where the ball was there.
-  * BAT (reconstructed, like every public bat-path explainer): the sweet spot moves through contact at the measured
-    attack angle + attack direction, in a plane tilted at the measured swing-path tilt. The last 40 ms (what Statcast
-    measures the plane over) is solid; a short stretch before + the follow-through are dashed = modeled shape. The
-    plane leans toward his measured stance position (Savant's board) and its centre sits above the ball (hands).
-    No body is drawn -- nothing about his movement is estimated.
+  * BAT: the last 40 ms before contact is what Statcast measures -- the sweet spot arrives at the ball at the measured
+    attack angle + attack direction, in a plane tilted at the measured swing-path tilt (leaning toward his measured
+    stance position, centre above the ball). The bat lies across that path in the plane, so its angle is known
+    everywhere on it: BAT PARALLEL (barrel level with the hands) is inferred from those measured angles and the path
+    is drawn back to it, styled as inferred. Nothing after contact, and no body.
   * BALL OFF THE BAT (balls in play only): measured launch angle + exit velo, aimed at where it was fielded. Statcast
     doesn't track where fouls go, so fouls get no flight.
 """
@@ -104,16 +104,28 @@ def scene(row, depth: float | None, stance_x: float | None = None) -> dict | Non
     R = float(np.clip(math.hypot(cx, cy), 24, 48))                         # sweet spot's radius about the hands
     O = C + R * w
     v = d["bat_speed"] * 17.6                                              # mph -> in/s
+    # The bat lies across the sweet spot's path, in the swing plane, pointing back to the hands (the arc's centre):
+    #   bat direction at angle phi along the arc = w*cos(phi) - d*sin(phi)   (phi = 0 at contact, negative = before)
+    # -> its vertical bat angle anywhere on the path, and BAT PARALLEL = where that direction is level (barrel even
+    # with the hands): w_z*cos(phi) - d_z*sin(phi) = 0  ->  phi = -pi/2 - atan2(d_z, w_z).
+    vba = -math.degrees(math.asin(max(-1.0, min(1.0, float(w[2])))))   # at contact; negative = barrel below hands
+    phi_bp = -math.pi / 2 - math.atan2(float(dvec[2]), float(w[2]))
+    s_bp = R * phi_bp                                                    # inches along the path before contact
+    swing_len = (_num(row, "swing_length") or 0) * 12
+    bp_ok = swing_len <= 0 or -s_bp <= swing_len                         # within his measured swing length
     measured = min(v * 0.040, R * 1.2)
-    swing_len = (_num(row, "swing_length") or 7.0) * 12
-    back = min(swing_len, measured + 30.0)
-    fwd = min(v * 0.03, 50.0)
+    start = min(-measured, s_bp) if bp_ok else -measured
     arc = []
-    for s_ in np.linspace(-back, fwd, 100):
+    for s_ in sorted(set(np.linspace(start, 0, 90).tolist() + [-measured])):
         phi = s_ / R
         P = O + R * (-w * math.cos(phi) + dvec * math.sin(phi))
+        # 1 = Statcast's measured last 40 ms; 2 = inferred from the measured plane + angles (bat parallel -> there)
         arc.append([round(float(P[0]), 2), round(float(P[1]), 2), round(float(P[2]), 2),
-                    1 if -measured <= s_ <= 0 else 0, round(s_ / v, 5)])
+                    1 if s_ >= -measured - 1e-9 else 2, round(s_ / v, 5)])
+    bp = None
+    if bp_ok:
+        P = O + R * (-w * math.cos(phi_bp) + dvec * math.sin(phi_bp))
+        bp = {"at": [round(float(x), 2) for x in P], "inches_before": round(-s_bp, 1), "t": round(s_bp / v, 5)}
 
     # ball off the bat (balls in play, measured)
     exit_ = None
@@ -132,11 +144,12 @@ def scene(row, depth: float | None, stance_x: float | None = None) -> dict | Non
             exit_.append([round(float(P[0]), 2), round(float(P[1]), 2), round(float(P[2]), 2), round(float(tt), 4)])
     return {
         "side": side, "contact": [round(float(c), 2) for c in C], "O": [round(float(o), 2) for o in O],
-        "pitch": pitch, "arc": arc, "exit": exit_,
+        "pitch": pitch, "arc": arc, "exit": exit_, "bp": bp,
         "sz": [round((_num(row, "sz_bot") or 1.6) * 12, 1), round((_num(row, "sz_top") or 3.4) * 12, 1)],
         "aim": [round(float(x), 3) for x in dvec],
         "read": {"bat_speed": d["bat_speed"], "swing_length": _num(row, "swing_length"), "attack_angle": aa,
                  "attack_direction": ad, "tilt": d["swing_path_tilt"], "front": round(pf, 1),
+                 "vba": round(vba, 1), "bp_in": bp["inches_before"] if bp else None,
                  "side_in": round(float(C[0]), 1), "height": round(float(C[2]), 1), "vaa": round(vaa, 1),
                  "haa": round(haa, 1), "plane_gap": round(aa + vaa, 1), "ev": ev, "la": la,
                  "velo": _num(row, "release_speed")},

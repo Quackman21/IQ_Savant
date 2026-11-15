@@ -1,5 +1,24 @@
 # IQ Savant – version history
 
+## v22.7 – 2026-11-15
+- 3D swing view: BAT PARALLEL checkpoint + the bat's angle, inferred from the measured plane. With the measured
+  swing-path tilt, attack angle and attack direction, the bat lies across its path in that plane, so its angle is
+  known all along the path:
+  * vertical bat angle at contact (readout, "inferred"; World Series G5: median -28°, range -42° to -1°);
+  * bat parallel = where the barrel is level with the hands; the path is drawn back to it (purple dashed, marked),
+    a "Bat parallel" button + purple scrubber tick jump there, and the readout gives it as inches of path before
+    contact (median 72"). When it falls beyond his measured swing length it isn't drawn ("past his swing length").
+  * time before Statcast's 40 ms window isn't measured, so the clock says so there instead of showing ms.
+
+## v22.6 – 2026-11-15
+- 3D swing view shows only what's measured: the bat appears for Statcast's last 40 ms before contact and nothing
+  else -- the reconstructed lead-in and follow-through are gone.
+- Contact checkpoint: a "Contact" button jumps to (and pauses at) the moment of contact; a red tick marks it on the
+  scrubber. (Bat-parallel isn't in public Statcast -- no swing-timing / vertical bat angle -- so it waits for a data
+  source that measures it.)
+- AAR Compare tiles: new "This game" tile, and This game / Last 30 PA / Season are colored red-white-green vs the
+  MLB average, the same scale used across the site.
+
 ## v22.5 – 2026-11-15
 - 3D swing view in the AAR: a cube icon next to the video icon on every swing that made contact (fouls + balls in
   play). It opens over the AAR (everything behind greys out; close with ✕, Esc or clicking the grey) and shows:
