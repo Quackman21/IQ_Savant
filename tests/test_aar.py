@@ -87,14 +87,18 @@ def test_component_renders_every_piece():
                  pxc=[1.0 if c == c else float("nan") for c in p["cx"]])
     pas = aar.plate_appearances(p)
     tiles = {k: [("Last 30 PA", "1"), ("Season", "2"), ("MLB season", "3")] for k in aar.GAME_METRICS}
-    html = aar_ui.component_html(p, pas, aar.box_line(feed(), 1), tiles, aar.GAME_METRICS, "No measured contact.")
+    html = aar_ui.component_html(p, pas, aar.box_line(feed(), 1), tiles, aar.GAME_METRICS, "No measured contact.",
+                                 {"leftLine": 315, "center": 404, "rightLine": 322}, "Fenway Park")
     assert html.count('<tr class="pa-h"') == 4                         # one table, one header row per PA
     assert html.count("<table class=\"p\">") == 1
     assert html.count('<tr class="row') == 12 and "tr.row{display:none" in html     # every PA starts collapsed
     assert html.count('<g class="pt"') == 12 + 3 + 4      # zone 12, spray 3 balls in play, contact 4 (fouls + in play)
     assert 'data-n="1" data-pa="1"' in html and "sporty-videos?playId=vid-3-1" in html
     assert "<svg viewBox=\"0 0 24 24\"" in html                        # camera is an icon, not an emoji
-    assert "Last 30 PA" in html and 'id="metric"' in html
+    assert "Last 30 PA" in html and '<option value="GD%" selected>' in html      # Good decision % by default
+    assert "allPA.forEach(p => open.add(p))" in html                           # every PA open to start
+    assert html.count('class="chip-f on"') == len(set(p["ptype"])) and 'data-h="L"' in html   # filters
+    assert ">404<" in html and "Fenway Park" in html                           # this park's fence
 
 
 def test_decision_labels():
@@ -103,36 +107,49 @@ def test_decision_labels():
     assert aar.decision_label(-0.4) == "Poor" and aar.decision_label(float("nan")) == ""
 
 
-def test_plate_calibration_places_contact_on_the_plate():
-    rng = np.random.default_rng(3)
-    n = 120
-    # RHB, center of mass 30" behind the front of the plate and 26" off the inside edge (Statcast stance)
-    stance = {"depth": 30.0, "off": 26.0}
-    front_body, away_body = rng.normal(33, 4, n), rng.normal(34.5, 3, n)     # from his hips, out front / away
-    season = pd.DataFrame({"stand": "R", aar.CONTACT_Y: front_body, aar.CONTACT_X: away_body})
-    cal = aar.plate_calibration(season, (1, 1), stance)
-    assert cal["depth"] == 30 and cal["off"] == 26
-    p = pd.DataFrame({"stand": ["R", "L"], "cx": [34.5, 34.5], "cy": [33.0, 33.0], "pa": [1, 2]})
-    on = aar.on_plate(p, cal)
-    assert len(p.join(on).columns) == 7                                 # joins onto the pitch table cleanly
-    assert abs(on["pf"].iloc[0] - 3.0) < 1e-9 and abs(on["paway"].iloc[0]) < 1e-9     # 3" out front, middle
-    assert on["pxc"].iloc[0] == -on["pxc"].iloc[1] or abs(on["pxc"].iloc[0]) < 1e-9
-    # stance given with the opposite sign convention still lands on the plate
-    cal2 = aar.plate_calibration(season, (1, 1), {"depth": -30.0, "off": -26.0})
-    assert cal2["depth"] == 30 and cal2["off"] == 26
-    assert aar.plate_calibration(season, None, stance) is None
+def _season_swings(n=300, X0=-30.0, F0=-28.0, sx=1, seed=4):
+    """A RHB whose hips sit 30" off the middle of the plate and 28" behind its front edge (catcher's view)."""
+    rng = np.random.default_rng(seed)
+    slope = rng.normal(0, 0.06, n)
+    vy0, ay = -130.0, 28.0
+    a, b, c = 0.5 * ay, vy0, 50 - aar.FRONT_Y
+    t = (-b - np.sqrt(b * b - 4 * a * c)) / (2 * a)
+    vx0 = slope * (vy0 + ay * t)                                  # ax = 0 -> this slope at the plate
+    px = rng.uniform(-1, 1, n)                                    # ft, where the ball crosses the front
+    cy = rng.normal(31, 5, n)                                     # contact, inches out front of his hips
+    f = F0 + cy                                                   # ... = inches in front of the plate
+    x_ball = px * 12 + slope * f                                  # where the ball is when he hits it
+    cx = sx * (x_ball - X0) + rng.normal(0, 0.8, n)
+    return pd.DataFrame({"stand": "R", "plate_x": px, "vx0": vx0, "vy0": vy0, "ax": 0.0, "ay": ay,
+                         aar.CONTACT_X: cx, aar.CONTACT_Y: cy})
 
 
-def test_stance_lookup_and_last_30_pa():
-    board = pd.DataFrame({"player_id": [1, 2], "avg_batter_y_position": [29.5, 31.0],
-                          "avg_batter_x_position": [27.0, 25.0], "avg_intercept_y_vs_batter": [30, 31]})
-    assert aar.stance_for(board, 1) == {"depth": 29.5, "off": 27.0}
-    assert aar.stance_for(board, 9) is None and aar.stance_for(pd.DataFrame(), 1) is None
+def test_plate_calibration_learns_where_he_stands_from_his_swings():
+    season = _season_swings()
+    cal = aar.plate_calibration(season, (1, 1))
+    r = cal["R"]
+    assert abs(r["F0"] + 28) < 2.5 and abs(r["X0"] + 30) < 1.5 and r["sx"] == 1 and r["n"] > 250
+    flipped = aar.plate_calibration(_season_swings(sx=-1), (1, 1))["R"]       # other axis direction -> found
+    assert flipped["sx"] == -1 and abs(flipped["F0"] + 28) < 2.5
+    assert aar.plate_calibration(season.head(20), (1, 1)) is None              # too few swings
+    # place one swing: 3" out front of the plate, ball over the middle
+    one = pd.DataFrame({"stand": ["R"], "cx": [30.0], "cy": [31.0], "px": [0.0], "slope": [0.0], "pa": [1]})
+    on = aar.on_plate(one, cal)
+    assert abs(on["pf"].iloc[0] - (r["F0"] + 31)) < 1e-9 and abs(on["pxc"].iloc[0]) < 1e-9
+    assert len(one.join(on).columns) == 8
+
+
+def test_field_dims_and_last_30_pa():
+    fd = {"gameData": {"venue": {"fieldInfo": {"leftLine": 315, "leftCenter": 370, "center": 404,
+                                                "rightCenter": 370, "rightLine": 322, "capacity": 25000}}}}
+    assert aar.field_dims(fd) == {"leftLine": 315.0, "leftCenter": 370.0, "center": 404.0, "rightCenter": 370.0,
+                                  "rightLine": 322.0}
+    assert aar.field_dims({}) == {}
     g = game()
     many = pd.concat([g.assign(game_pk=k, game_date=f"2026-08-{k:02d}") for k in range(1, 11)])
     last = aar.last_pas(many, 30)
     assert last.groupby(["game_pk", "at_bat_number"]).ngroups == 30
-    assert last["game_pk"].min() >= 3                                    # the most recent games only
+    assert last["game_pk"].min() >= 3
 
 
 def test_box_score_has_aar_links():

@@ -88,7 +88,8 @@ def _shape(kind: str, x: float, y: float, r: float, fill: str) -> str:
 
 def _mark(r, kind: str, x: float, y: float, fill: str, rad: float = 8.5) -> str:
     dy = 1.6 if kind in ("Breaking", "LD") else -1.3 if kind == "GB" else 0
-    return (f'<g class="pt" data-n="{r.n}" data-pa="{r.pa}">{_shape(kind, x, y, rad, fill)}'
+    return (f'<g class="pt" data-n="{r.n}" data-pa="{r.pa}" data-pt="{escape(str(r.ptype))}" '
+            f'data-hand="{escape(str(r.p_throws))}">{_shape(kind, x, y, rad, fill)}'
             f'<text x="{x:.1f}" y="{y + dy + 2.7:.1f}" text-anchor="middle">{r.n}</text></g>')
 
 
@@ -122,26 +123,50 @@ def zone_svg(p: pd.DataFrame) -> str:
     return _chart("Pitch location", "catcher's view", f'<svg viewBox="0 0 {W} {H}">{"".join(g)}</svg>', leg)
 
 
-def spray_svg(p: pd.DataFrame) -> str:
+DEFAULT_DIMS = {"leftLine": 330, "leftCenter": 375, "center": 400, "rightCenter": 375, "rightLine": 330}
+ANGLES = {"leftLine": -45, "left": -33.75, "leftCenter": -22.5, "center": 0, "rightCenter": 22.5, "right": 33.75,
+          "rightLine": 45}
+
+
+def _fence(dims: dict, pt) -> str:
+    """Smooth fence through the park's published distances (Catmull-Rom curve)."""
+    import math as m
+    pts = [pt(dims[k] * m.sin(m.radians(a)), dims[k] * m.cos(m.radians(a))) for k, a in ANGLES.items() if k in dims]
+    d = f"L{pts[0][0]:.1f},{pts[0][1]:.1f}"
+    for i in range(len(pts) - 1):
+        p0, p1, p2 = pts[max(i - 1, 0)], pts[i], pts[i + 1]
+        p3 = pts[min(i + 2, len(pts) - 1)]
+        c1 = (p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6)
+        c2 = (p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6)
+        d += f" C{c1[0]:.1f},{c1[1]:.1f} {c2[0]:.1f},{c2[1]:.1f} {p2[0]:.1f},{p2[1]:.1f}"
+    return d
+
+
+def spray_svg(p: pd.DataFrame, dims: dict | None = None, park: str = "") -> str:
     W, H = 290, 300
-    hx, hy, s = W / 2, 282, 0.6
+    dims = dims or DEFAULT_DIMS
+    far = max(dims.values())
+    s = 268 / (far + 15)
+    hx, hy = W / 2, 288
     pt = lambda fx, fy: (hx + fx * s, hy - fy * s)
-    lf, rf, lc, rc, cf = pt(-233, 233), pt(233, 233), pt(-265, 315), pt(265, 315), pt(0, 405)
-    g = [f'<path d="M{hx},{hy} L{lf[0]:.1f},{lf[1]:.1f} Q{lc[0]:.1f},{lc[1] - 40:.1f} {cf[0]:.1f},{cf[1]:.1f} '
-         f'Q{rc[0]:.1f},{rc[1] - 40:.1f} {rf[0]:.1f},{rf[1]:.1f} Z" fill="#eef5ef" stroke="#9fb9be"/>']
+    g = [f'<path d="M{hx},{hy} {_fence(dims, pt)} Z" fill="#eef5ef" stroke="#7fa3a9" stroke-width="1.3"/>']
     b1, b2, b3 = pt(63.6, 63.6), pt(0, 127.3), pt(-63.6, 63.6)
     g.append(f'<path d="M{hx},{hy} L{b1[0]:.1f},{b1[1]:.1f} L{b2[0]:.1f},{b2[1]:.1f} L{b3[0]:.1f},{b3[1]:.1f} Z" '
              f'fill="#f4ede2" stroke="#c9b48f"/>')
+    for k, anchor, dx in (("leftLine", "start", 5), ("center", "middle", 0), ("rightLine", "end", -5)):
+        a = ANGLES[k]
+        x, y = pt(dims[k] * math.sin(math.radians(a)), dims[k] * math.cos(math.radians(a)))
+        g.append(f'<text x="{x + dx:.1f}" y="{y - 4:.1f}" class="ax" text-anchor="{anchor}">{dims[k]:.0f}</text>')
     for r in p.itertuples():
         if r.bip and r.hc_x == r.hc_x and r.hc_y == r.hc_y:
             x, y = pt((r.hc_x - 125.42) * 2.5, (198.27 - r.hc_y) * 2.5)
             g.append(_mark(r, r.bb or "GB", max(9, min(W - 9, x)), max(9, min(H - 9, y)), _res_color(r.play)))
     leg = ("▼ GB ▲ LD ◆ FB ■ PU &nbsp;" + " ".join(f'<i style="color:{c}">●</i> {k.replace("Home run", "HR")}'
                                                  for k, c in RES_COLOR.items()) + f' <i style="color:{OUT_COLOR}">●</i> Out')
-    return _chart("Spray", "", f'<svg viewBox="0 0 {W} {H}">{"".join(g)}</svg>', leg)
+    return _chart("Spray", escape(park), f'<svg viewBox="0 0 {W} {H}">{"".join(g)}</svg>', leg)
 
 
-def contact_svg(p: pd.DataFrame, note: str) -> str:
+def contact_svg(p: pd.DataFrame, note: str, tip: str = "") -> str:
     """Point of contact on the plate (catcher's view): front-center of the plate = 0, 0; up = out in front."""
     have = p[p["swing"] & p["pf"].notna() & p["pxc"].notna()]
     if have.empty:
@@ -167,7 +192,7 @@ def contact_svg(p: pd.DataFrame, note: str) -> str:
     leg = (f'<i style="color:#b8322a">●</i> Whiff <i style="color:{SWING}">●</i> Foul &nbsp;in play: shape = BB type, '
            f'color = result &nbsp;<span class="faint">inches · catcher\'s view</span>')
     return _chart("Point of contact", "on the plate", f'<svg viewBox="0 0 {W} {H}">{"".join(g)}</svg>', leg,
-                  tip=note)
+                  tip=tip)
 
 
 def _chart(title: str, sub: str, body: str, leg: str, tip: str = "") -> str:
@@ -233,7 +258,8 @@ def table_html(p: pd.DataFrame, pas: list[dict]) -> str:
                  f'<b>{escape(pa["result"])}</b>{ex}<span class="dr">{dr}</span></div></td></tr>')
         for r in pa["rows"].itertuples():
             tds = "".join(f'<td class="{a}" style="{st}">{h}</td>' for (k, _, a) in cols for h, st in [_cell(k, r)])
-            body += f'<tr class="row{" bip" if r.bip else ""}" data-n="{r.n}" data-pa="{pa["i"]}">{tds}</tr>'
+            body += (f'<tr class="row{" bip" if r.bip else ""}" data-n="{r.n}" data-pa="{pa["i"]}" '
+                     f'data-pt="{escape(str(r.ptype))}" data-hand="{escape(str(r.p_throws))}">{tds}</tr>')
     return f'<table class="p"><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table>'
 
 
@@ -270,6 +296,15 @@ g.pt.sel .m{{stroke:#111;stroke-width:2.2;filter:drop-shadow(0 0 4px rgba(255,19
 .bar .ttl{{font:700 15px system-ui;margin-right:auto}}
 .bar button{{font:600 12px system-ui;border:1px solid {LINE};background:#fff;border-radius:7px;padding:5px 10px;cursor:pointer}}
 .bar button:hover{{border-color:{TEAL};color:{TEAL}}} .bar .sel-n{{font:600 12px system-ui;color:{TEAL}}}
+.filters{{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 8px}}
+.filters .lab{{font:600 12px system-ui;color:{MUTED};margin-right:2px}} .filters .sep{{width:14px}}
+.chip-f{{font:700 12px ui-monospace,monospace;border:1.5px solid var(--c);color:var(--c);background:#fff;
+  border-radius:12px;padding:3px 9px;cursor:pointer;opacity:.45}}
+.chip-f.on{{background:var(--c);color:#fff;opacity:1}}
+.seg{{display:inline-flex;border:1px solid {LINE};border-radius:8px;overflow:hidden}}
+.seg button{{font:600 12px system-ui;border:none;background:#fff;padding:4px 10px;cursor:pointer;color:{INK}}}
+.seg button.on{{background:{TEAL};color:#fff}} #shown{{margin-left:6px}}
+g.pt.filt,tr.row.filt,tr.pa-h.filt{{display:none!important}}
 .wrap{{overflow-x:auto;background:#fff;border:1px solid {LINE};border-radius:10px}}
 table.p{{border-collapse:collapse;width:100%;white-space:nowrap}}
 table.p th{{font:600 11px system-ui;color:{MUTED};padding:7px;border-bottom:1.5px solid {TEAL};position:sticky;top:0;background:#fff}}
@@ -292,18 +327,28 @@ a.vid{{color:{TEAL};display:inline-flex}} a.vid:hover{{color:{INK}}}
 
 JS = """
 const root = document.getElementById('aar');
-const open = new Set(), sel = new Set();
+const open = new Set(), sel = new Set(), types = new Set();
 const allPA = [...document.querySelectorAll('tr.pa-h')].map(h => h.dataset.pa);
+allPA.forEach(p => open.add(p));                       // every PA open to start
+document.querySelectorAll('.chip-f').forEach(c => types.add(c.dataset.f));
+let hand = '';
+const pass = el => types.has(el.dataset.pt) && (!hand || el.dataset.hand === hand);
 function apply() {
   document.querySelectorAll('tr.pa-h').forEach(h => h.classList.toggle('open', open.has(h.dataset.pa)));
+  const live = new Set(); let n = 0, tot = 0;
   document.querySelectorAll('tr.row').forEach(r => {
+    const ok = pass(r); tot++; if (ok) { n++; live.add(r.dataset.pa); }
+    r.classList.toggle('filt', !ok);
     r.classList.toggle('show', open.has(r.dataset.pa));
     r.classList.toggle('sel', sel.has(r.dataset.n));
   });
+  document.querySelectorAll('tr.pa-h').forEach(h => h.classList.toggle('filt', !live.has(h.dataset.pa)));
   document.querySelectorAll('g.pt').forEach(g => {
+    g.classList.toggle('filt', !pass(g));
     g.classList.toggle('hide', open.size > 0 && !open.has(g.dataset.pa));
     g.classList.toggle('sel', sel.has(g.dataset.n));
   });
+  document.getElementById('shown').textContent = n < tot ? `${n} of ${tot} pitches` : '';
   root.classList.toggle('has-sel', sel.size > 0);
   document.getElementById('seln').textContent = sel.size ? sel.size + ' selected' : '';
   document.getElementById('scope').textContent = open.size ? 'charts: open PAs' : 'charts: whole game';
@@ -318,6 +363,10 @@ document.querySelectorAll('g.pt').forEach(g => g.addEventListener('click', () =>
 document.getElementById('expand').onclick = () => { allPA.forEach(p => open.add(p)); apply(); };
 document.getElementById('collapse').onclick = () => { open.clear(); apply(); };
 document.getElementById('clear').onclick = () => { sel.clear(); apply(); };
+document.querySelectorAll('.chip-f').forEach(c => c.onclick = () => {
+  toggle(types, c.dataset.f); c.classList.toggle('on', types.has(c.dataset.f)); apply(); });
+document.querySelectorAll('#hand button').forEach(b => b.onclick = () => {
+  hand = b.dataset.h; document.querySelectorAll('#hand button').forEach(x => x.classList.toggle('on', x === b)); apply(); });
 const tiles = JSON.parse(document.getElementById('tiles-data').textContent);
 const pick = document.getElementById('metric');
 function showTiles() {
@@ -334,15 +383,24 @@ showTiles(); apply(); window.addEventListener('load', resize);
 
 
 def component_html(p: pd.DataFrame, pas: list[dict], line: dict, tiles: dict, metric_names: dict,
-                   contact_note: str) -> str:
-    opts = "".join(f'<option value="{escape(k)}">{escape(v)}</option>' for k, v in metric_names.items())
+                   contact_note: str, dims: dict | None = None, park: str = "", default_metric: str = "GD%",
+                   contact_tip: str = "") -> str:
+    opts = "".join(f'<option value="{escape(k)}"{" selected" if k == default_metric else ""}>{escape(v)}</option>'
+                   for k, v in metric_names.items())
     left = (f'<div class="left"><div class="card">{line_html(line)}</div>'
             f'<div class="card tiles"><div class="hd"><span class="lab">Compare</span>'
             f'<select id="metric">{opts}</select></div><div class="row" id="tiles"></div></div></div>')
-    charts = f'<div class="card charts">{zone_svg(p)}{spray_svg(p)}{contact_svg(p, contact_note)}</div>'
+    charts = f'<div class="card charts">{zone_svg(p)}{spray_svg(p, dims, park)}{contact_svg(p, contact_note, contact_tip)}</div>'
+    types = [t for t in pd.unique(p["ptype"]) if t]
+    chips = "".join(f'<button class="chip-f on" data-f="{escape(t)}" style="--c:{PT_COLOR.get(t, INK)}">'
+                    f'{escape(t)}</button>' for t in types)
+    filt = ('<div class="filters"><span class="lab">Pitch types</span>' + chips +
+            '<span class="sep"></span><span class="lab">Pitcher</span><div class="seg" id="hand">'
+            '<button class="on" data-h="">All</button><button data-h="R">vs RHP</button>'
+            '<button data-h="L">vs LHP</button></div><span class="faint" id="shown"></span></div>')
     bar = ('<div class="bar"><span class="ttl">Plate appearances</span><span class="sel-n" id="seln"></span>'
            '<span class="faint" id="scope"></span><button id="expand">Open all</button>'
-           '<button id="collapse">Collapse all</button><button id="clear">Clear selection</button></div>')
+           '<button id="collapse">Collapse all</button><button id="clear">Clear selection</button></div>' + filt)
     data = json.dumps(tiles).replace("</", "<\\/")
     return (f'<!doctype html><html><head><meta charset="utf-8"><style>{CSS}</style></head><body>'
             f'<div id="aar"><div class="top">{left}{charts}</div>{bar}'
@@ -350,6 +408,6 @@ def component_html(p: pd.DataFrame, pas: list[dict], line: dict, tiles: dict, me
             f'<script type="application/json" id="tiles-data">{data}</script><script>{JS}</script></body></html>')
 
 
-def estimate_height(n_pas: int) -> int:
-    """Starting height before the panel reports its own (all PAs collapsed)."""
-    return 470 + 40 * n_pas + 60
+def estimate_height(n_pas: int, n_pitches: int) -> int:
+    """Starting height before the panel reports its own (every PA open)."""
+    return 560 + 40 * n_pas + 34 * n_pitches + 40

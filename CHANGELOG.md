@@ -1,5 +1,18 @@
 # IQ Savant – version history
 
+## v21.2 – 2026-11-14
+- Point of contact on the plate WITHOUT the stance download: contact happens where the ball is, and Statcast
+  tracks the ball. Across his season's swings, how his contact point (measured from his hips) shifts with each
+  pitch's angle into the plate pins down where his hips are in the box -- a straight-line fit per batting side
+  (tested: recovers a hitter's spot within ~1" from 300 swings). Each contact is then drawn where the ball was:
+  front-center of the plate = 0, 0. Hover the chart for how many swings and the ± on his depth.
+- Every PA open by default (all pitches showing); collapsing them all still shows every pitch on the charts.
+- Spray chart = the actual park: fence drawn from MLB's published distances for that venue (lines, alleys,
+  center), labeled with the line / center distances.
+- Compare defaults to Good decision %.
+- Filters above the table: pitch types (click to toggle each) and pitcher hand (All / vs RHP / vs LHP) -- the
+  table, all three charts and selections follow.
+
 ## v21.1 – 2026-11-14
 - AAR rebuilt as ONE interactive panel (v21.0's charts never drew -- the page's HTML cleaner strips SVG -- and
   the PAs came out as separate tables):

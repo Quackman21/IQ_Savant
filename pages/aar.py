@@ -12,7 +12,7 @@ import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
 
-from core import aar, game_feed, league_ref, mlb_api, savant
+from core import aar, game_feed, league_ref, mlb_api
 from core.statcast_clean import clean
 from ui import aar as aar_ui
 from ui import data
@@ -36,9 +36,16 @@ def league(season: int) -> dict:
     return league_ref.load(season)
 
 
-@st.cache_data(ttl=24 * 3600, show_spinner=False)
-def stance_board(season: int) -> pd.DataFrame:
-    return savant.batting_stance(season)
+@st.cache_data(ttl=7 * 24 * 3600, show_spinner=False)
+def venue_dims(venue_id: int) -> dict:
+    """Fence distances for a park (MLB stats API), when the game feed doesn't carry them."""
+    try:
+        import requests
+        r = requests.get(f"https://statsapi.mlb.com/api/v1/venues/{venue_id}?hydrate=fieldInfo", timeout=15)
+        v = (r.json().get("venues") or [{}])[0]
+        return aar.field_dims({"gameData": {"venue": v}})
+    except Exception:
+        return {}
 
 
 try:
@@ -84,22 +91,28 @@ if not season_sc.empty and "game_type" in season_sc:
 p = aar.pitches(sc, f)
 pas = aar.plate_appearances(p)
 
-# point of contact on the plate: Statcast measures it from his center of mass; his stance places that on the plate
+# point of contact on the plate: Statcast measures it from his hips; his own season's swings (where the ball was vs
+# where he met it) place his hips in the box, so every contact point lands on the plate -- no stance download
 orient = aar.contact_orientation(season_sc)
-stance = aar.stance_for(stance_board(season), pid)
-cal = aar.plate_calibration(season_sc, orient, stance)
+cal = aar.plate_calibration(season_sc, orient)
 p = p.join(aar.on_plate(p, cal))
 pas = aar.plate_appearances(p)
-if p["cx"].notna().any() and cal is None:
-    note = ("Contact measured, but his stance (Savant batting stance) isn't available to place it on the plate."
-            if stance is None else "Contact measured, but not enough of his season yet to place it on the plate.")
+if p["cx"].notna().any() and not cal:
+    note = "Contact measured, but he needs ~40 measured swings this season before it can be placed on the plate."
 else:
     note = "No measured contact."
 
+tip = "; ".join(f'{"RHB" if k == "R" else "LHB"}: placed from {c["n"]} of his swings this season (his hips sit '
+                f'{-c["F0"]:.0f}" ± {c["se"]:.0f}" behind the front of the plate)' for k, c in (cal or {}).items())
+
+dims = aar.field_dims(f) or venue_dims(int(f.get("gameData", {}).get("venue", {}).get("id", 0) or 0))
+
 tiles = aar.metric_values(aar.last_pas(season_sc, 30), season_sc, league(season))
-components.html(aar_ui.component_html(p, pas, line, tiles, aar.GAME_METRICS, note),
-                height=aar_ui.estimate_height(len(pas)), scrolling=True)
+components.html(aar_ui.component_html(p, pas, line, tiles, aar.GAME_METRICS, note, dims, hd["venue"],
+                                      contact_tip=tip),
+                height=aar_ui.estimate_height(len(pas), len(p)), scrolling=True)
 st.caption("Click any pitch on a chart or in the table to light it up everywhere; click more to compare. Opening "
            "plate appearances narrows the charts to those PAs. Decision = our swing-decision model on that exact "
            "pitch; Dec Runs = runs vs what an average hitter does with it. Point of contact: Statcast bat tracking "
-           "(from his center of mass) placed on the plate with his Statcast stance -- front-center of the plate = 0, 0.")
+           "placed on the plate from his own swings (front-center of the plate = 0, 0; hover the chart for how many). "
+           "The spray chart uses this park's real fence distances.")

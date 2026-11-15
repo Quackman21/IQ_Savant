@@ -98,6 +98,7 @@ def pitches(sc: pd.DataFrame, feed: dict | None = None) -> pd.DataFrame:
         "px": _num(d, "plate_x"), "pz": _num(d, "plate_z"), "sz_top": _num(d, "sz_top"),
         "sz_bot": _num(d, "sz_bot"), "hc_x": _num(d, "hc_x"), "hc_y": _num(d, "hc_y"),
         "cx": _num(d, CONTACT_X).where(swing), "cy": _num(d, CONTACT_Y).where(swing),
+        "slope": plate_slope(d),
     })
     # Savant's 2026 swing-timing / miss-distance fields, whatever they're called in the download
     for c in d.columns:
@@ -188,59 +189,80 @@ def contact_orientation(season: pd.DataFrame) -> tuple[int, int] | None:
 
 
 PLATE_HALF = 8.5             # inches: plate is 17" wide
+FRONT_Y = 17 / 12            # Statcast y of the FRONT edge of the plate (ft; y = 0 is the back point)
 
 
-def stance_for(board: pd.DataFrame, pid: int) -> dict | None:
-    """His average stance from Savant's batting stance board: {'depth': in. from the front of the plate,
-    'off': in. from the plate's inside edge} (center of mass, i.e. the midpoint of his hips)."""
-    if board is None or board.empty:
-        return None
-    low = {c.lower(): c for c in board.columns}
-    idc = next((c for lc, c in low.items() if "id" in lc and ("player" in lc or "batter" in lc)), None)
-    dc = next((c for lc, c in low.items() if ("depth" in lc or "batter_y" in lc) and "intercept" not in lc), None)
-    oc = next((c for lc, c in low.items() if (("off" in lc and "plate" in lc) or "batter_x" in lc)
-               and "intercept" not in lc), None)
-    if not (idc and dc and oc):
-        return None
-    row = board[pd.to_numeric(board[idc], errors="coerce") == pid]
-    if row.empty:
-        return None
-    d, o = pd.to_numeric(row[dc], errors="coerce").mean(), pd.to_numeric(row[oc], errors="coerce").mean()
-    return {"depth": float(d), "off": float(o)} if d == d and o == o else None
+def plate_slope(df: pd.DataFrame) -> pd.Series:
+    """How fast the ball is drifting sideways as it crosses the front of the plate (inches sideways per inch of
+    depth, catcher's view), from Statcast's pitch kinematics (velocity / acceleration measured at y = 50 ft)."""
+    vx0, vy0, ax, ay = (_num(df, c) for c in ("vx0", "vy0", "ax", "ay"))
+    a, b, c = 0.5 * ay, vy0, 50 - FRONT_Y
+    disc = (b * b - 4 * a * c).clip(lower=0)
+    t = (-b - np.sqrt(disc)) / (2 * a)
+    return (vx0 + ax * t) / (vy0 + ay * t)
 
 
-def plate_calibration(season: pd.DataFrame, orient: tuple[int, int] | None, stance: dict | None) -> dict | None:
-    """How to move Statcast's contact point (from his center of mass) onto the plate (front-center of the plate =
-    0, 0; + = out front / + = toward the far side of the plate). Statcast gives the stance as distances, so its sign
-    is settled by his own season: contact has to land around the plate, not two feet off it."""
-    if orient is None or stance is None or season is None or season.empty or CONTACT_Y not in season:
+def plate_calibration(season: pd.DataFrame, orient: tuple[int, int] | None = None) -> dict | None:
+    """Where his contact point sits on the plate, learned from his own swings -- no stance download.
+
+    Statcast measures contact from his center of mass (hips). Contact happens where the BALL is, and Statcast
+    tracks the ball: at f inches in front of the plate it's at plate_x + slope x f sideways. Pitches come in at
+    different angles (slopes), so across his swings
+        plate_x + slope x (depth from hips) - (side-to-side from hips)  =  X0 - slope x F0
+    is a straight line in slope: its tilt gives F0 (where his hips are, inches in front of the plate's front edge --
+    negative = behind it), its height X0 (how far off the plate). Fitted per batting side; the axis directions are
+    picked by which way fits his swings and puts him in a real batter's box."""
+    if season is None or season.empty or CONTACT_Y not in season or CONTACT_X not in season:
         return None
-    s = season[pd.to_numeric(season[CONTACT_Y], errors="coerce").notna()]
-    if len(s) < 25:
-        return None
-    sy, sx = orient
-    side = np.where(s["stand"].astype(str).eq("R"), 1, -1) if "stand" in s else 1
-    front = sy * pd.to_numeric(s[CONTACT_Y], errors="coerce")
-    away = sx * side * pd.to_numeric(s[CONTACT_X], errors="coerce")
-    pick = lambda options: min(options, key=lambda o: abs(o[1]))
-    d_sign, _ = pick([(sg, float((front - sg * stance["depth"]).median()) - 3) for sg in (1, -1)])
-    o_sign, _ = pick([(sg, float((away - PLATE_HALF - sg * stance["off"]).median())) for sg in (1, -1)])
-    return {"sy": sy, "sx": sx, "depth": d_sign * stance["depth"], "off": o_sign * stance["off"]}
+    s = season.copy()
+    s["_cx"], s["_cy"] = _num(s, CONTACT_X), _num(s, CONTACT_Y)
+    s["_s"], s["_px"] = plate_slope(s), _num(s, "plate_x") * 12
+    s = s.dropna(subset=["_cx", "_cy", "_s", "_px"])
+    out = {}
+    for side, g in s.groupby(s["stand"].astype(str) if "stand" in s else pd.Series("R", index=s.index)):
+        if len(g) < 40 or g["_s"].std() < 0.01:
+            continue
+        best = None
+        for sx in (1, -1):
+            for sy in ((orient[0],) if orient else (1, -1)):
+                z = g["_px"] + g["_s"] * sy * g["_cy"] - sx * g["_cx"]
+                slope, x0 = np.polyfit(g["_s"], z, 1)                  # fit, drop bad tracks by residual, refit
+                res = z - (x0 + slope * g["_s"])
+                keep = (res - res.median()).abs() <= max(3 * (res - res.median()).abs().median(), 1.5)
+                slope, x0 = np.polyfit(g.loc[keep, "_s"], z[keep], 1)
+                f0 = -slope
+                resid = float((z[keep] - (x0 + slope * g.loc[keep, "_s"])).std())
+                box_ok = -60 <= f0 <= 10 and 12 <= abs(x0) <= 60 and np.sign(x0) == (-1 if side == "R" else 1)
+                if box_ok and (best is None or resid < best["resid"]):
+                    se = resid / (float(g.loc[keep, "_s"].std()) * max(int(keep.sum()), 1) ** 0.5)
+                    best = {"sx": sx, "sy": sy, "F0": float(f0), "X0": float(x0), "n": int(keep.sum()), "resid": resid,
+                            "se": float(se)}
+        if best:
+            out[side] = best
+    return out or None
 
 
 def on_plate(p: pd.DataFrame, cal: dict | None) -> pd.DataFrame:
-    """Contact point on the plate for each swing: pf = inches out in front of the plate's front edge (0 = front of
-    the plate), paway = inches toward the far side from the middle of the plate (0 = middle), catcher's-view x too."""
-    out = pd.DataFrame({"pf": np.nan, "paway": np.nan, "pxc": np.nan}, index=p.index)
-    if cal is None or p.empty:
+    """Contact point on the plate for each measured swing: pf = inches in front of the plate's front edge
+    (0 = front of the plate), pxc = inches from the middle of the plate, catcher's view -- where the ball was."""
+    out = pd.DataFrame({"pf": np.nan, "pxc": np.nan}, index=p.index)
+    if not cal or p.empty:
         return out
-    side = np.where(p["stand"].astype(str).eq("R"), 1, -1)
-    front = cal["sy"] * p["cy"]
-    away = cal["sx"] * side * p["cx"]
-    out["pf"] = front - cal["depth"]
-    out["paway"] = away - PLATE_HALF - cal["off"]
-    out["pxc"] = side * out["paway"]                     # catcher's view: a RHB's far side is the catcher's right
+    for side, c in cal.items():
+        m = p["stand"].astype(str).eq(side) & p["cy"].notna()
+        if m.any():
+            pf = c["F0"] + c["sy"] * p.loc[m, "cy"]
+            out.loc[m, "pf"] = pf
+            out.loc[m, "pxc"] = p.loc[m, "px"] * 12 + p.loc[m, "slope"] * pf
     return out
+
+
+def field_dims(feed: dict) -> dict:
+    """Fence distances (ft) of the park this game was played in, from MLB's game feed."""
+    fi = feed.get("gameData", {}).get("venue", {}).get("fieldInfo", {}) if feed else {}
+    keys = ("leftLine", "left", "leftCenter", "center", "rightCenter", "right", "rightLine")
+    d = {k: float(fi[k]) for k in keys if isinstance(fi.get(k), (int, float))}
+    return d if {"leftLine", "center", "rightLine"} <= set(d) else {}
 
 
 def last_pas(season: pd.DataFrame, n: int = 30) -> pd.DataFrame:
@@ -255,8 +277,8 @@ def last_pas(season: pd.DataFrame, n: int = 30) -> pd.DataFrame:
     return s[s["_k"].isin(keep)].drop(columns=["_d", "_k"])
 
 
-GAME_METRICS = {"O-SWING%": "Chase% (O-Swing%)", "Z-SWING%": "Z-Swing%", "WHIFF%": "Whiff%",
-                "DEC RUNS/100": "Decision runs / 100", "GD%": "Good decision %", "xwOBA": "xwOBA",
+GAME_METRICS = {"GD%": "Good decision %", "O-SWING%": "Chase% (O-Swing%)", "Z-SWING%": "Z-Swing%", "WHIFF%": "Whiff%",
+                "DEC RUNS/100": "Decision runs / 100", "xwOBA": "xwOBA",
                 "EV": "Avg EV", "AVG BAT SPEED": "Avg bat speed"}
 
 
