@@ -210,18 +210,44 @@ def plate_slope(df: pd.DataFrame) -> pd.Series:
     return (vx0 + ax * t) / (vy0 + ay * t)
 
 
-# ---------------------------------------------------------------- hip position at contact (point of contact model)
-# Built + checked in prototypes/swing_map on World Series Game 5 (Ivan's swing-by-swing review + Savant's batting-stance
-# leaderboard as the referee -- Savant is never an input):
-#   * his swings place his hips: contact happens where the BALL is, the ball drifts sideways at a known rate, so
-#     (where the ball was) - (Statcast's contact-from-hips) traces a line in drift whose tilt = hip depth;
-#   * his hips get their own side-to-side spot vs LHP and vs RHP (drift flips with the pitcher's hand; without this
-#     Hicks / Palacios came out BEHIND their own stance);
-#   * recent swings count more (weight halves every 90 days; hitters move in the box);
-#   * each hitter is pulled toward the MLB average, harder when his own swings are noisy (Savant's at-contact feet put
-#     everyone in a narrow band -- raw fits spread far wider). Average miss vs Savant: 9.4" -> 5.5".
+# ---------------------------------------------------------------- point of contact vs the plate
+# MLB's own definition (glossary "Intercept Point"; it's how Savant's leaderboard builds "intercept Y vs plate"):
+#     contact vs the front of the plate = contact in front of his center of mass - his stance depth in the box
+# Statcast measures contact from his center of mass (midpoint of the hips); his stance depth (front of the plate ->
+# center of mass, measured 1 s before release) comes from Savant's batting-stance board.
+# Checked on World Series Game 5: the drift-fit "hips at contact" (v22.0) put contact ~25"+ out front on 6-7% of
+# swings and its implied forward move ran OPPOSITE to the real stride (r = -0.67 vs Savant's foot positions) -- a
+# method artifact. The drift fit now only stands in for hitters not on the stance board yet (calibrated to it).
 HIP_HALF_LIFE = 90.0
-HIP_GROUP_DEFAULT = {"mu": 19.4, "tau": 4.1}      # MLB average hips-at-contact (in behind the front) + real spread
+HIP_GROUP_DEFAULT = {"mu": 19.4, "tau": 4.1,          # drift fit across hitters (raw, inches behind the front)
+                     "offset": 9.6, "offset_sd": 3.9,  # stance depth - drift fit (2026, World Series hitters)
+                     "stance_mu": 28.0, "stance_sd": 3.6}  # Savant stance board, 737 hitter-sides
+
+
+def stance_depths(season: int) -> dict:
+    """{(batter id, 'R'/'L'): depth in the box (inches, front of the plate -> center of mass)} from Savant's
+    batting-stance board: data/batting_stance_<season>.csv (or last season's), else live from Savant (saved)."""
+    from pathlib import Path
+    d = Path(__file__).resolve().parents[1] / "data"
+    df = pd.DataFrame()
+    for yr in (season, season - 1):
+        f = d / f"batting_stance_{yr}.csv"
+        if f.exists():
+            df = pd.read_csv(f)
+            break
+    if df.empty:
+        try:
+            from core import savant
+            df = savant.batting_stance(season)
+            if not df.empty:
+                df.to_csv(d / f"batting_stance_{season}.csv", index=False)
+        except Exception:
+            df = pd.DataFrame()
+    if df.empty or "avg_batter_y_position" not in df:
+        return {}
+    side = df["side"] if "side" in df else df.get("bat_side", "R")
+    return {(int(b), str(sd)): float(v) for b, sd, v in zip(df["id"], side, df["avg_batter_y_position"])
+            if pd.notna(v)}
 
 
 def hip_group(season: int | None = None) -> dict:
@@ -262,24 +288,33 @@ def _hip_line(s_, z, L, w):
     return float(b[1]), float(b[0]), float(b[2]) if use_L else 0.0, se, int(k.sum())
 
 
-def plate_calibration(season: pd.DataFrame, asof: str | None = None, group: dict | None = None) -> dict | None:
-    """Where his hips are at contact (per batting side), learned from his own swings -- no stance download.
+def plate_calibration(season: pd.DataFrame, asof: str | None = None, group: dict | None = None,
+                      stance: dict | None = None) -> dict | None:
+    """Where Statcast's contact reference (his center of mass) sits vs the front of the plate, per batting side.
 
-    Returns {side: {"F0": inches in front of the plate's front edge (negative = behind), "X0", "se", "n", "raw",
-    "group", "sx", "sy"}}. Contact axes are what the data shows: Y = inches out in front of his hips, X = inches from
-    his hips toward the plate."""
+    stance: {'R'/'L': depth in the box} from Savant's stance board -> MLB's own plate-relative contact (exact to their
+    definition). A side that isn't on the board yet falls back to his swings: the drift fit, calibrated to the stance
+    board (+offset) and blended with the MLB stance average by how sure it is.
+    Returns {side: {"F0": inches in front of the plate's front edge (negative = behind), "source": "mlb"/"estimated",
+    "depth", "se", "n", ...}}."""
+    g_ = {**HIP_GROUP_DEFAULT, **(group or {})}
+    out = {}
+    for side, depth in (stance or {}).items():
+        out[side] = {"sx": 1 if side == "R" else -1, "sy": 1, "F0": -float(depth), "depth": float(depth),
+                     "source": "mlb", "se": 1.5, "n": None}
     if season is None or season.empty or CONTACT_Y not in season or CONTACT_X not in season:
-        return None
+        return out or None
     s = season[made_contact(season)].copy() if "description" in season else season.copy()   # contact swings only
     if "game_type" in s:
         s = s[~s["game_type"].astype(str).isin(["S", "E"])]                                  # no spring training
     s["_cx"], s["_cy"] = _num(s, CONTACT_X), _num(s, CONTACT_Y)
     s["_s"], s["_px"] = plate_slope(s), _num(s, "plate_x") * 12
     s = s.dropna(subset=["_cx", "_cy", "_s", "_px"])
-    g_ = group or HIP_GROUP_DEFAULT
     mu, tau2 = float(g_["mu"]), float(g_["tau"]) ** 2
-    out = {}
     for side, g in s.groupby(s["stand"].astype(str) if "stand" in s else pd.Series("R", index=s.index)):
+        if side in out:
+            out[side]["n"] = int(len(g))
+            continue
         if len(g) < 40 or g["_s"].std() < 0.01:
             continue
         sx = 1 if side == "R" else -1
@@ -294,11 +329,15 @@ def plate_calibration(season: pd.DataFrame, asof: str | None = None, group: dict
         if fit is None:
             continue
         slope, x0, dL, se, n = fit
-        raw = slope                                               # inches behind the front of the plate
-        k = tau2 / (tau2 + se ** 2)
-        est = mu + k * (raw - mu)                                 # pulled toward MLB, harder when he's noisy
-        out[side] = {"sx": sx, "sy": 1, "F0": -est, "X0": x0, "dL": dL, "n": n, "raw": raw, "group": mu,
-                     "se": float(math.sqrt(1 / (1 / tau2 + 1 / se ** 2))), "weight": float(k)}
+        raw = slope                                               # drift fit, inches behind the front of the plate
+        # stand-in for his stance depth: the fit + its calibration offset, blended with the MLB stance average
+        guess = raw + float(g_["offset"])
+        v_fit = float(g_["offset_sd"]) ** 2 + se ** 2
+        v_pop = float(g_["stance_sd"]) ** 2
+        k = v_pop / (v_pop + v_fit)
+        depth = float(g_["stance_mu"]) + k * (guess - float(g_["stance_mu"]))
+        out[side] = {"sx": sx, "sy": 1, "F0": -depth, "depth": depth, "source": "estimated", "X0": x0, "dL": dL,
+                     "n": n, "raw": raw, "weight": float(k), "se": float(math.sqrt(1 / (1 / v_pop + 1 / v_fit)))}
     return out or None
 
 

@@ -215,16 +215,17 @@ def spray_svg(p: pd.DataFrame, dims: dict | None = None, park: str = "", outline
                   tip=(outline or {}).get("note", ""))
 
 
-def contact_svg(p: pd.DataFrame, note: str, tip: str = "") -> str:
+def contact_svg(p: pd.DataFrame, note: str, tip: str = "", estimated: bool = False) -> str:
     """Point of contact on the plate (catcher's view): front-center of the plate = 0, 0; up = out in front."""
     have = p[p["pf"].notna() & p["pxc"].notna()]                 # fouls + balls in play only (see core.aar)
+    title = "Point of contact*" if estimated else "Point of contact"
     if have.empty:
-        return _chart("Point of contact*", "", f'<div class="none">{escape(note)}</div>', "")
-    W, H = 270, 300
-    xs = lambda v: W / 2 + v * 5.2
-    ys = lambda v: 165 - v * 5.2
+        return _chart(title, "", f'<div class="none">{escape(note)}</div>', "")
+    W, H = 270, 330
+    xs = lambda v: W / 2 + v * 4.6
+    ys = lambda v: 160 - v * 4.6                                 # 30" out front down to 35" behind the front
     g = []
-    for v in range(-20, 35, 5):
+    for v in range(-35, 35, 5):
         g.append(f'<line x1="22" y1="{ys(v):.1f}" x2="{W - 6}" y2="{ys(v):.1f}" stroke="#eef1f3" '
                  f'stroke-dasharray="{"" if v == 0 else "3 3"}"/><text x="18" y="{ys(v) + 3:.1f}" class="ax" '
                  f'text-anchor="end">{v}</text>')
@@ -238,10 +239,11 @@ def contact_svg(p: pd.DataFrame, note: str, tip: str = "") -> str:
         color = _res_color(r.play) if r.bip else SWING
         x, y = max(9, min(W - 9, xs(r.pxc))), max(9, min(H - 16, ys(r.pf)))
         g.append(_mark(r, r.bb if r.bip else "", x, y, color))
-    leg = (f'<b>*</b> side to side = where the ball was; front to back uses his estimated hip position '
-           f'(Statcast measures contact from his hips) &nbsp; <i style="color:{SWING}">●</i> Foul &nbsp;in play: shape = BB type, '
+    how = ('<b>*</b> front to back estimated -- he isn\'t on Savant\'s stance board yet' if estimated else
+           'front to back = MLB\'s contact point vs the plate; side to side = where the ball was')
+    leg = (f'{how} &nbsp; <i style="color:{SWING}">●</i> Foul &nbsp;in play: shape = BB type, '
            f'color = result &nbsp;<span class="faint">inches · catcher\'s view</span>')
-    return _chart("Point of contact*", "on the plate", f'<svg viewBox="0 0 {W} {H}">{"".join(g)}</svg>', leg,
+    return _chart(title, "on the plate", f'<svg viewBox="0 0 {W} {H}">{"".join(g)}</svg>', leg,
                   tip=tip)
 
 
@@ -434,13 +436,13 @@ showTiles(); apply(); window.addEventListener('load', resize);
 
 def component_html(p: pd.DataFrame, pas: list[dict], line: dict, tiles: dict, metric_names: dict,
                    contact_note: str, dims: dict | None = None, park: str = "", default_metric: str = "GD%",
-                   contact_tip: str = "", outline: dict | None = None) -> str:
+                   contact_tip: str = "", outline: dict | None = None, contact_est: bool = False) -> str:
     opts = "".join(f'<option value="{escape(k)}"{" selected" if k == default_metric else ""}>{escape(v)}</option>'
                    for k, v in metric_names.items())
     left = (f'<div class="left"><div class="card">{line_html(line)}</div>'
             f'<div class="card tiles"><div class="hd"><span class="lab">Compare</span>'
             f'<select id="metric">{opts}</select></div><div class="row" id="tiles"></div></div></div>')
-    charts = f'<div class="card charts">{zone_svg(p)}{spray_svg(p, dims, park, outline)}{contact_svg(p, contact_note, contact_tip)}</div>'
+    charts = f'<div class="card charts">{zone_svg(p)}{spray_svg(p, dims, park, outline)}{contact_svg(p, contact_note, contact_tip, contact_est)}</div>'
     types = [t for t in pd.unique(p["ptype"]) if t]
     chips = "".join(f'<button class="chip-f on" data-f="{escape(t)}" style="--c:{PT_COLOR.get(t, INK)}">'
                     f'{escape(t)}</button>' for t in types)

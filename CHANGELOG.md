@@ -1,5 +1,17 @@
 # IQ Savant – version history
 
+## v22.1 – 2026-11-15
+- Point of contact vs the plate now uses MLB's own definition: Statcast's contact point (inches in front of his
+  center of mass) minus his stance depth from Savant's batting-stance board -- exactly how Savant builds "intercept Y
+  vs plate" (MLB glossary: 2024 range ~16" in front of the plate to ~4" behind).
+- Why: v22.0's drift-fit "hips at contact" put 6-7% of contact 25"+ out front, and its implied hip move ran OPPOSITE
+  to the real stride (r = -0.67 against Savant's at-contact foot positions) -- a method artifact, not the swing.
+  Under MLB's definition World Series Game 5 runs ~10" behind to ~10" in front of the plate, nothing past 20".
+- The asterisk is gone for anyone on the stance board (data/batting_stance_2026.csv, 737 hitter-sides; refreshed
+  from Savant when a season's file is missing). Hitters not on it yet keep the asterisk: their stance depth is
+  estimated from their swings (drift fit, calibrated to the board, blended with the MLB average stance).
+- Chart now runs 35" behind to 30" in front so very late contact isn't pinned to the edge.
+
 ## v22.0 – 2026-11-15
 - Point of contact: new hip-position model (built + checked in prototypes/swing_map on World Series Game 5, with
   Ivan's swing-by-swing review and Savant's batting-stance leaderboard as the referee -- Savant is never an input):

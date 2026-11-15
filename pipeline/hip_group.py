@@ -1,4 +1,5 @@
-"""MLB-wide hip-position reference for the point-of-contact model, + the Savant check.
+"""Calibrates the stand-in used for hitters who aren't on Savant's batting-stance board yet (the AAR uses MLB's own
+contact-vs-plate -- contact from the hips minus stance depth -- whenever the board has him).
 
     python -m pipeline.hip_group ~/Desktop/swing_data/league_2026.csv.gz [batting-stance.csv]
 
@@ -34,8 +35,20 @@ def main(argv: list[str]) -> None:
     se = np.array([v[1] for v in raw.values()])
     mu = float(F.mean())
     tau = float(np.sqrt(max(F.var(ddof=1) - (se ** 2).mean(), 1.0)))
+    ref = {"mu": round(mu, 2), "tau": round(tau, 2), "n_hitters": len(raw)}
+    # calibrate the drift fit to Savant's stance board -- it's only the stand-in for hitters not on the board yet
+    stance = aar.stance_depths(season)
+    pairs = [(stance[k], v[0], v[1]) for k, v in raw.items() if k in stance]
+    if len(pairs) >= 20:
+        d_, f_, s_ = map(np.array, zip(*pairs))
+        off = d_ - f_
+        ref.update({"offset": round(float(off.mean()), 2),
+                    "offset_sd": round(float(np.sqrt(max(off.var(ddof=1) - (s_ ** 2).mean(), 1.0))), 2),
+                    "stance_mu": round(float(np.mean(list(stance.values()))), 2),
+                    "stance_sd": round(float(np.std(list(stance.values()), ddof=1)), 2), "n_calibrated": len(pairs)})
     out = Path(__file__).resolve().parents[1] / "data" / f"hip_group_{season}.json"
-    out.write_text(json.dumps({"mu": round(mu, 2), "tau": round(tau, 2), "n_hitters": len(raw)}))
+    out.write_text(json.dumps(ref))
+    print(ref)
     print(f"{len(raw)} hitter-sides: MLB average hips {mu:.1f}\" behind the front of the plate, real spread ±{tau:.1f}\" "
           f"(raw spread ±{F.std():.1f}\", fitting noise ±{np.sqrt((se ** 2).mean()):.1f}\") -> {out}")
 

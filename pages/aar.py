@@ -36,6 +36,11 @@ def league(season: int) -> dict:
     return league_ref.load(season)
 
 
+@st.cache_data(ttl=24 * 3600, show_spinner=False)
+def stance_board(season: int) -> dict:
+    return aar.stance_depths(season)
+
+
 @st.cache_data(ttl=7 * 24 * 3600, show_spinner=False)
 def venue_dims(venue_id: int) -> dict:
     """Fence distances for a park (MLB stats API), when the game feed doesn't carry them."""
@@ -104,7 +109,8 @@ pas = aar.plate_appearances(p)
 
 # point of contact on the plate: Statcast measures it from his hips; his own season's swings (where the ball was vs
 # where he met it) place his hips in the box, so every contact point lands on the plate -- no stance download
-cal = aar.plate_calibration(hip_sc, asof=gday, group=aar.hip_group(season))
+stance = {sd: d for (b, sd), d in stance_board(season).items() if b == pid}
+cal = aar.plate_calibration(hip_sc, asof=gday, group=aar.hip_group(season), stance=stance)
 p = p.join(aar.on_plate(p, cal))
 pas = aar.plate_appearances(p)
 if p["cx"].notna().any() and not cal:
@@ -112,10 +118,18 @@ if p["cx"].notna().any() and not cal:
 else:
     note = "No measured contact."
 
-tip = "; ".join(f'{"RHB" if k == "R" else "LHB"}: his hips are ~{-c["F0"]:.0f}" (± {2 * c["se"]:.0f}") behind the front '
-                f'of the plate at contact -- {c["n"]} of his swings ({c["weight"]:.0%}) blended with the MLB average '
-                f'({c["group"]:.0f}"); side to side + height are where the ball was'
-                for k, c in (cal or {}).items())
+def _tip(k, c):
+    hand = "RHB" if k == "R" else "LHB"
+    if c["source"] == "mlb":
+        return (f'{hand}: MLB\'s contact point vs the plate -- Statcast\'s contact (from his hips) minus his stance '
+                f'depth ({c["depth"]:.1f}" from the front of the plate, Savant stance board); side to side + height = '
+                f'where the ball was')
+    return (f'{hand}: not on Savant\'s stance board yet -- stance depth estimated from {c["n"]} of his swings '
+            f'(~{c["depth"]:.0f}" ± {2 * c["se"]:.0f}")')
+
+
+tip = "; ".join(_tip(k, c) for k, c in (cal or {}).items())
+estimated = any(c["source"] != "mlb" for c in (cal or {}).values())
 
 dims = aar.field_dims(f) or venue_dims(int(f.get("gameData", {}).get("venue", {}).get("id", 0) or 0))
 home_name = teams.get(hd["home"], {}).get("name", "") or f.get("gameData", {}).get("teams", {}).get("home", {}).get("name", "")
@@ -123,10 +137,10 @@ outline = park_outline(home_name, tuple(sorted(dims.items())), hd["venue"] or ""
 
 tiles = aar.metric_values(aar.last_pas(season_sc, 30), season_sc, league(season))
 components.html(aar_ui.component_html(p, pas, line, tiles, aar.GAME_METRICS, note, dims, hd["venue"],
-                                      contact_tip=tip, outline=outline),
+                                      contact_tip=tip, outline=outline, contact_est=estimated),
                 height=aar_ui.estimate_height(len(pas), len(p)), scrolling=True)
 st.caption("Click any pitch on a chart or in the table to light it up everywhere; click more to compare. Opening "
            "plate appearances narrows the charts to those PAs. Decision = our swing-decision model on that exact "
-           "pitch; Dec Runs = runs vs what an average hitter does with it. Point of contact: Statcast bat tracking "
-           "placed on the plate from his own swings (front-center of the plate = 0, 0; hover the chart for how many). "
+           "pitch; Dec Runs = runs vs what an average hitter does with it. Point of contact: MLB's contact point vs "
+           "the plate (Statcast's contact from his hips minus his stance depth; front-center of the plate = 0, 0). "
            "The spray chart uses this park's real fence distances.")

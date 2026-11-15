@@ -1,3 +1,4 @@
+import pytest
 import numpy as np
 import pandas as pd
 
@@ -127,36 +128,43 @@ def _season_swings(n=300, X0=-30.0, F0=-28.0, sx=1, seed=4, stand="R", noise=0.8
                          "vy0": vy0, "ax": 0.0, "ay": ay, aar.CONTACT_X: cx, aar.CONTACT_Y: cy})
 
 
-def test_plate_calibration_learns_where_his_hips_are_from_his_swings():
-    season = _season_swings()
-    cal = aar.plate_calibration(season)
-    r = cal["R"]
-    assert abs(r["F0"] + 28) < 1.5 and abs(r["X0"] + 30) < 1.5 and r["n"] > 250 and r["weight"] > 0.85
-    # Statcast X = inches from his hips TOWARD THE PLATE (always positive): a LHB stands on the catcher's right
-    lhb = aar.plate_calibration(_season_swings(X0=30.0, sx=-1, stand="L"))["L"]
-    assert abs(lhb["F0"] + 28) < 1.5 and abs(lhb["X0"] - 30) < 1.5
-    assert aar.plate_calibration(season.head(20)) is None                      # too few swings
-    # place one swing: 3" out front of the plate, ball over the middle
+def test_contact_vs_plate_is_mlbs_definition_when_hes_on_the_stance_board():
+    # MLB: contact vs the front of the plate = contact in front of his center of mass - his stance depth
+    cal = aar.plate_calibration(_season_swings(), stance={"R": 28.0})
+    assert cal["R"]["source"] == "mlb" and cal["R"]["F0"] == -28.0 and cal["R"]["n"] > 250
     one = pd.DataFrame({"stand": ["R"], "cx": [30.0], "cy": [31.0], "px": [0.0], "slope": [0.0], "pa": [1]})
     on = aar.on_plate(one, cal)
-    assert abs(on["pf"].iloc[0] - (r["F0"] + 31)) < 1e-9 and abs(on["pxc"].iloc[0]) < 1e-9
+    assert abs(on["pf"].iloc[0] - 3.0) < 1e-9 and abs(on["pxc"].iloc[0]) < 1e-9     # 31 - 28 = 3" out front
     assert len(one.join(on).columns) == 8
+    assert aar.plate_calibration(None, stance={"L": 30.0})["L"]["F0"] == -30.0       # no swings needed
+    assert aar.stance_depths(2026)[(694192, "R")] == pytest.approx(25.85, abs=0.01)  # Chourio, Savant board
+
+
+def test_not_on_the_board_falls_back_to_his_swings():
+    cal = aar.plate_calibration(_season_swings())["R"]
+    g = aar.HIP_GROUP_DEFAULT
+    assert cal["source"] == "estimated" and abs(cal["raw"] - 28) < 1.5            # the drift fit itself
+    guess = cal["raw"] + g["offset"]
+    lo, hi = sorted([guess, g["stance_mu"]])
+    assert lo - 1e-9 <= cal["depth"] <= hi + 1e-9 and cal["se"] < g["stance_sd"]
+    lhb = aar.plate_calibration(_season_swings(X0=30.0, sx=-1, stand="L"))["L"]
+    assert abs(lhb["raw"] - 28) < 1.5 and abs(lhb["X0"] - 30) < 1.5
+    assert aar.plate_calibration(_season_swings().head(20)) is None                 # too few swings, no board
 
 
 def test_hips_get_their_own_spot_vs_lefties():
     # his hips sit 4" further off the plate vs LHP; drift flips with the hand -- without the pitcher-hand term that
-    # 4" would leak into his depth (what put Hicks / Palacios behind their own stance)
+    # 4" would leak into the drift fit
     cal = aar.plate_calibration(_season_swings(hand_shift=4.0))["R"]
     assert abs(cal["raw"] - 28) < 1.5 and abs(abs(cal["dL"]) - 4) < 1.0
 
 
 def test_noisy_hitters_lean_on_the_mlb_average():
-    group = {"mu": 19.0, "tau": 4.0}
-    tight = aar.plate_calibration(_season_swings(), group=group)["R"]
-    noisy = aar.plate_calibration(_season_swings(n=60, noise=8.0, seed=9), group=group)["R"]
-    assert tight["weight"] > 0.85 and noisy["weight"] < tight["weight"]
-    assert abs(-noisy["F0"] - 19.0) < abs(noisy["raw"] - 19.0)                  # pulled toward the average
-    assert noisy["se"] < 4.0                                                     # never less sure than the average
+    tight = aar.plate_calibration(_season_swings())["R"]
+    noisy = aar.plate_calibration(_season_swings(n=60, noise=8.0, seed=9))["R"]
+    assert noisy["weight"] < tight["weight"]
+    mu = aar.HIP_GROUP_DEFAULT["stance_mu"]
+    assert abs(noisy["depth"] - mu) < abs(noisy["raw"] + aar.HIP_GROUP_DEFAULT["offset"] - mu)
 
 
 def test_recent_swings_count_more():
@@ -168,7 +176,7 @@ def test_recent_swings_count_more():
 
 def test_hip_group_falls_back_to_default():
     g = aar.hip_group(1999)
-    assert g["mu"] == aar.HIP_GROUP_DEFAULT["mu"] and g["tau"] == aar.HIP_GROUP_DEFAULT["tau"]
+    assert g["offset"] == aar.HIP_GROUP_DEFAULT["offset"] and g["stance_mu"] == aar.HIP_GROUP_DEFAULT["stance_mu"]
 
 
 def test_field_dims_and_last_30_pa():
