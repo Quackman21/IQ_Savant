@@ -523,7 +523,7 @@ def last_pas(season: pd.DataFrame, n: int = 30) -> pd.DataFrame:
 
 
 GAME_METRICS = {"GD%": "Good decision %", "O-SWING%": "Chase% (O-Swing%)", "Z-SWING%": "Z-Swing%", "WHIFF%": "Whiff%",
-                "DEC RUNS/100": "Decision runs / 100", "xwOBA": "xwOBA",
+                "xwOBA": "xwOBA",
                 "EV": "Avg EV", "AVG BAT SPEED": "Avg bat speed"}
 
 

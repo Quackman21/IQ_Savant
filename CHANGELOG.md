@@ -1,5 +1,8 @@
 # IQ Savant – version history
 
+## v22.10 – 2026-11-15
+- AAR Compare tiles: Decision runs / 100 removed from the metric picker.
+
 ## v22.9 – 2026-11-15
 - Contact type, squared-up and smash factor only for balls put in play -- fouls (and whiffs) get no contact grade.
   Fouls keep their measured exit velo / launch angle.
