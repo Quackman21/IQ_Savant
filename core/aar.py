@@ -53,6 +53,13 @@ def names(feed: dict) -> dict[int, str]:
     return {int(v["id"]): v.get("fullName", "") for v in people.values() if "id" in v}
 
 
+def made_contact(df: pd.DataFrame) -> pd.Series:
+    """Fouls and balls in play -- the swings with a real bat-ball contact point."""
+    from core import hit_metrics as hm
+    desc = _txt(df, "description")
+    return desc.isin(hm.FOULS) | desc.eq("hit_into_play")
+
+
 def decision_label(z: float) -> str:
     """Our decision grade for one pitch (z = how clearly right the choice was, from the decision model)."""
     from models.decisions_iq import CLEAR, NEUTRAL
@@ -97,7 +104,8 @@ def pitches(sc: pd.DataFrame, feed: dict | None = None) -> pd.DataFrame:
         "zone": hm.attack_zone(d), "swing": swing, "bip": _txt(d, "type").eq("X"),
         "px": _num(d, "plate_x"), "pz": _num(d, "plate_z"), "sz_top": _num(d, "sz_top"),
         "sz_bot": _num(d, "sz_bot"), "hc_x": _num(d, "hc_x"), "hc_y": _num(d, "hc_y"),
-        "cx": _num(d, CONTACT_X).where(swing), "cy": _num(d, CONTACT_Y).where(swing),
+        # point of contact: only swings that actually hit the ball (fouls + balls in play) -- whiffs have no contact
+        "cx": _num(d, CONTACT_X).where(made_contact(d)), "cy": _num(d, CONTACT_Y).where(made_contact(d)),
         "slope": plate_slope(d),
     })
     # Savant's 2026 swing-timing / miss-distance fields, whatever they're called in the download
@@ -214,7 +222,7 @@ def plate_calibration(season: pd.DataFrame, orient: tuple[int, int] | None = Non
     picked by which way fits his swings and puts him in a real batter's box."""
     if season is None or season.empty or CONTACT_Y not in season or CONTACT_X not in season:
         return None
-    s = season.copy()
+    s = season[made_contact(season)].copy() if "description" in season else season.copy()   # contact swings only
     s["_cx"], s["_cy"] = _num(s, CONTACT_X), _num(s, CONTACT_Y)
     s["_s"], s["_px"] = plate_slope(s), _num(s, "plate_x") * 12
     s = s.dropna(subset=["_cx", "_cy", "_s", "_px"])
@@ -308,33 +316,43 @@ def fence_distance(fx: np.ndarray, fy: np.ndarray, angle_deg: float) -> float:
     return float(np.hypot(fx[i], fy[i]))
 
 
+HOME_HC = (125.42, 198.27)        # where Statcast's hit coordinates put home plate
+
+
 def park_outline(home_team_name: str, dims: dict | None, outlines: pd.DataFrame | None = None) -> dict:
-    """The park to draw: {'segments': {name: (fx, fy)}, 'source': 'outline' | 'distances', 'note': str}.
-    The traced outline is used only if it matches MLB's published distances for THIS venue (lines + center within
-    12 ft) -- teams move (A's to Sacramento, Rays' 2025 season), and an old outline would be the wrong park."""
+    """The park to draw: {'segments': {name: (fx, fy) in feet}, 'source': 'outline' | 'distances', 'note': str,
+    'poles': (lf, rf)}.
+
+    Each traced park is first slid so ITS home plate sits where Statcast puts home plate (the file's plates aren't
+    all at the same spot -- measuring from the wrong spot made foul lines look ~18 ft long). Then the foul-pole
+    distances (the two ends of the fence) are checked against MLB's published lines for THIS venue. Center isn't
+    checked: MLB's 'center' is the deepest point (Fenway's 420 is the triangle), not straightaway center."""
     d = stadium_outlines() if outlines is None else outlines
     key = team_key(home_team_name)
     t = d[d["team"].astype(str).eq(key)]
-    if not t.empty:
-        segs = {}
-        for seg, g in t.groupby("segment", sort=False):
-            segs[str(seg)] = to_feet(g["x"].values, g["y"].values)
-        fence = segs.get("outfield_outer")
-        if fence is not None:
-            if dims and {"leftLine", "center", "rightLine"} <= set(dims):
-                checks = {k: fence_distance(*fence, a) for k, a in (("leftLine", -45), ("center", 0), ("rightLine", 45))}
-                off = {k: abs(v - dims[k]) for k, v in checks.items()}
-                if max(off.values()) <= 12:
-                    return {"segments": segs, "source": "outline", "note": "traced park outline"}
-                why = ", ".join(f"{k} {checks[k]:.0f} vs {dims[k]:.0f}" for k in off if off[k] > 12)
-                note = f"outline on file doesn't match this venue ({why}) -- fence from published distances"
-            else:
-                return {"segments": segs, "source": "outline", "note": "traced park outline (no distances to check)"}
-        else:
-            note = "no traced outline -- fence from published distances"
-    else:
-        note = "no traced outline for this park -- fence from published distances"
-    return {"segments": {}, "source": "distances", "note": note}
+    if t.empty:
+        return {"segments": {}, "source": "distances", "note": "no traced outline for this park -- fence from "
+                                                               "published distances"}
+    hp = t[t["segment"].astype(str).eq("home_plate")]
+    dx, dy = ((HOME_HC[0] - hp["x"].mean(), HOME_HC[1] - hp["y"].max()) if not hp.empty else (0.0, 0.0))
+    segs = {str(seg): to_feet(g["x"].values + dx, g["y"].values + dy)
+            for seg, g in t.groupby("segment", sort=False)}
+    fence = segs.get("outfield_outer")
+    if fence is None:
+        return {"segments": {}, "source": "distances", "note": "no traced fence -- fence from published distances"}
+    fx, fy = fence
+    ok = np.isfinite(fx) & np.isfinite(fy) & (np.hypot(fx, fy) > 50)
+    ang = np.degrees(np.arctan2(fx[ok], fy[ok]))
+    dist = np.hypot(fx[ok], fy[ok])
+    poles = (float(dist[np.argmin(ang)]), float(dist[np.argmax(ang)]))
+    if dims and {"leftLine", "rightLine"} <= set(dims):
+        off = {"leftLine": abs(poles[0] - dims["leftLine"]), "rightLine": abs(poles[1] - dims["rightLine"])}
+        if max(off.values()) > 15:
+            why = f"poles {poles[0]:.0f} / {poles[1]:.0f} vs listed {dims['leftLine']:.0f} / {dims['rightLine']:.0f}"
+            return {"segments": {}, "source": "distances", "poles": poles,
+                    "note": f"traced outline doesn't match this venue ({why}) -- fence from published distances"}
+    return {"segments": segs, "source": "outline", "poles": poles,
+            "note": f"traced park outline (poles {poles[0]:.0f} / {poles[1]:.0f} ft)"}
 
 
 def field_dims(feed: dict) -> dict:

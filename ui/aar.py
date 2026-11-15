@@ -128,6 +128,25 @@ DEFAULT_DIMS = {"leftLine": 330, "leftCenter": 375, "center": 400, "rightCenter"
 LINE_ANGLES = {"leftLine": -45, "leftCenter": -22.5, "center": 0, "rightCenter": 22.5, "rightLine": 45}
 
 
+def _by_spray(fx, fy):
+    """Outline points in order from the left-field line to the right-field line (the traced file isn't always in
+    order, and joining points out of order scrambles the shape)."""
+    fx, fy = np.asarray(fx, float), np.asarray(fy, float)
+    ok = np.isfinite(fx) & np.isfinite(fy) & (np.hypot(fx, fy) > 1)
+    fx, fy = fx[ok], fy[ok]
+    o = np.argsort(np.arctan2(fx, fy))
+    return fx[o], fy[o]
+
+
+def _around_center(fx, fy):
+    """A closed outline's points in order around its own middle."""
+    fx, fy = np.asarray(fx, float), np.asarray(fy, float)
+    ok = np.isfinite(fx) & np.isfinite(fy)
+    fx, fy = fx[ok], fy[ok]
+    o = np.argsort(np.arctan2(fx - fx.mean(), fy - fy.mean()))
+    return fx[o], fy[o]
+
+
 def _poly(pts) -> str:
     return " ".join(f"{x:.1f},{y:.1f}" for x, y in pts)
 
@@ -145,17 +164,22 @@ def spray_svg(p: pd.DataFrame, dims: dict | None = None, park: str = "", outline
     pt = lambda fx, fy: (hx + fx * sc, hy - fy * sc)
     g = []
     if segs:
-        fx, fy = segs["outfield_outer"]
+        fx, fy = _by_spray(*segs["outfield_outer"])
         fence = [pt(a, b) for a, b in zip(fx, fy)]
         g.append(f'<polygon points="{hx:.1f},{hy:.1f} {_poly(fence)}" fill="#eef5ef" stroke="#5f8f96" '
                  f'stroke-width="1.6" stroke-linejoin="round"/>')
-        for seg, fill, stroke in (("infield_outer", "#f4ede2", "#c9b48f"), ("infield_inner", "#e8f1e8", "#c9b48f")):
-            if seg in segs:
-                g.append(f'<polygon points="{_poly(pt(a, b) for a, b in zip(*segs[seg]))}" fill="{fill}" '
-                         f'stroke="{stroke}" stroke-width=".8"/>')
-        if "foul_lines" in segs:
-            g.append(f'<polyline points="{_poly(pt(a, b) for a, b in zip(*segs["foul_lines"]))}" fill="none" '
-                     f'stroke="#b9c7cb" stroke-width=".8"/>')
+        if "infield_outer" in segs:                                # dirt: arc from line to line, closed at home
+            ix, iy = _by_spray(*segs["infield_outer"])
+            g.append(f'<polygon points="{hx:.1f},{hy:.1f} {_poly(pt(a, b) for a, b in zip(ix, iy))}" '
+                     f'fill="#f4ede2" stroke="#c9b48f" stroke-width=".8"/>')
+        if "infield_inner" in segs:                                # infield grass: a closed shape
+            ix, iy = _around_center(*segs["infield_inner"])
+            g.append(f'<polygon points="{_poly(pt(a, b) for a, b in zip(ix, iy))}" fill="#e8f1e8" '
+                     f'stroke="#c9b48f" stroke-width=".8"/>')
+        for a_, b_ in ((fx[0], fy[0]), (fx[-1], fy[-1])):          # foul lines: home -> each pole
+            x2, y2 = pt(a_, b_)
+            g.append(f'<line x1="{hx:.1f}" y1="{hy:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" stroke="#b9c7cb" '
+                     f'stroke-width=".9"/>')
         note = ""
     else:
         pts = [pt(dims[k] * math.sin(math.radians(a)), dims[k] * math.cos(math.radians(a)))
@@ -165,10 +189,17 @@ def spray_svg(p: pd.DataFrame, dims: dict | None = None, park: str = "", outline
         b1, b2, b3 = pt(63.6, 63.6), pt(0, 127.3), pt(-63.6, 63.6)
         g.append(f'<polygon points="{hx},{hy} {_poly([b1, b2, b3])}" fill="#f4ede2" stroke="#c9b48f"/>')
         note = " (approximate fence)"
-    for k, anchor, dx in (("leftLine", "start", 5), ("center", "middle", 0), ("rightLine", "end", -5)):
+    if segs:                         # labels where they belong on the real wall: the poles + the deepest point
+        dist = np.hypot(fx, fy)
+        spots = {"leftLine": (fx[0], fy[0], "start", 5), "rightLine": (fx[-1], fy[-1], "end", -5),
+                 "center": (fx[int(np.argmax(dist))], fy[int(np.argmax(dist))], "middle", 0)}
+    else:
+        spots = {k: (dims[k] * math.sin(math.radians(LINE_ANGLES[k])), dims[k] * math.cos(math.radians(LINE_ANGLES[k])),
+                     anchor, dx) for k, anchor, dx in (("leftLine", "start", 5), ("center", "middle", 0),
+                                                       ("rightLine", "end", -5)) if k in dims}
+    for k, (ax_, ay_, anchor, dx) in spots.items():
         if k in dims:
-            a = LINE_ANGLES[k]
-            x, y = pt(dims[k] * math.sin(math.radians(a)), dims[k] * math.cos(math.radians(a)))
+            x, y = pt(ax_, ay_)
             g.append(f'<text x="{x + dx:.1f}" y="{y - 5:.1f}" class="ax" text-anchor="{anchor}">{dims[k]:.0f}</text>')
     for r in p.itertuples():
         if r.bip and r.hc_x == r.hc_x and r.hc_y == r.hc_y:
@@ -182,7 +213,7 @@ def spray_svg(p: pd.DataFrame, dims: dict | None = None, park: str = "", outline
 
 def contact_svg(p: pd.DataFrame, note: str, tip: str = "") -> str:
     """Point of contact on the plate (catcher's view): front-center of the plate = 0, 0; up = out in front."""
-    have = p[p["swing"] & p["pf"].notna() & p["pxc"].notna()]
+    have = p[p["pf"].notna() & p["pxc"].notna()]                 # fouls + balls in play only (see core.aar)
     if have.empty:
         return _chart("Point of contact", "", f'<div class="none">{escape(note)}</div>', "")
     W, H = 270, 300
@@ -200,10 +231,10 @@ def contact_svg(p: pd.DataFrame, note: str, tip: str = "") -> str:
              f'{xs(0):.1f},{ys(-17):.1f} {xs(-h):.1f},{ys(-h):.1f}" fill="#f6f8f9" stroke="{TEAL}" stroke-width="1.6"/>')
     g.append(f'<text x="{W - 8}" y="{ys(30) + 9:.1f}" class="ax" text-anchor="end">out front ↑</text>')
     for r in have.itertuples():
-        color = _res_color(r.play) if r.bip else (SWING if "Foul" in r.result else "#b8322a")
+        color = _res_color(r.play) if r.bip else SWING
         x, y = max(9, min(W - 9, xs(r.pxc))), max(9, min(H - 16, ys(r.pf)))
         g.append(_mark(r, r.bb if r.bip else "", x, y, color))
-    leg = (f'<i style="color:#b8322a">●</i> Whiff <i style="color:{SWING}">●</i> Foul &nbsp;in play: shape = BB type, '
+    leg = (f'<i style="color:{SWING}">●</i> Foul &nbsp;in play: shape = BB type, '
            f'color = result &nbsp;<span class="faint">inches · catcher\'s view</span>')
     return _chart("Point of contact", "on the plate", f'<svg viewBox="0 0 {W} {H}">{"".join(g)}</svg>', leg,
                   tip=tip)

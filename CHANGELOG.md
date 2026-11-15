@@ -1,5 +1,20 @@
 # IQ Savant – version history
 
+## v21.5 – 2026-11-14
+- Real park outlines now actually used (v21.3 / v21.4 rejected every park):
+  * each traced park is slid so its own home plate sits where Statcast puts home plate (the file's plates are
+    offset -- measuring from the wrong spot made the Trop's lines read ~18 ft long);
+  * the venue check compares the two FOUL POLES only. MLB's "center" is the deepest point (Fenway 420 = the
+    triangle), not straightaway center, so checking it there was wrong.
+  * labels sit where they belong: line distances at the poles, the deep number at the wall's deepest point.
+
+## v21.4 – 2026-11-14
+- Point of contact shows ONLY fouls and balls in play (Statcast also gives whiffs a point -- dropped). The
+  placement fit on his season uses contact swings only too.
+- Park outlines drawn in order: the traced file isn't always listed around the field, and joining points out of
+  order scrambled some parks. Fence + dirt are now ordered from the left-field line to the right-field line, the
+  infield grass around its middle, and foul lines run home -> each pole.
+
 ## v21.3 – 2026-11-14
 - Spray chart = the REAL park. v21.2 curved a line through MLB's ~7 published distances, which can't show walls
   like the Green Monster / Fenway's triangle and overshot between points. Now it draws the traced outline of each

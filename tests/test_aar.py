@@ -177,6 +177,17 @@ def _outline(team="red_sox", lf=310, cf=420, rf=302):
     return pd.DataFrame(rows)
 
 
+def test_outline_slid_onto_statcast_home_plate():
+    o = _outline(lf=310, cf=390, rf=302)
+    o["y"] = o["y"] + 7.2                                             # this park's file sits 18 ft off
+    hp = pd.DataFrame({"team": "red_sox", "x": [125.42 - 3, 125.42 + 3, 125.42], "y": [198.27 + 7.2 - 1,
+                       198.27 + 7.2 - 1, 198.27 + 7.2], "segment": "home_plate"})
+    got = aar.park_outline("Boston Red Sox", {"leftLine": 310.0, "center": 420.0, "rightLine": 302.0},
+                           pd.concat([o, hp]))
+    assert got["source"] == "outline", got["note"]                    # 420 = deepest point, not checked at center
+    assert abs(got["poles"][0] - 310) < 3 and abs(got["poles"][1] - 302) < 3
+
+
 def test_park_outline_used_only_when_it_matches_this_venue():
     o = _outline()
     dims = {"leftLine": 310.0, "center": 420.0, "rightLine": 302.0}
@@ -195,3 +206,21 @@ def test_spray_draws_real_outline_or_labeled_fallback():
     assert "approximate" not in html and ">420<" in html and html.count("<polygon") >= 2
     fb = aar_ui.spray_svg(p, dims, "Some Park", aar.park_outline("Athletics", dims, _outline()))
     assert "approximate fence" in fb
+
+
+def test_contact_only_fouls_and_balls_in_play():
+    g = game()
+    g[aar.CONTACT_X], g[aar.CONTACT_Y] = 30.0, 31.0                  # Statcast gives whiffs a point too
+    p = aar.pitches(g, feed())
+    whiff = p["result"].eq("Swinging strike")
+    assert whiff.any() and p.loc[whiff, "cx"].isna().all()
+    assert p.loc[p["result"].isin(["Foul", "In play"]), "cx"].notna().all()
+    assert p.loc[p["result"].isin(["Ball", "Called strike"]), "cx"].isna().all()
+
+
+def test_scrambled_outline_is_drawn_in_order():
+    o = _outline().sample(frac=1, random_state=1)                    # file rows out of order
+    got = aar.park_outline("Boston Red Sox", {"leftLine": 310.0, "center": 420.0, "rightLine": 302.0}, o)
+    fx, fy = aar_ui._by_spray(*got["segments"]["outfield_outer"])
+    ang = np.degrees(np.arctan2(fx, fy))
+    assert (np.diff(ang) > 0).all() and ang[0] < -40 and ang[-1] > 40
