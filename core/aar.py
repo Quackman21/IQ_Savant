@@ -130,7 +130,7 @@ def pitches(sc: pd.DataFrame, feed: dict | None = None) -> pd.DataFrame:
         out["dec"], out["dec_runs"] = "", np.nan
     try:                                    # what kind of contact (label, not rpm) -- core/batted_ball.py
         from core import batted_ball
-        lab = [batted_ball.spin_label(r) if str(r.get("description")) in ("hit_into_play", "foul") else None
+        lab = [batted_ball.spin_label(r) if str(r.get("description")) == "hit_into_play" else None   # in play only
                for _, r in d.iterrows()]
         out["spin"] = [x["label"] if x else "" for x in lab]
         out["spin_why"] = [x["why"] if x else "" for x in lab]

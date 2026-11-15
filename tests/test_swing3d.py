@@ -92,3 +92,11 @@ def test_contact_labels():
     assert lab(launch_speed=85.0, launch_angle=30.0, attack_angle=20.0, attack_direction=-5.0, hc_x=200.0, hc_y=120.0) == "Slice"
     q = bb.contact_quality(pd.Series({**base, "launch_speed": 100.0, "bat_speed": 72.0, "release_speed": 92.0}))
     assert q["smash"] == round(1 + (100 - 72) / (92 + 72), 2) and q["squared_up"]
+
+
+def test_no_contact_grade_unless_in_play():
+    from core import batted_ball as bb
+    foul = _row(description="foul")
+    assert bb.spin_label(foul) is None
+    s = swing3d.scene(foul, depth=28.0)
+    assert s["read"]["spin"] is None and s["read"]["squared_up_pct"] is None and s["read"]["smash"] is None

@@ -7,6 +7,7 @@ Two gaps between where the ball went and where the bat was going (both measured 
               pull side of the aim = hook, opposite side = slice)
 Both are centred on how SQUARED-UP balls behave (EV >= 85% of the most that bat speed + pitch speed allow; 2026,
 World Series hitters' seasons: launch angle sits 3.8 deg above the attack angle, spray 9.7 deg to the pull side of it).
+Balls in play only -- fouls and whiffs get no contact grade.
 Squared-up = MLB's definition (EV vs 1.23 x bat speed + 0.23 x pitch speed); smash factor = Savant's
 (1 + (EV - bat speed) / (pitch speed + bat speed)).
 """
@@ -45,7 +46,9 @@ def contact_quality(row) -> dict:
 
 
 def spin_label(row) -> dict | None:
-    """{label, why, v_gap, h_gap} for a ball in play / foul with exit data, else None."""
+    """{label, why, v_gap, h_gap} for a BALL IN PLAY with exit data, else None (fouls / whiffs get no grade)."""
+    if "description" in row and str(row.get("description")) != "hit_into_play":
+        return None
     la, aa, ad = _f(row, "launch_angle"), _f(row, "attack_angle"), _f(row, "attack_direction")
     if la is None or aa is None or _f(row, "launch_speed") is None:
         return None

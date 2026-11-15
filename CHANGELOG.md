@@ -1,5 +1,9 @@
 # IQ Savant – version history
 
+## v22.9 – 2026-11-15
+- Contact type, squared-up and smash factor only for balls put in play -- fouls (and whiffs) get no contact grade.
+  Fouls keep their measured exit velo / launch angle.
+
 ## v22.8 – 2026-11-15
 - Contact type for every ball in play / foul (core/batted_ball.py) -- a label, not an rpm, from measured gaps:
   Optimal (barrel, or squared-up >= 90% at 8-32 deg), Backspin (left >= 10 deg above the bat's path = hit under),

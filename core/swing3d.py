@@ -145,8 +145,9 @@ def scene(row, depth: float | None, stance_x: float | None = None) -> dict | Non
                 break
             exit_.append([round(float(P[0]), 2), round(float(P[1]), 2), round(float(P[2]), 2), round(float(tt), 4)])
     from core import batted_ball
-    lab = batted_ball.spin_label(row) or {}
-    q = batted_ball.contact_quality(row)
+    in_play = str(row.get("description")) == "hit_into_play"            # contact grades: balls in play only
+    lab = (batted_ball.spin_label(row) or {}) if in_play else {}
+    q = batted_ball.contact_quality(row) if in_play else {}
     return {
         "side": side, "contact": [round(float(c), 2) for c in C], "O": [round(float(o), 2) for o in O],
         "pitch": pitch, "arc": arc, "exit": exit_, "bp": bp,
