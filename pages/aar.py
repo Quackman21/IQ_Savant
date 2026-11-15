@@ -87,8 +87,9 @@ gm = {**hd, "abbr_away": teams.get(hd["away"], {}).get("abbr", ""),
       "abbr_home": teams.get(hd["home"], {}).get("abbr", ""),
       "date": f"{int(gday[5:7])}/{int(gday[8:10])}/{gday[:4]}"}
 
-show(aar_ui.header_html(pid, who, team, gm))
+head = aar_ui.header_html(pid, who, team, gm)
 if not line:
+    show(head)
     st.info("This player didn't bat in this game.")
     st.stop()
 
@@ -96,6 +97,7 @@ sc = statcast(pid, gday, gday)
 if not sc.empty and "game_pk" in sc:
     sc = sc[pd.to_numeric(sc["game_pk"], errors="coerce").eq(pk)]
 if sc.empty:
+    show(head)
     st.info("Statcast hasn't posted this game's pitches yet -- they usually appear within an hour or two of the "
             "final out.")
     st.stop()
@@ -154,10 +156,17 @@ home_name = teams.get(hd["home"], {}).get("name", "") or f.get("gameData", {}).g
 outline = park_outline(home_name, tuple(sorted(dims.items())), hd["venue"] or "")
 
 tiles = aar.metric_values(aar.last_pas(season_sc, 30), season_sc, league(season))
+from core import swing3d
+try:
+    scenes3d = swing3d.scenes(sc, p, swing3d.stance_offsets(season, pid))   # contact swings: pitch + bat in 3D
+except Exception:
+    scenes3d = {}
 components.html(aar_ui.component_html(p, pas, line, tiles, aar.GAME_METRICS, note, dims, hd["venue"],
-                                      contact_tip=tip, outline=outline, contact_est=estimated),
+                                      contact_tip=tip, outline=outline, contact_est=estimated,
+                                      header=head, scenes3d=scenes3d),
                 height=aar_ui.estimate_height(len(pas), len(p)), scrolling=True)
-st.caption("Click any pitch on a chart or in the table to light it up everywhere; click more to compare. Opening "
+st.caption("Click any pitch on a chart or in the table to light it up everywhere; click more to compare. The cube "
+           "next to a swing's video opens that pitch + swing in 3D (contact swings). Opening "
            "plate appearances narrows the charts to those PAs. Decision = our swing-decision model on that exact "
            "pitch; Dec Runs = runs vs what an average hitter does with it. Point of contact: MLB's contact point vs "
            "the plate (Statcast's contact from his hips minus his stance depth; front-center of the plate = 0, 0). "

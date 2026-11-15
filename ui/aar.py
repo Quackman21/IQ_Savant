@@ -33,6 +33,11 @@ CAMERA = ('<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="c
           'stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="13" height="12" rx="2"/>'
           '<path d="M15.5 10.5l6-3.5v10l-6-3.5z"/></svg>')
 
+CUBE = ('<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" '
+        'stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.8l8 4.6v9.2l-8 4.6-8-4.6V7.4z"/>'
+        '<path d="M4 7.4l8 4.6 8-4.6M12 12v9.2"/></svg>')
+THREE_JS = "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
+
 HEAD_CSS = f"""<style>
 .aarh{{font:13px system-ui,sans-serif;color:{INK};display:flex;align-items:center;gap:14px;flex-wrap:wrap;
   border:1px solid {LINE};border-radius:10px;padding:10px 14px;background:#fff}}
@@ -273,8 +278,11 @@ def _cols(p: pd.DataFrame) -> list:
 def _cell(key: str, r) -> tuple[str, str]:
     v = getattr(r, key, None)
     if key == "video":
-        return (f'<a class="vid" href="{SAVANT_VIDEO.format(v)}" target="_blank" rel="noopener" '
-                f'title="Play this pitch">{CAMERA}</a>' if v else "–"), ""
+        cam = (f'<a class="vid" href="{SAVANT_VIDEO.format(v)}" target="_blank" rel="noopener" '
+               f'title="Play this pitch">{CAMERA}</a>' if v else "")
+        s3 = (f'<button class="s3d" data-n="{r.n}" title="Swing + pitch in 3D">{CUBE}</button>'
+              if getattr(r, "has3d", False) else "")
+        return (f'<span class="vcell">{cam}{s3}</span>' if (cam or s3) else "–"), ""
     if key == "inn":
         return f"{r.half}{r.inning}", ""
     if key == "ptype":
@@ -374,6 +382,35 @@ tr.row.sel td{{background:#fff4c7!important;box-shadow:inset 0 1px 0 #ffd34d,ins
 .has-sel tr.row:not(.sel) td{{opacity:.55}}
 .chip{{display:inline-block;padding:1px 8px;border-radius:9px;font:600 11px system-ui}}
 a.vid{{color:{TEAL};display:inline-flex}} a.vid:hover{{color:{INK}}}
+.vcell{{display:inline-flex;gap:6px;align-items:center}}
+button.s3d{{border:none;background:none;padding:0;color:{TEAL};cursor:pointer;display:inline-flex}}
+button.s3d:hover{{color:{INK}}}
+#ovl{{position:absolute;left:0;top:0;width:100%;background:rgba(22,32,43,.55);z-index:50;display:none}}
+#ovl.on{{display:block}}
+#dlg{{position:absolute;left:50%;transform:translateX(-50%);width:min(1180px,96%);background:#fff;border-radius:12px;
+  box-shadow:0 12px 40px rgba(0,0,0,.35);overflow:hidden}}
+#dlg .dh{{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid {LINE}}}
+#dlg .dh b{{font:700 15px system-ui}} #dlg .dh .x{{margin-left:auto;border:none;background:none;font:22px system-ui;
+  cursor:pointer;color:{MUTED};line-height:1}} #dlg .dh .x:hover{{color:{INK}}}
+#dlg .db{{display:grid;grid-template-columns:1fr 280px}}
+#stage{{position:relative;height:560px;background:#f4f7f8;cursor:grab}} #stage:active{{cursor:grabbing}}
+#stage canvas{{display:block}} #stage .msg{{position:absolute;inset:0;display:flex;align-items:center;
+  justify-content:center;color:{MUTED};font:13px system-ui;text-align:center;padding:30px}}
+#cams{{position:absolute;left:10px;top:10px;display:flex;gap:4px;flex-wrap:wrap}}
+#cams button,#ctl button{{font:600 11.5px system-ui;border:1px solid {LINE};background:#fff;border-radius:6px;
+  padding:4px 8px;cursor:pointer}} #cams button.on{{background:{TEAL};color:#fff;border-color:{TEAL}}}
+#ctl{{display:flex;align-items:center;gap:8px;padding:8px 12px;border-top:1px solid {LINE}}}
+#ctl select{{font:12px system-ui}} #ctl input[type=range]{{flex:1}} #ctl .clk{{font:12px ui-monospace,monospace;
+  color:{MUTED};min-width:120px;text-align:right}}
+#ctl a{{font:600 12px system-ui;color:#fff;background:{INK};border-radius:6px;padding:5px 10px;text-decoration:none;
+  display:inline-flex;gap:5px;align-items:center}}
+#rd{{border-left:1px solid {LINE};padding:10px 12px;font:12.5px system-ui;overflow:auto;max-height:620px}}
+#rd h5{{margin:10px 0 4px;font:700 11px system-ui;color:{MUTED};text-transform:uppercase;letter-spacing:.04em}}
+#rd table{{width:100%;border-collapse:collapse}} #rd td{{padding:3px 0;border-bottom:1px solid #f0f2f4}}
+#rd td:last-child{{text-align:right;font-family:ui-monospace,monospace}}
+#rd .lg{{font-size:11px;color:{MUTED};line-height:1.6;margin-top:8px}} #rd .lg i{{font-style:normal;font-weight:800}}
+.tag{{font-size:9.5px;padding:0 5px;border-radius:7px;margin-left:5px;background:#dbeef1;color:#2c6670}}
+.tag.x{{background:#eef1f3;color:{MUTED}}}
 @media (max-width:900px){{.top{{grid-template-columns:1fr}}.charts{{grid-template-columns:1fr 1fr}}}}
 """
 
@@ -409,7 +446,7 @@ function apply() {
 function toggle(set, k) { set.has(k) ? set.delete(k) : set.add(k); }
 document.querySelectorAll('tr.pa-h').forEach(h => h.addEventListener('click', () => { toggle(open, h.dataset.pa); apply(); }));
 document.querySelectorAll('tr.row').forEach(r => r.addEventListener('click', e => {
-  if (e.target.closest('a')) return; toggle(sel, r.dataset.n); apply(); }));
+  if (e.target.closest('a') || e.target.closest('button')) return; toggle(sel, r.dataset.n); apply(); }));
 document.querySelectorAll('g.pt').forEach(g => g.addEventListener('click', () => {
   const was = sel.has(g.dataset.n); toggle(sel, g.dataset.n); if (!was) open.add(g.dataset.pa); apply(); }));
 document.getElementById('expand').onclick = () => { allPA.forEach(p => open.add(p)); apply(); };
@@ -434,9 +471,194 @@ showTiles(); apply(); window.addEventListener('load', resize);
 """
 
 
+OVERLAY = """<div id="ovl"><div id="dlg"><div class="dh"><b id="s3t"></b><span class="faint" id="s3s"></span>
+<button class="x" id="s3x" title="Close (Esc)">&times;</button></div><div class="db"><div><div id="stage">
+<div id="cams"></div><div class="msg" id="s3msg">Loading 3D…</div></div><div id="ctl"><button id="s3p">❚❚</button>
+<select id="s3sp"><option value="4">1/4 speed</option><option value="10" selected>1/10</option>
+<option value="25">1/25</option><option value="60">1/60</option></select><input id="s3sc" type="range" min="0"
+max="1000" value="0"><span class="clk" id="s3c"></span><a id="s3v" target="_blank" rel="noopener">Video</a></div></div>
+<div id="rd"></div></div></div></div>"""
+
+S3D_JS = r"""
+const S3 = JSON.parse(document.getElementById('s3d-data').textContent);
+const ovl = document.getElementById('ovl'), dlg = document.getElementById('dlg'), stage = document.getElementById('stage');
+let R3 = null;                     // live renderer state
+function loadThree(cb) {
+  if (window.THREE) return cb();
+  const s = document.createElement('script'); s.src = THREE_SRC; s.onload = cb;
+  s.onerror = () => { document.getElementById('s3msg').textContent = "Couldn't load the 3D library (needs an internet connection)."; };
+  document.head.appendChild(s);
+}
+const V = (p) => new THREE.Vector3(p[0], p[2], -p[1]);   // plate frame (x, y toward pitcher, z up) -> three (x, up, -y)
+function fmt(v, d = 1) { return v === null || v === undefined ? '–' : (+v).toFixed(d); }
+function at(pts, t) {
+  const T = q => q[q.length - 1];
+  if (!pts || !pts.length || t < T(pts[0])) return null;
+  for (let k = 1; k < pts.length; k++) if (T(pts[k]) >= t) {
+    const a = pts[k - 1], b = pts[k], f = (t - T(a)) / ((T(b) - T(a)) || 1);
+    return [0, 1, 2].map(i => a[i] + (b[i] - a[i]) * f);
+  }
+  return null;
+}
+function upto(pts, t) { return pts ? pts.filter(q => q[q.length - 1] <= t) : []; }
+function line(pts, mat) {
+  const g = new THREE.BufferGeometry().setFromPoints(pts.map(V)); const l = new THREE.Line(g, mat);
+  if (mat.isLineDashedMaterial) l.computeLineDistances(); return l;
+}
+function readouts(sc) {
+  const r = sc.read, m = '<span class="tag">measured</span>', x = '<span class="tag x">reconstructed</span>';
+  const row = (k, v, t = '') => `<tr><td>${k}${t}</td><td>${v}</td></tr>`;
+  const smash = r.ev && r.bat_speed && r.velo ? ((r.ev - 0.2 * r.velo) / (1.2 * r.bat_speed)) : null;
+  document.getElementById('rd').innerHTML =
+    '<h5>Swing</h5><table>' + row('Bat speed', fmt(r.bat_speed) + ' mph', m) + row('Swing length', fmt(r.swing_length) + ' ft', m) +
+    row('Attack angle', fmt(r.attack_angle) + '°', m) + row('Attack direction', fmt(r.attack_direction) + '° ' +
+      (r.attack_direction < 0 ? 'pull' : 'oppo'), m) + row('Swing tilt', fmt(r.tilt) + '°', m) + '</table>' +
+    '<h5>Contact (vs the plate)</h5><table>' + row('Out front', fmt(r.front) + '″', m) +
+    row('Side (+ = 1B side)', fmt(r.side_in) + '″', m) + row('Height', fmt(r.height) + '″', m) + '</table>' +
+    '<h5>Pitch at contact</h5><table>' + row(r.ptype + ' velo', fmt(r.velo) + ' mph', m) +
+    row('Coming down at', fmt(-r.vaa) + '°', m) + row('Swing vs pitch plane', (r.plane_gap > 0 ? '+' : '') + fmt(r.plane_gap) + '°',
+      '') + '</table>' +
+    (r.ev ? '<h5>Ball off the bat</h5><table>' + row('Exit velo', fmt(r.ev) + ' mph', m) + row('Launch angle', fmt(r.la, 0) + '°', m) +
+      (smash ? row('Smash factor', fmt(smash, 2)) : '') + '</table>' : '') +
+    '<div class="lg"><i style="color:#e07b24">━</i> pitch (measured) &nbsp; <i style="color:#2f5fb3">━</i> bat, last 40 ms ' +
+    '(measured direction + plane) &nbsp; <i style="color:#8fa6c9">┅</i> rest of the swing (reconstructed) &nbsp; ' +
+    '<i style="color:#c0392b">●</i> contact &nbsp; <i style="color:#2e9d5b">━</i> ball off the bat' +
+    (sc.exit ? '' : ' (fouls: direction not tracked)') + '<br>Swing vs pitch plane = attack angle minus how steeply ' +
+    'the pitch is coming down (0 = matched).</div>';
+}
+function build(sc) {
+  const W = stage.clientWidth, H = stage.clientHeight;
+  const scene = new THREE.Scene(); scene.background = new THREE.Color(0xf4f7f8);
+  const cam = new THREE.PerspectiveCamera(38, W / H, 1, 20000);
+  const ren = new THREE.WebGLRenderer({antialias: true}); ren.setSize(W, H); ren.setPixelRatio(Math.min(2, window.devicePixelRatio));
+  stage.appendChild(ren.domElement);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x99aabb, 0.9)); const dl = new THREE.DirectionalLight(0xffffff, 0.6);
+  dl.position.set(100, 300, 200); scene.add(dl);
+  const dark = new THREE.LineBasicMaterial({color: 0x16202b});
+  // ground + plate + boxes + foul lines (the field's own measurements)
+  const shp = new THREE.Shape([[-8.5, 0], [8.5, 0], [8.5, -8.5], [0, -17], [-8.5, -8.5]].map(([x, y]) => new THREE.Vector2(x, y)));
+  const plate = new THREE.Mesh(new THREE.ShapeGeometry(shp), new THREE.MeshBasicMaterial({color: 0xdde4e8, side: THREE.DoubleSide}));
+  plate.rotation.x = -Math.PI / 2; plate.position.y = 0.1; scene.add(plate);
+  scene.add(line([[-8.5, 0, .2], [8.5, 0, .2], [8.5, -8.5, .2], [0, -17, .2], [-8.5, -8.5, .2], [-8.5, 0, .2]], dark));
+  for (const sg of [-1, 1]) {
+    scene.add(line([[sg * 14.5, -44.5, .2], [sg * 62.5, -44.5, .2], [sg * 62.5, 27.5, .2], [sg * 14.5, 27.5, .2], [sg * 14.5, -44.5, .2]], dark));
+    scene.add(line([[sg * 44.5, 27.5, .2], [sg * 1200, -17 + 1200, .2]], dark));
+  }
+  // his strike zone at the front of the plate
+  scene.add(line([[-8.5, 0, sc.sz[0]], [8.5, 0, sc.sz[0]], [8.5, 0, sc.sz[1]], [-8.5, 0, sc.sz[1]], [-8.5, 0, sc.sz[0]]],
+    new THREE.LineDashedMaterial({color: 0x16202b, dashSize: 2, gapSize: 1.5})));
+  // ghosts of the whole thing
+  scene.add(line(sc.pitch, new THREE.LineBasicMaterial({color: 0xe07b24, transparent: true, opacity: .25})));
+  scene.add(line(sc.arc, new THREE.LineDashedMaterial({color: 0x8fa6c9, dashSize: 2, gapSize: 1.5})));
+  const meas = sc.arc.filter(q => q[3] === 1);
+  if (meas.length > 1) scene.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(meas.map(V)), 40, 0.6, 8),
+    new THREE.MeshLambertMaterial({color: 0x2f5fb3})));
+  if (sc.exit) scene.add(line(sc.exit, new THREE.LineBasicMaterial({color: 0x2e9d5b, transparent: true, opacity: .3})));
+  // live pieces
+  const trail = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({color: 0xe07b24}));
+  const etrail = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({color: 0x2e9d5b}));
+  scene.add(trail, etrail);
+  const ball = new THREE.Mesh(new THREE.SphereGeometry(1.45, 20, 14), new THREE.MeshLambertMaterial({color: 0xffffff, emissive: 0x332211}));
+  scene.add(ball);
+  const bat = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 0.55, 33, 16), new THREE.MeshLambertMaterial({color: 0x9a7b52}));
+  scene.add(bat);
+  const hit = new THREE.Mesh(new THREE.SphereGeometry(2.2, 18, 12), new THREE.MeshBasicMaterial({color: 0xc0392b}));
+  hit.position.copy(V(sc.contact)); scene.add(hit);
+  // camera: orbit around the contact point
+  const tgt = V([sc.contact[0] * 0.5, sc.contact[1] * 0.5 - 4, 30]);
+  const st = {th: 0, ph: 1.25, r: 190};
+  const openSide = sc.side === 'R' ? 1 : -1;
+  const PRESETS = {Catcher: {th: 0, ph: 1.32, r: 170}, 'Open side': {th: openSide * Math.PI / 2, ph: 1.38, r: 190},
+                   Overhead: {th: 0.0001, ph: 0.06, r: 260}, Pitcher: {th: Math.PI, ph: 1.4, r: 260}};
+  function place() {
+    cam.position.set(tgt.x + st.r * Math.sin(st.ph) * Math.sin(st.th), tgt.y + st.r * Math.cos(st.ph),
+                     tgt.z + st.r * Math.sin(st.ph) * Math.cos(st.th));
+    cam.lookAt(tgt);
+  }
+  const cams = document.getElementById('cams'); cams.innerHTML = '';
+  Object.entries(PRESETS).forEach(([k, v], i) => {
+    const b = document.createElement('button'); b.textContent = k; if (!i) b.classList.add('on');
+    b.onclick = () => { Object.assign(st, v); place(); cams.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); };
+    cams.appendChild(b);
+  });
+  let drag = null;
+  ren.domElement.addEventListener('pointerdown', e => { drag = [e.clientX, e.clientY]; ren.domElement.setPointerCapture(e.pointerId); });
+  ren.domElement.addEventListener('pointermove', e => {
+    if (!drag) return; st.th -= (e.clientX - drag[0]) * 0.008; st.ph = Math.max(0.05, Math.min(1.55, st.ph - (e.clientY - drag[1]) * 0.008));
+    drag = [e.clientX, e.clientY]; place(); cams.querySelectorAll('button').forEach(x => x.classList.remove('on'));
+  });
+  ren.domElement.addEventListener('pointerup', () => { drag = null; });
+  ren.domElement.addEventListener('wheel', e => { e.preventDefault(); st.r = Math.max(40, Math.min(1500, st.r * (1 + e.deltaY * 0.001))); place(); }, {passive: false});
+  place();
+  // time
+  const T = q => q[q.length - 1];
+  const t0 = Math.min(T(sc.pitch[0]), T(sc.arc[0])), t1 = Math.max(T(sc.arc[sc.arc.length - 1]), sc.exit ? 0.12 : 0.03);
+  const S = {t: t0, playing: true, last: null, raf: 0};
+  function frame(t) {
+    const bt = upto(sc.pitch, t).map(V);
+    trail.geometry.dispose(); trail.geometry = new THREE.BufferGeometry().setFromPoints(bt.length > 1 ? bt : [V(sc.pitch[0]), V(sc.pitch[0])]);
+    const et = t > 0 && sc.exit ? upto(sc.exit, t).map(V) : [];
+    etrail.geometry.dispose(); etrail.geometry = new THREE.BufferGeometry().setFromPoints(et.length > 1 ? et : [V(sc.contact), V(sc.contact)]);
+    const B = t <= 0 ? at(sc.pitch, t) : (sc.exit ? at(sc.exit, t) : null);
+    ball.visible = !!B; if (B) ball.position.copy(V(B));
+    const P = at(sc.arc, Math.max(T(sc.arc[0]), Math.min(t, T(sc.arc[sc.arc.length - 1]))));  // waits at the start, holds the finish
+    bat.visible = !!P;
+    if (P) {
+      const u = new THREE.Vector3(sc.O[0] - P[0], sc.O[2] - P[2], -(sc.O[1] - P[1])).normalize();   // sweet spot -> hands
+      const mid = V(P).add(u.clone().multiplyScalar(10.5));                                         // 33" bat, sweet spot 6" from the end
+      bat.position.copy(mid); bat.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), u);
+    }
+    hit.visible = t >= 0;
+    document.getElementById('s3c').textContent = `${t >= 0 ? '+' : ''}${(t * 1000).toFixed(0)} ms from contact`;
+    ren.render(scene, cam);
+  }
+  function tick(now) {
+    if (S.playing && S.last !== null) {
+      S.t += (now - S.last) / 1000 / +document.getElementById('s3sp').value;
+      if (S.t > t1 + 0.02) S.t = t0;
+      document.getElementById('s3sc').value = Math.round((Math.min(S.t, t1) - t0) / (t1 - t0) * 1000);
+    }
+    S.last = now; frame(Math.min(S.t, t1)); S.raf = requestAnimationFrame(tick);
+  }
+  S.raf = requestAnimationFrame(tick);
+  document.getElementById('s3p').onclick = e => { S.playing = !S.playing; e.target.textContent = S.playing ? '❚❚' : '▶'; };
+  document.getElementById('s3sc').oninput = e => {
+    S.playing = false; document.getElementById('s3p').textContent = '▶'; S.t = t0 + (t1 - t0) * e.target.value / 1000; };
+  return {stop() { cancelAnimationFrame(S.raf); ren.dispose(); ren.domElement.remove(); }};
+}
+function open3d(n, btn) {
+  const sc = S3[n]; if (!sc) return;
+  const r = sc.read;
+  document.getElementById('s3t').textContent = `${r.count} ${r.ptype} ${fmt(r.velo)} · ${r.result}`;
+  document.getElementById('s3s').textContent = 'drag to orbit · scroll to zoom';
+  const v = document.getElementById('s3v');
+  if (r.video) { v.href = 'https://baseballsavant.mlb.com/sporty-videos?playId=' + r.video; v.style.display = ''; } else v.style.display = 'none';
+  readouts(sc);
+  const docH = Math.max(document.documentElement.scrollHeight, 760);
+  ovl.style.height = docH + 'px'; ovl.classList.add('on');
+  const rowTop = btn.getBoundingClientRect().top + window.scrollY;
+  dlg.style.top = Math.max(10, Math.min(rowTop - 160, docH - dlg.offsetHeight - 10)) + 'px';
+  if (document.documentElement.scrollHeight < docH) document.body.style.minHeight = docH + 'px';
+  resize();
+  const msg = document.getElementById('s3msg'); msg.style.display = '';
+  loadThree(() => { msg.style.display = 'none'; if (R3) R3.stop(); R3 = build(sc); });
+}
+function close3d() { ovl.classList.remove('on'); if (R3) { R3.stop(); R3 = null; } document.body.style.minHeight = ''; resize(); }
+document.querySelectorAll('button.s3d').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); open3d(b.dataset.n, b); }));
+document.getElementById('s3x').onclick = close3d;
+ovl.addEventListener('click', e => { if (e.target === ovl) close3d(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && ovl.classList.contains('on')) close3d(); });
+"""
+
+
 def component_html(p: pd.DataFrame, pas: list[dict], line: dict, tiles: dict, metric_names: dict,
                    contact_note: str, dims: dict | None = None, park: str = "", default_metric: str = "GD%",
-                   contact_tip: str = "", outline: dict | None = None, contact_est: bool = False) -> str:
+                   contact_tip: str = "", outline: dict | None = None, contact_est: bool = False,
+                   header: str = "", scenes3d: dict | None = None) -> str:
+    scenes3d = scenes3d or {}
+    if "n" in p:
+        p = p.assign(has3d=p["n"].isin(list(scenes3d)))
+        pas = [{**pa, "rows": pa["rows"].assign(has3d=pa["rows"]["n"].isin(list(scenes3d)))} for pa in pas]
     opts = "".join(f'<option value="{escape(k)}"{" selected" if k == default_metric else ""}>{escape(v)}</option>'
                    for k, v in metric_names.items())
     left = (f'<div class="left"><div class="card">{line_html(line)}</div>'
@@ -454,10 +676,14 @@ def component_html(p: pd.DataFrame, pas: list[dict], line: dict, tiles: dict, me
            '<span class="faint" id="scope"></span><button id="expand">Open all</button>'
            '<button id="collapse">Collapse all</button><button id="clear">Clear selection</button></div>' + filt)
     data = json.dumps(tiles).replace("</", "<\\/")
+    s3 = json.dumps({str(k): v for k, v in scenes3d.items()}).replace("</", "<\\/")
+    head = header.replace("<style>", "<style>", 1) if header else ""
     return (f'<!doctype html><html><head><meta charset="utf-8"><style>{CSS}</style></head><body>'
-            f'<div id="aar"><div class="top">{left}{charts}</div>{bar}'
-            f'<div class="wrap">{table_html(p, pas)}</div></div>'
-            f'<script type="application/json" id="tiles-data">{data}</script><script>{JS}</script></body></html>')
+            f'<div id="aar">{head}<div class="top">{left}{charts}</div>{bar}'
+            f'<div class="wrap">{table_html(p, pas)}</div></div>{OVERLAY}'
+            f'<script type="application/json" id="tiles-data">{data}</script>'
+            f'<script type="application/json" id="s3d-data">{s3}</script><script>{JS}</script>'
+            f'<script>const THREE_SRC = "{THREE_JS}";{S3D_JS}</script></body></html>')
 
 
 def estimate_height(n_pas: int, n_pitches: int) -> int:

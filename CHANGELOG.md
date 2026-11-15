@@ -1,5 +1,22 @@
 # IQ Savant – version history
 
+## v22.5 – 2026-11-15
+- 3D swing view in the AAR: a cube icon next to the video icon on every swing that made contact (fouls + balls in
+  play). It opens over the AAR (everything behind greys out; close with ✕, Esc or clicking the grey) and shows:
+  * the pitch: measured flight from release to contact, animated with a trail;
+  * the bat: the sweet spot's path -- solid for Statcast's last 40 ms (measured attack angle, attack direction,
+    swing tilt), dashed for the reconstructed stretch before + follow-through -- with the bat on it. No hitter body
+    is drawn; the plane only leans toward his measured stance position;
+  * contact at MLB's contact-vs-plate point; his strike zone; plate, batter's boxes, foul lines;
+  * ball off the bat for balls in play (measured launch angle + exit velo toward where it was fielded);
+  * cameras: Catcher / Open side / Overhead / Pitcher, drag to orbit, scroll to zoom; Play, 1/4-1/60 speed, scrubber
+    (ms from contact), Savant video;
+  * readouts: bat speed, swing length, attack angle / direction, tilt, contact vs plate, pitch velo + how steeply it
+    was coming down, swing vs pitch plane (attack angle minus descent), exit velo / launch angle / smash factor.
+- The 3D library (three.js r128, cdnjs) loads only the first time a cube is clicked.
+- The AAR header now lives inside the interactive panel so the overlay greys out the whole report.
+- Pitch physics will be refined next (currently Statcast's constant-acceleration fit).
+
 ## v22.4 – 2026-11-15
 - Point of contact, pitch by pitch: each dot uses the most specific stance depth Savant's board has for him --
   his playoff stance in a playoff game, then his stance vs that pitcher's hand (LHP / RHP), then his season stance
