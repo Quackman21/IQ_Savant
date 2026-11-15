@@ -157,9 +157,13 @@ def spray_svg(p: pd.DataFrame, dims: dict | None = None, park: str = "", outline
     W, H = 290, 300
     dims = dims or DEFAULT_DIMS
     segs = (outline or {}).get("segments") or {}
-    far = max([max(dims.values())] + [float(np.max(np.hypot(*v))) for v in segs.values()] if segs else
-              [max(dims.values())])
-    sc = 262 / (far + 12)
+    if segs:                                  # fit the whole park: its depth AND its width
+        wx_, wy_ = segs["outfield_outer"]
+        deep, wide = float(np.max(wy_)), float(np.max(np.abs(wx_)))
+    else:
+        deep = max(dims.values())
+        wide = deep * 0.75
+    sc = min(262 / (deep + 14), (W / 2 - 10) / (wide + 6))
     hx, hy = W / 2, 290
     pt = lambda fx, fy: (hx + fx * sc, hy - fy * sc)
     g = []

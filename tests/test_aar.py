@@ -165,45 +165,43 @@ def test_box_score_has_aar_links():
 
 
 def _outline(team="red_sox", lf=310, cf=420, rf=302):
-    """A made-up traced park in Statcast hit coordinates: fence from the LF pole to the RF pole + dirt."""
-    angs = np.radians(np.linspace(-45, 45, 31))
-    dist = np.interp(np.degrees(angs), [-45, -20, 0, 20, 45], [lf, 380, cf, 380, rf])
-    fx, fy = dist * np.sin(angs), dist * np.cos(angs)
-    rows = [{"team": team, "x": 125.42 + x / 2.5, "y": 198.27 - y / 2.5, "segment": "outfield_outer"}
-            for x, y in zip(fx, fy)]
-    a2 = np.radians(np.linspace(-45, 45, 9))
-    rows += [{"team": team, "x": 125.42 + 95 * np.sin(a) / 2.5, "y": 198.27 - 95 * np.cos(a) / 2.5,
-              "segment": "infield_outer"} for a in a2]
+    """A made-up park traced like the real file (Statcast hit coordinates): 'outfield_outer' outlines the WHOLE
+    park -- wall in fair territory plus the stands around foul territory -- and 'foul_lines' end at the poles."""
+    ft = lambda x, y: (125.42 + np.asarray(x) / 2.5, 198.27 - np.asarray(y) / 2.5)
+    angs = np.linspace(-45, 45, 31)
+    dist = np.interp(angs, [-45, -20, 0, 20, 45], [lf, 380, cf, 380, rf])
+    wx, wy = dist * np.sin(np.radians(angs)), dist * np.cos(np.radians(angs))
+    # stands: from the RF pole around behind home and back up to the LF pole
+    back = np.linspace(45, 315, 40)
+    sx, sy = 90 * np.sin(np.radians(back)) * 2.2, 90 * np.cos(np.radians(back)) + 30
+    ox, oy = np.r_[wx, sx], np.r_[wy, sy]
+    rows = [{"team": team, "x": x, "y": y, "segment": "outfield_outer"} for x, y in zip(*ft(ox, oy))]
+    for a, dd in ((-45, lf), (45, rf)):
+        line = np.linspace(0, dd, 12)
+        rows += [{"team": team, "x": x, "y": y, "segment": "foul_lines"}
+                 for x, y in zip(*ft(line * np.sin(np.radians(a)), line * np.cos(np.radians(a))))]
+    a2 = np.radians(np.linspace(-60, 60, 13))
+    rows += [{"team": team, "x": x, "y": y, "segment": "infield_outer"}
+             for x, y in zip(*ft(95 * np.sin(a2), 95 * np.cos(a2)))]
     return pd.DataFrame(rows)
 
 
-def test_outline_slid_onto_statcast_home_plate():
-    o = _outline(lf=310, cf=390, rf=302)
-    o["y"] = o["y"] + 7.2                                             # this park's file sits 18 ft off
-    hp = pd.DataFrame({"team": "red_sox", "x": [125.42 - 3, 125.42 + 3, 125.42], "y": [198.27 + 7.2 - 1,
-                       198.27 + 7.2 - 1, 198.27 + 7.2], "segment": "home_plate"})
-    got = aar.park_outline("Boston Red Sox", {"leftLine": 310.0, "center": 420.0, "rightLine": 302.0},
-                           pd.concat([o, hp]))
-    assert got["source"] == "outline", got["note"]                    # 420 = deepest point, not checked at center
-    assert abs(got["poles"][0] - 310) < 3 and abs(got["poles"][1] - 302) < 3
-
-
-def test_fence_path_that_runs_down_the_foul_lines():
-    """The real file's fence path goes home -> LF line -> wall -> RF line -> home."""
-    o = _outline(lf=310, cf=390, rf=302)
-    fence = o[o.segment.eq("outfield_outer")]
-    line = lambda ang, far: pd.DataFrame({"team": "red_sox", "segment": "outfield_outer",
-                                          "x": 125.42 + np.linspace(5, far, 25) * np.sin(np.radians(ang)) / 2.5,
-                                          "y": 198.27 - np.linspace(5, far, 25) * np.cos(np.radians(ang)) / 2.5})
-    near_home = pd.DataFrame({"team": "red_sox", "segment": "outfield_outer",       # points by the plate land at
-                              "x": 125.42 + np.array([-20, 22]) / 2.5, "y": 198.27 - np.array([12, 11]) / 2.5})  # odd angles
-    path = pd.concat([near_home.iloc[:1], line(-45, 309), fence, line(45, 301).iloc[::-1], near_home.iloc[1:],
-                      o[o.segment.ne("outfield_outer")]])
-    got = aar.park_outline("Boston Red Sox", {"leftLine": 310.0, "center": 420.0, "rightLine": 302.0}, path)
+def test_wall_is_the_fair_part_of_the_park_outline():
+    got = aar.park_outline("Boston Red Sox", {"leftLine": 310.0, "center": 420.0, "rightLine": 302.0}, _outline())
     assert got["source"] == "outline", got["note"]
-    assert abs(got["poles"][0] - 310) < 3 and abs(got["poles"][1] - 302) < 3
+    assert abs(got["poles"][0] - 310) < 1 and abs(got["poles"][1] - 302) < 1
     fx, fy = got["segments"]["outfield_outer"]
-    assert np.hypot(fx, fy).min() > 290                                # no foul-line points left in the wall
+    assert np.hypot(fx, fy).min() > 290                                # none of the stands behind home
+    assert abs(np.hypot(fx, fy).max() - 420) < 2
+    shuffled = aar.park_outline("Boston Red Sox", None, _outline().sample(frac=1, random_state=2))
+    assert abs(shuffled["poles"][0] - 310) < 1
+
+
+def test_moved_team_never_gets_its_old_park():
+    o = _outline("athletics", 330, 400, 330)
+    dims = {"leftLine": 330.0, "center": 403.0, "rightLine": 325.0}
+    assert aar.park_outline("Athletics", dims, o, venue="Sutter Health Park")["source"] == "distances"
+    assert aar.park_outline("Athletics", dims, o, venue="Oakland Coliseum")["source"] == "outline"
 
 
 def test_park_outline_used_only_when_it_matches_this_venue():
@@ -222,7 +220,7 @@ def test_spray_draws_real_outline_or_labeled_fallback():
     dims = {"leftLine": 310.0, "center": 420.0, "rightLine": 302.0}
     html = aar_ui.spray_svg(p, dims, "Fenway Park", aar.park_outline("Boston Red Sox", dims, _outline()))
     assert "approximate" not in html and ">420<" in html and html.count("<polygon") >= 2
-    fb = aar_ui.spray_svg(p, dims, "Some Park", aar.park_outline("Athletics", dims, _outline()))
+    fb = aar_ui.spray_svg(p, dims, "Some Park", aar.park_outline("Seattle Mariners", dims, _outline()))
     assert "approximate fence" in fb
 
 
@@ -234,11 +232,3 @@ def test_contact_only_fouls_and_balls_in_play():
     assert whiff.any() and p.loc[whiff, "cx"].isna().all()
     assert p.loc[p["result"].isin(["Foul", "In play"]), "cx"].notna().all()
     assert p.loc[p["result"].isin(["Ball", "Called strike"]), "cx"].isna().all()
-
-
-def test_scrambled_outline_is_drawn_in_order():
-    o = _outline().sample(frac=1, random_state=1)                    # file rows out of order
-    got = aar.park_outline("Boston Red Sox", {"leftLine": 310.0, "center": 420.0, "rightLine": 302.0}, o)
-    fx, fy = aar_ui._by_spray(*got["segments"]["outfield_outer"])
-    ang = np.degrees(np.arctan2(fx, fy))
-    assert (np.diff(ang) > 0).all() and ang[0] < -40 and ang[-1] > 40

@@ -316,62 +316,64 @@ def fence_distance(fx: np.ndarray, fy: np.ndarray, angle_deg: float) -> float:
     return float(np.hypot(fx[i], fy[i]))
 
 
-HOME_HC = (125.42, 198.27)        # where Statcast's hit coordinates put home plate
-WALL_MIN = 250                    # ft: anything closer than this can't be an MLB outfield wall
+HOME_HC = (125.42, 198.27)        # Statcast home plate -- the traced outlines are already in this frame
 
 
-def wall_only(fx, fy, window: float = 1.0, min_dist: float = 0.0):
-    """Just the wall, pole to pole, in order. The traced 'outfield_outer' path also runs down both foul lines to
-    home plate, so many points share the same angle; keep only the outermost point near each angle (the wall),
-    then order them from the left-field line to the right-field line."""
-    fx, fy = np.asarray(fx, float), np.asarray(fy, float)
-    ok = np.isfinite(fx) & np.isfinite(fy) & (np.hypot(fx, fy) >= min_dist)
-    fx, fy = fx[ok], fy[ok]
-    if len(fx) == 0:
-        return fx, fy
-    ang, dist = np.degrees(np.arctan2(fx, fy)), np.hypot(fx, fy)
-    keep = np.array([dist[i] >= 0.97 * dist[np.abs(ang - ang[i]) <= window].max() for i in range(len(fx))],
-                    dtype=bool)
-    o = np.argsort(ang[keep])
-    return fx[keep][o], fy[keep][o]
+def _ang(fx, fy):
+    return np.degrees(np.arctan2(fx, fy))
 
 
-def park_outline(home_team_name: str, dims: dict | None, outlines: pd.DataFrame | None = None) -> dict:
-    """The park to draw: {'segments': {name: (fx, fy) in feet}, 'source': 'outline' | 'distances', 'note': str,
-    'poles': (lf, rf)}.
+# the park each traced outline is -- if the game was somewhere else (team moved / temporary home), don't use it
+OUTLINE_VENUE = {"athletics": "coliseum", "rays": "tropicana"}
 
-    Each traced park is first slid so ITS home plate sits where Statcast puts home plate (the file's plates aren't
-    all at the same spot -- measuring from the wrong spot made foul lines look ~18 ft long). Then the foul-pole
-    distances (the two ends of the fence) are checked against MLB's published lines for THIS venue. Center isn't
-    checked: MLB's 'center' is the deepest point (Fenway's 420 is the triangle), not straightaway center."""
+
+def park_outline(home_team_name: str, dims: dict | None, outlines: pd.DataFrame | None = None,
+                 venue: str = "") -> dict:
+    """The park to draw: {'segments': {...feet...}, 'source': 'outline' | 'distances', 'note', 'poles'}.
+
+    The traced file (GeomMLBStadiums, via pybaseball) is already in Statcast's hit coordinates -- no shifting.
+    Its 'outfield_outer' is the outline of the WHOLE park (outfield wall + the walls around foul territory), so the
+    outfield wall is the part of it between the two foul poles; the poles are the far ends of 'foul_lines'.
+    The wall is checked against MLB's published foul-line distances for THIS venue (within 15 ft) -- a team that
+    moved or a park that was rebuilt shows an approximate fence instead of the wrong park."""
     d = stadium_outlines() if outlines is None else outlines
     key = team_key(home_team_name)
+    if venue and key in OUTLINE_VENUE and OUTLINE_VENUE[key] not in venue.lower():
+        return {"segments": {}, "source": "distances",
+                "note": f"the traced outline is the team's old park, not {venue} -- fence from published distances"}
     t = d[d["team"].astype(str).eq(key)]
     if t.empty:
-        return {"segments": {}, "source": "distances", "note": "no traced outline for this park -- fence from "
-                                                               "published distances"}
-    hp = t[t["segment"].astype(str).eq("home_plate")]
-    dx, dy = ((HOME_HC[0] - hp["x"].mean(), HOME_HC[1] - hp["y"].max()) if not hp.empty else (0.0, 0.0))
-    segs = {str(seg): to_feet(g["x"].values + dx, g["y"].values + dy)
-            for seg, g in t.groupby("segment", sort=False)}
-    fence = segs.get("outfield_outer")
-    if fence is None:
-        return {"segments": {}, "source": "distances", "note": "no traced fence -- fence from published distances"}
-    fx, fy = wall_only(*fence, min_dist=WALL_MIN)          # no MLB wall is inside ~300 ft: drop foul-line points
-    if len(fx) < 5:
-        return {"segments": {}, "source": "distances", "note": "traced fence unusable -- fence from published "
-                                                               "distances"}
-    segs["outfield_outer"] = (fx, fy)
-    if "infield_outer" in segs:
-        segs["infield_outer"] = wall_only(*segs["infield_outer"], min_dist=60)
-    ang, dist = np.degrees(np.arctan2(fx, fy)), np.hypot(fx, fy)
-    poles = (float(dist[ang <= ang.min() + 1.5].max()), float(dist[ang >= ang.max() - 1.5].max()))
+        return {"segments": {}, "source": "distances",
+                "note": "no traced outline for this park -- fence from published distances"}
+    segs = {str(seg): to_feet(g["x"].values, g["y"].values) for seg, g in t.groupby("segment", sort=False)}
+    if "outfield_outer" not in segs or "foul_lines" not in segs:
+        return {"segments": {}, "source": "distances", "note": "traced outline incomplete -- published distances"}
+    lx, ly = segs["foul_lines"]
+    la, ld = _ang(lx, ly), np.hypot(lx, ly)
+    lp, rp = int(np.argmax(np.where(la < 0, ld, -1))), int(np.argmax(np.where(la > 0, ld, -1)))
+    a_l, a_r = la[lp], la[rp]
+    ox, oy = segs["outfield_outer"]
+    oa, od = _ang(ox, oy), np.hypot(ox, oy)
+    fair = (oa > a_l + 1.0) & (oa < a_r - 1.0) & (od > 200)          # wall strictly between the poles
+    if fair.sum() < 5:
+        return {"segments": {}, "source": "distances", "note": "traced wall unusable -- published distances"}
+    o = np.argsort(oa[fair])
+    wx = np.concatenate([[lx[lp]], ox[fair][o], [lx[rp]]])            # LF pole -> wall -> RF pole
+    wy = np.concatenate([[ly[lp]], oy[fair][o], [ly[rp]]])
+    poles = (float(ld[lp]), float(ld[rp]))                             # the foul poles = far ends of the lines
+    segs["outfield_outer"] = (wx, wy)
+    segs["poles_xy"] = (np.array([wx[0], wx[-1]]), np.array([wy[0], wy[-1]]))
+    if "infield_outer" in segs:                                          # dirt: just the arc in fair territory
+        ix, iy = segs["infield_outer"]
+        ia = _ang(ix, iy)
+        k = (ia >= a_l - 1) & (ia <= a_r + 1) & (np.hypot(ix, iy) > 60)
+        segs["infield_outer"] = (ix[k][np.argsort(ia[k])], iy[k][np.argsort(ia[k])])
     if dims and {"leftLine", "rightLine"} <= set(dims):
-        off = {"leftLine": abs(poles[0] - dims["leftLine"]), "rightLine": abs(poles[1] - dims["rightLine"])}
-        if max(off.values()) > 15:
-            why = f"poles {poles[0]:.0f} / {poles[1]:.0f} vs listed {dims['leftLine']:.0f} / {dims['rightLine']:.0f}"
+        off = max(abs(poles[0] - dims["leftLine"]), abs(poles[1] - dims["rightLine"]))
+        if off > 15:
             return {"segments": {}, "source": "distances", "poles": poles,
-                    "note": f"traced outline doesn't match this venue ({why}) -- fence from published distances"}
+                    "note": f"traced outline doesn't match this venue (poles {poles[0]:.0f} / {poles[1]:.0f} vs "
+                            f"listed {dims['leftLine']:.0f} / {dims['rightLine']:.0f}) -- fence from published distances"}
     return {"segments": segs, "source": "outline", "poles": poles,
             "note": f"traced park outline (poles {poles[0]:.0f} / {poles[1]:.0f} ft)"}
 

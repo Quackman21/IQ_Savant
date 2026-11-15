@@ -1,5 +1,16 @@
 # IQ Savant – version history
 
+## v21.8 – 2026-11-14
+- Park outlines finally right -- worked out on the actual outline file, all 30 parks drawn and checked:
+  * the outlines are ALREADY in Statcast's hit coordinates (v21.5's "line up each park on its own plate" added
+    ~11 ft and was the mistake -- removed);
+  * the file's 'outfield_outer' is the outline of the WHOLE park (wall + the stands around foul territory), so the
+    wall is the part between the foul poles, and the poles are the far ends of 'foul_lines';
+  * checked against real line distances: 29 of 30 within a few feet (Fenway 312/309 vs 310/302, Trop 317/327 vs
+    315/322, Wrigley 353/355 vs 355/353). Yankee Stadium's outline is 16 ft long on the lines -> approximate fence.
+  * teams whose outline is an old park (A's = Oakland Coliseum) never get it at another venue (venue-name check).
+  * the chart fits the park's width as well as its depth (Fenway's right field ran off the edge).
+
 ## v21.7 – 2026-11-14
 - Park walls: points by home plate land at odd angles once a park is lined up on Statcast's plate, so they were
   still being read as the "poles" (every park ~50-75 ft). Points inside 250 ft are now dropped before finding the
