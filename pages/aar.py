@@ -98,8 +98,7 @@ pas = aar.plate_appearances(p)
 
 # point of contact on the plate: Statcast measures it from his hips; his own season's swings (where the ball was vs
 # where he met it) place his hips in the box, so every contact point lands on the plate -- no stance download
-orient = aar.contact_orientation(season_sc)
-cal = aar.plate_calibration(season_sc, orient)
+cal = aar.plate_calibration(season_sc)
 p = p.join(aar.on_plate(p, cal))
 pas = aar.plate_appearances(p)
 if p["cx"].notna().any() and not cal:

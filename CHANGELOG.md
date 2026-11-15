@@ -1,5 +1,14 @@
 # IQ Savant – version history
 
+## v21.9 – 2026-11-14
+- Point of contact* now carries an asterisk + note: side to side is where the ball actually was; front to back
+  uses his ESTIMATED hip position (Statcast measures contact from the hips and never publishes where the hips are
+  relative to the plate).
+- Contact axes locked to what the 2026 data shows: Y = inches out in front of his hips (average +30 = MLB's
+  published figure), X = inches from his hips toward the plate (always positive) -- no longer searched for.
+- Later (planned): league-anchored hip position (pooled fit across every hitter, each hitter moved toward his own
+  swings by sample size) and, eventually, a per-hitter 3D swing map for the Bat Path tab.
+
 ## v21.8 – 2026-11-14
 - Park outlines finally right -- worked out on the actual outline file, all 30 parks drawn and checked:
   * the outlines are ALREADY in Statcast's hit coordinates (v21.5's "line up each park on its own plate" added

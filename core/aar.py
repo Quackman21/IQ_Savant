@@ -231,8 +231,11 @@ def plate_calibration(season: pd.DataFrame, orient: tuple[int, int] | None = Non
         if len(g) < 40 or g["_s"].std() < 0.01:
             continue
         best = None
-        for sx in (1, -1):
-            for sy in ((orient[0],) if orient else (1, -1)):
+        # axes confirmed from the data (avg Y = +30 in = MLB's published "30 inches in front of his hips"; X is always
+        # positive): Y = inches OUT FRONT of his hips, X = inches from his hips TOWARD THE PLATE. Toward the plate is
+        # the catcher's right for a RHB and left for a LHB.
+        for sx in ((1,) if side == "R" else (-1,)):
+            for sy in (1,):
                 z = g["_px"] + g["_s"] * sy * g["_cy"] - sx * g["_cx"]
                 slope, x0 = np.polyfit(g["_s"], z, 1)                  # fit, drop bad tracks by residual, refit
                 res = z - (x0 + slope * g["_s"])

@@ -107,7 +107,7 @@ def test_decision_labels():
     assert aar.decision_label(-0.4) == "Poor" and aar.decision_label(float("nan")) == ""
 
 
-def _season_swings(n=300, X0=-30.0, F0=-28.0, sx=1, seed=4):
+def _season_swings(n=300, X0=-30.0, F0=-28.0, sx=1, seed=4, stand="R"):
     """A RHB whose hips sit 30" off the middle of the plate and 28" behind its front edge (catcher's view)."""
     rng = np.random.default_rng(seed)
     slope = rng.normal(0, 0.06, n)
@@ -120,7 +120,7 @@ def _season_swings(n=300, X0=-30.0, F0=-28.0, sx=1, seed=4):
     f = F0 + cy                                                   # ... = inches in front of the plate
     x_ball = px * 12 + slope * f                                  # where the ball is when he hits it
     cx = sx * (x_ball - X0) + rng.normal(0, 0.8, n)
-    return pd.DataFrame({"stand": "R", "plate_x": px, "vx0": vx0, "vy0": vy0, "ax": 0.0, "ay": ay,
+    return pd.DataFrame({"stand": stand, "plate_x": px, "vx0": vx0, "vy0": vy0, "ax": 0.0, "ay": ay,
                          aar.CONTACT_X: cx, aar.CONTACT_Y: cy})
 
 
@@ -129,8 +129,9 @@ def test_plate_calibration_learns_where_he_stands_from_his_swings():
     cal = aar.plate_calibration(season, (1, 1))
     r = cal["R"]
     assert abs(r["F0"] + 28) < 2.5 and abs(r["X0"] + 30) < 1.5 and r["sx"] == 1 and r["n"] > 250
-    flipped = aar.plate_calibration(_season_swings(sx=-1), (1, 1))["R"]       # other axis direction -> found
-    assert flipped["sx"] == -1 and abs(flipped["F0"] + 28) < 2.5
+    # Statcast X = inches from his hips TOWARD THE PLATE (always positive): a LHB stands on the catcher's right
+    lhb = aar.plate_calibration(_season_swings(X0=30.0, sx=-1, stand="L"))["L"]
+    assert lhb["sx"] == -1 and abs(lhb["F0"] + 28) < 2.5 and abs(lhb["X0"] - 30) < 1.5
     assert aar.plate_calibration(season.head(20), (1, 1)) is None              # too few swings
     # place one swing: 3" out front of the plate, ball over the middle
     one = pd.DataFrame({"stand": ["R"], "cx": [30.0], "cy": [31.0], "px": [0.0], "slope": [0.0], "pa": [1]})

@@ -219,7 +219,7 @@ def contact_svg(p: pd.DataFrame, note: str, tip: str = "") -> str:
     """Point of contact on the plate (catcher's view): front-center of the plate = 0, 0; up = out in front."""
     have = p[p["pf"].notna() & p["pxc"].notna()]                 # fouls + balls in play only (see core.aar)
     if have.empty:
-        return _chart("Point of contact", "", f'<div class="none">{escape(note)}</div>', "")
+        return _chart("Point of contact*", "", f'<div class="none">{escape(note)}</div>', "")
     W, H = 270, 300
     xs = lambda v: W / 2 + v * 5.2
     ys = lambda v: 165 - v * 5.2
@@ -238,9 +238,10 @@ def contact_svg(p: pd.DataFrame, note: str, tip: str = "") -> str:
         color = _res_color(r.play) if r.bip else SWING
         x, y = max(9, min(W - 9, xs(r.pxc))), max(9, min(H - 16, ys(r.pf)))
         g.append(_mark(r, r.bb if r.bip else "", x, y, color))
-    leg = (f'<i style="color:{SWING}">●</i> Foul &nbsp;in play: shape = BB type, '
+    leg = (f'<b>*</b> side to side = where the ball was; front to back uses his estimated hip position '
+           f'(Statcast measures contact from his hips) &nbsp; <i style="color:{SWING}">●</i> Foul &nbsp;in play: shape = BB type, '
            f'color = result &nbsp;<span class="faint">inches · catcher\'s view</span>')
-    return _chart("Point of contact", "on the plate", f'<svg viewBox="0 0 {W} {H}">{"".join(g)}</svg>', leg,
+    return _chart("Point of contact*", "on the plate", f'<svg viewBox="0 0 {W} {H}">{"".join(g)}</svg>', leg,
                   tip=tip)
 
 
