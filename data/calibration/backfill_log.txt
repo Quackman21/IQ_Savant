@@ -56,3 +56,39 @@
 20:58:48  weather check (11,987 well-hit fly balls): +0.53 ft per mph of tailwind, -1.50 ft per 1% denser air, thin-air parks +23 ft vs average
 20:58:48  hip-position fallback: already have it
 20:58:48  regular data update (league reference + grades)
+21:02:28  backfill done in 0.3 h
+22:54:29  backfill: seasons [2023, 2024, 2025, 2026]
+22:54:29  ===== 2023 =====
+22:54:29  stance board: already have it
+22:54:31  league contact swings: 263,680 (654 hitters)
+22:54:31  contact-type centres: already have them
+22:54:31  weather: already have it
+22:54:38  weather check, hourly wind (12,211 well-hit fly balls): +0.22 ft per mph of tailwind, -1.51 ft per 1% denser air, thin-air parks +23 ft vs average
+22:54:44  weather check, reported wind (11,588 well-hit fly balls): +0.19 ft per mph of tailwind, -1.52 ft per 1% denser air, thin-air parks +23 ft vs average
+22:54:44  hip-position fallback: already have it
+22:54:44  ===== 2024 =====
+22:54:44  stance board: already have it
+22:54:45  league contact swings: 264,770 (650 hitters)
+22:54:45  contact-type centres: already have them
+22:54:45  weather: already have it
+22:54:52  weather check, hourly wind (12,109 well-hit fly balls): +0.30 ft per mph of tailwind, -1.41 ft per 1% denser air, thin-air parks +22 ft vs average
+22:54:58  weather check, reported wind (11,663 well-hit fly balls): +0.26 ft per mph of tailwind, -1.39 ft per 1% denser air, thin-air parks +21 ft vs average
+22:54:58  hip-position fallback: already have it
+22:54:58  ===== 2025 =====
+22:54:58  stance board: already have it
+22:55:00  league contact swings: 264,652 (670 hitters)
+22:55:00  contact-type centres: already have them
+22:55:00  weather: already have it
+22:55:06  weather check, hourly wind (12,837 well-hit fly balls): +0.58 ft per mph of tailwind, -1.61 ft per 1% denser air, thin-air parks +24 ft vs average
+22:55:12  weather check, reported wind (12,353 well-hit fly balls): +0.46 ft per mph of tailwind, -1.61 ft per 1% denser air, thin-air parks +24 ft vs average
+22:55:12  hip-position fallback: already have it
+22:55:12  ===== 2026 =====
+22:55:22  stance board: season, playoff, vs_L, vs_R
+22:55:22  league contact swings: downloading (resumable)
+22:55:39  league contact swings: 265,428 (660 hitters)
+22:55:39  contact-type centres: already have them
+22:57:52  weather: 2,470 games, 33 parks with hourly history
+22:57:59  weather check, hourly wind (11,987 well-hit fly balls): +0.53 ft per mph of tailwind, -1.50 ft per 1% denser air, thin-air parks +23 ft vs average
+22:58:05  weather check, reported wind (11,521 well-hit fly balls): +0.36 ft per mph of tailwind, -1.54 ft per 1% denser air, thin-air parks +23 ft vs average
+22:58:05  hip-position fallback: already have it
+22:58:05  regular data update (league reference + grades)
