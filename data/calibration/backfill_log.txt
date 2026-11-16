@@ -1,0 +1,26 @@
+19:13:08  backfill: seasons [2023, 2024, 2025, 2026]
+19:13:08  ===== 2023 =====
+19:13:18  stance board: season, playoff, vs_L, vs_R
+19:13:18  league contact swings: downloading (resumable)
+19:16:15  league contact swings: 263,680 (654 hitters)
+19:16:15  contact-type centres: launch +5.0 deg vs attack angle, spray -3.7 deg vs attack direction (25,808 squared-up balls)
+19:16:22  hip-position fallback: done
+19:16:22  ===== 2024 =====
+19:16:32  stance board: season, playoff, vs_L, vs_R
+19:16:32  league contact swings: downloading (resumable)
+19:19:30  league contact swings: 264,770 (650 hitters)
+19:19:30  contact-type centres: launch +5.5 deg vs attack angle, spray -3.1 deg vs attack direction (55,356 squared-up balls)
+19:19:38  hip-position fallback: done
+19:19:38  ===== 2025 =====
+19:19:48  stance board: season, playoff, vs_L, vs_R
+19:19:48  league contact swings: downloading (resumable)
+19:22:45  league contact swings: 264,652 (670 hitters)
+19:22:45  contact-type centres: launch +5.3 deg vs attack angle, spray -3.5 deg vs attack direction (58,943 squared-up balls)
+19:22:53  hip-position fallback: done
+19:22:53  ===== 2026 =====
+19:23:02  stance board: season, playoff, vs_L, vs_R
+19:23:02  league contact swings: downloading (resumable)
+19:26:57  league contact swings: 265,428 (660 hitters)
+19:26:57  contact-type centres: launch +5.1 deg vs attack angle, spray -4.8 deg vs attack direction (55,646 squared-up balls)
+19:27:04  hip-position fallback: done
+19:27:04  regular data update (league reference + grades)
