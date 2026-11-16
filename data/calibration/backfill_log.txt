@@ -25,3 +25,34 @@
 19:27:04  hip-position fallback: done
 19:27:04  regular data update (league reference + grades)
 20:13:33  backfill done in 1.0 h
+20:45:10  backfill: seasons [2023, 2024, 2025, 2026]
+20:45:10  ===== 2023 =====
+20:45:10  stance board: already have it
+20:45:11  league contact swings: 263,680 (654 hitters)
+20:45:11  contact-type centres: already have them
+20:47:23  weather: 2,478 games, 32 parks with hourly history
+20:47:29  weather check (12,211 well-hit fly balls): +0.22 ft per mph of tailwind, -1.51 ft per 1% denser air, thin-air parks +23 ft vs average
+20:47:29  hip-position fallback: already have it
+20:47:29  ===== 2024 =====
+20:47:29  stance board: already have it
+20:47:31  league contact swings: 264,770 (650 hitters)
+20:47:31  contact-type centres: already have them
+20:52:58  weather: 2,475 games, 34 parks with hourly history
+20:53:08  weather check (12,109 well-hit fly balls): +0.30 ft per mph of tailwind, -1.41 ft per 1% denser air, thin-air parks +22 ft vs average
+20:53:08  hip-position fallback: already have it
+20:53:08  ===== 2025 =====
+20:53:08  stance board: already have it
+20:53:10  league contact swings: 264,652 (670 hitters)
+20:53:10  contact-type centres: already have them
+20:56:10  weather: 2,481 games, 33 parks with hourly history
+20:56:17  weather check (12,837 well-hit fly balls): +0.58 ft per mph of tailwind, -1.61 ft per 1% denser air, thin-air parks +24 ft vs average
+20:56:17  hip-position fallback: already have it
+20:56:17  ===== 2026 =====
+20:56:26  stance board: season, playoff, vs_L, vs_R
+20:56:26  league contact swings: downloading (resumable)
+20:56:43  league contact swings: 265,428 (660 hitters)
+20:56:43  contact-type centres: already have them
+20:58:41  weather: 2,470 games, 33 parks with hourly history
+20:58:48  weather check (11,987 well-hit fly balls): +0.53 ft per mph of tailwind, -1.50 ft per 1% denser air, thin-air parks +23 ft vs average
+20:58:48  hip-position fallback: already have it
+20:58:48  regular data update (league reference + grades)
