@@ -530,11 +530,15 @@ function readouts(sc) {
     '<h5>Contact (vs the plate)</h5><table>' + row('Out front', fmt(r.front) + '″', m) +
     row('Side (+ = 1B side)', fmt(r.side_in) + '″', m) + row('Height', fmt(r.height) + '″', m) + '</table>' +
     '<h5>Pitch at contact</h5><table>' + row(r.ptype + ' velo', fmt(r.velo) + ' mph', m) +
+    (r.air_pct !== undefined && r.air_pct !== null ? row('Air vs 70°F sea level', (r.air_pct > 0 ? '+' : '') + fmt(r.air_pct) +
+      '% ' + (r.air_pct < 0 ? 'thinner' : 'denser') + (r.temp_f ? ' · ' + fmt(r.temp_f, 0) + '°F' : ''), m) : '') +
     row('Coming down at', fmt(-r.vaa) + '°', m) + row('Swing vs pitch plane', (r.plane_gap > 0 ? '+' : '') + fmt(r.plane_gap) + '°',
       '') + '</table>' +
     (r.ev ? '<h5>Ball off the bat</h5><table>' + row('Exit velo', fmt(r.ev) + ' mph', m) + row('Launch angle', fmt(r.la, 0) + '°', m) +
       (sqp ? row('Squared-up', fmt(sqp, 0) + '% of max' + (sqp >= 80 ? ' ✓' : ''), m) : '') +
       (smash ? row('Smash factor', fmt(smash, 2), m) : '') +
+      (r.tailwind !== undefined && r.tailwind !== null ? row('Wind along the ball', (r.tailwind > 0 ? '+' : '') +
+        fmt(r.tailwind) + ' mph ' + (r.tailwind > 0.5 ? 'tail' : r.tailwind < -0.5 ? 'head' : ''), m) : '') +
       (r.spin ? row('Contact', '<b>' + r.spin + '</b>', i) + `<tr><td colspan="2" style="color:#6a7681;font-size:11px">${r.spin_why}</td></tr>` : '') +
       '</table>' : '') +
     '<div class="lg"><i style="color:#e07b24">━</i> pitch (measured) &nbsp; <i style="color:#2f5fb3">━</i> bat, last 40 ms ' +

@@ -24,3 +24,4 @@
 19:26:57  contact-type centres: launch +5.1 deg vs attack angle, spray -4.8 deg vs attack direction (55,646 squared-up balls)
 19:27:04  hip-position fallback: done
 19:27:04  regular data update (league reference + grades)
+20:13:33  backfill done in 1.0 h

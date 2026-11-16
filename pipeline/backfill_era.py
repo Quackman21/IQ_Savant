@@ -10,6 +10,8 @@ Per season, in order (each step skips itself when its output already exists, so 
   3. contact-type calibration -- where squared-up balls leave vs the bat's path, league-wide
      -> data/calibration/batted_ball_<season>.json
   4. hip-position fallback for hitters not on the stance board -> data/hip_group_<season>.json
+  5. weather: every park (location, elevation, field bearing, roof) + every game's reported weather + hourly history
+     -> data/weather/; then a check that it explains carry (tailwind -> longer, thinner air -> longer)
 Then the regular data update (league reference + grades for every season that needs it) and one commit + push.
 A log of the whole run goes to data/calibration/backfill_log.txt.
 """
@@ -70,6 +72,25 @@ def season_steps(season: int, force: bool) -> None:
             f"vs attack direction ({c['n_squared_up']:,} squared-up balls)")
     else:
         log("contact-type centres: already have them")
+    # 5 weather: parks, schedule + reported weather, hourly history; then check weather explains carry
+    from core import weather
+    wf = weather.DIR / f"games_{season}.csv"
+    if force or not wf.exists() or season == date.today().year:
+        weather.build_season(season, verbose=False, refresh_hourly=season == date.today().year)
+        n = len(pd.read_csv(wf)) if wf.exists() else 0
+        log(f"weather: {n:,} games, {len(list((weather.DIR / str(season)).glob('*.csv')))} parks with hourly history")
+    else:
+        log("weather: already have it")
+    chk = CAL / f"carry_{season}.json"
+    if force or not chk.exists():
+        c = weather.carry_check(lg, season)
+        chk.write_text(json.dumps(c))
+        if c.get("ft_per_mph_tailwind") is not None:
+            log(f"weather check ({c['n']:,} well-hit fly balls): {c['ft_per_mph_tailwind']:+.2f} ft per mph of tailwind, "
+                f"{c['ft_per_pct_density']:+.2f} ft per 1% denser air"
+                + (f", thin-air parks {c['coors_minus_avg_ft']:+.0f} ft vs average" if c.get("coors_minus_avg_ft") else ""))
+        else:
+            log(f"weather check: not enough matched fly balls ({c.get('n', 0)})")
     # 4 hip fallback
     if force or not (ROOT / "data" / f"hip_group_{season}.json").exists():
         hip_group.main([str(lg_file)])
@@ -101,7 +122,7 @@ def main(argv: list[str]) -> None:
         log(f"data update FAILED: {type(e).__name__}: {e}")
     try:
         from pipeline.update import _git
-        paths = ["data/calibration", "data/stance", *[f"data/hip_group_{s}.json" for s in seasons],
+        paths = ["data/calibration", "data/stance", "data/weather", *[f"data/hip_group_{s}.json" for s in seasons],
                  *[f"data/batting_stance_{s}.csv" for s in seasons]]
         _git("add", *[p for p in paths if (ROOT / p).exists()])
         if _git("diff", "--cached", "--quiet") != 0:

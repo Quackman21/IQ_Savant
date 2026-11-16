@@ -160,11 +160,32 @@ game_rows = season_all[pd.to_numeric(season_all["game_pk"], errors="coerce").eq(
     if (not season_all.empty and "game_pk" in season_all) else pd.DataFrame()
 tiles = aar.metric_values(aar.last_pas(season_sc, 30), season_sc, league(season),
                           game=game_rows if not game_rows.empty else sc)
-from core import swing3d
+from core import swing3d, weather
 try:
     scenes3d = swing3d.scenes(sc, p, swing3d.stance_offsets(season, pid))   # contact swings: pitch + bat in 3D
 except Exception:
     scenes3d = {}
+# the air: game conditions in the header; per ball, the wind along its direction + air density in the 3D readouts
+try:
+    cond0 = weather.conditions(pk, season, feed=f)
+except Exception:
+    cond0 = {}
+if cond0:
+    head = head + (f'<div style="margin:-6px 0 10px 4px;color:#6a7681;font:12.5px system-ui">'
+                   f'Conditions: {weather.describe(cond0)}</div>')
+for n, s3 in scenes3d.items():
+    try:
+        r = p.loc[p["n"].eq(n)].iloc[0]
+        c = weather.conditions(pk, season, int(r["inning"]), str(r["half"]) == "▲", feed=f)
+        s3["read"]["air_pct"] = c.get("density_vs_std_pct")
+        s3["read"]["temp_f"] = c.get("temp_f")
+        if s3.get("exit") and pd.notna(r.get("hc_x")) and c.get("wind_mph") is not None:
+            import math
+            spray = math.degrees(math.atan2(float(r["hc_x"]) - 125.42, 198.27 - float(r["hc_y"])))
+            s3["read"]["tailwind"] = (round(weather.along(c["wind_mph"], c["wind_field_deg"], spray), 1)
+                                      if c.get("wind_field_deg") is not None else (0.0 if c["wind_mph"] == 0 else None))
+    except Exception:
+        pass
 components.html(aar_ui.component_html(p, pas, line, tiles, aar.GAME_METRICS, note, dims, hd["venue"],
                                       contact_tip=tip, outline=outline, contact_est=estimated,
                                       header=head, scenes3d=scenes3d),

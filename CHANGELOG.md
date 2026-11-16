@@ -1,5 +1,22 @@
 # IQ Savant – version history
 
+## v24.0 – 2026-11-15
+- Weather + park layer (core/weather.py), the foundation for pitch and batted-ball physics:
+  * parks from MLB's venues API: location, elevation, field orientation (home -> CF compass bearing), roof type
+    (data/weather/parks.json);
+  * every game from MLB's schedule: venue, first pitch (UTC), the weather reported at the park (temp, wind, condition
+    incl. "Roof Closed" / "Dome") -> data/weather/games_<season>.csv;
+  * Open-Meteo hourly history at each park (temp, humidity, surface pressure, wind speed + direction)
+    -> data/weather/<season>/<venue>.csv;
+  * per pitch (game + inning): temperature (park report moved by the hourly change), humidity, pressure (moved to the
+    park's elevation), AIR DENSITY (+ % vs a 70°F sea-level day), and the wind as a vector on the field -> any
+    ball's tail/headwind = wind along its spray direction. Roof closed / dome -> no wind, 72°F inside.
+- Backfill step 5: weather for every season + a carry check (well-hit fly balls: distance vs the median for that
+  EV / LA, against air density and tailwind -> ft per mph and ft per 1% density, logged).
+- Daily update refreshes the current season's weather.
+- AAR: game conditions under the header; 3D readouts: air vs a 70°F sea-level day (+ temp) and, for balls in
+  play, the wind along the ball.
+
 ## v23.1 – 2026-11-15
 - AAR "This game" tile computed from the same season-to-date pull the Season tile uses, filtered to this game (the
   single-game pull is now only the fallback).

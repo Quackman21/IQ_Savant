@@ -56,9 +56,23 @@ def refresh_stance() -> None:
         print(f"Stance board refresh skipped: {e}", flush=True)
 
 
+def refresh_weather() -> None:
+    """Current season's games + reported weather + hourly history at each park (daily during the season)."""
+    try:
+        from core import weather
+        season = date.today().year
+        if 3 <= date.today().month <= 11:
+            print(f"Weather {season}:", flush=True)
+            weather.build_season(season, verbose=False, refresh_hourly=True)
+            _git("add", "data/weather")
+    except Exception as e:
+        print(f"Weather refresh skipped: {e}", flush=True)
+
+
 def main(argv: list[str]) -> None:
     if "--check" not in argv:
         refresh_stance()
+        refresh_weather()
     todo = plan()
     if not todo:
         if "--no-push" not in argv and "--check" not in argv and _git("diff", "--cached", "--quiet") != 0:
