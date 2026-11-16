@@ -1,5 +1,9 @@
 # IQ Savant – version history
 
+## v23.1 – 2026-11-15
+- AAR "This game" tile computed from the same season-to-date pull the Season tile uses, filtered to this game (the
+  single-game pull is now only the fallback).
+
 ## v23.0 – 2026-11-15
 - pipeline/backfill_era.py: one long, resumable job for the whole bat-tracking era (2023 -> now). Per season: Savant's
   stance board (season / playoff / vs LHP / RHP), every MLB contact swing, league-wide contact-type calibration

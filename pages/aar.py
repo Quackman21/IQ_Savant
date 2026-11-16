@@ -155,7 +155,11 @@ dims = aar.field_dims(f) or venue_dims(int(f.get("gameData", {}).get("venue", {}
 home_name = teams.get(hd["home"], {}).get("name", "") or f.get("gameData", {}).get("teams", {}).get("home", {}).get("name", "")
 outline = park_outline(home_name, tuple(sorted(dims.items())), hd["venue"] or "")
 
-tiles = aar.metric_values(aar.last_pas(season_sc, 30), season_sc, league(season))
+# This game: the same pull the Season tile uses (it works), filtered to this game; the single-game pull is the fallback
+game_rows = season_all[pd.to_numeric(season_all["game_pk"], errors="coerce").eq(pk)] \
+    if (not season_all.empty and "game_pk" in season_all) else pd.DataFrame()
+tiles = aar.metric_values(aar.last_pas(season_sc, 30), season_sc, league(season),
+                          game=game_rows if not game_rows.empty else sc)
 from core import swing3d
 try:
     scenes3d = swing3d.scenes(sc, p, swing3d.stance_offsets(season, pid))   # contact swings: pitch + bat in 3D
