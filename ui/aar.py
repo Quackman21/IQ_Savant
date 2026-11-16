@@ -491,9 +491,8 @@ OVERLAY = """<div id="ovl"><div id="dlg"><div class="dh"><b id="s3t"></b><span c
 max="1000" value="0"><span id="s3tickbp" class="tick bp" title="Bat parallel (inferred)"></span><span id="s3tick" class="tick" title="Contact"></span></span><button id="s3bp" title="Jump to bat parallel (inferred)">Bat parallel</button><button id="s3k" title="Jump to contact">Contact</button><span class="clk" id="s3c"></span><a id="s3v" target="_blank" rel="noopener">Video</a></div></div>
 <div id="rd"></div></div></div></div>"""
 
-S3D_JS = r"""
-const S3 = JSON.parse(document.getElementById('s3d-data').textContent);
-const ovl = document.getElementById('ovl'), dlg = document.getElementById('dlg'), stage = document.getElementById('stage');
+S3D_CORE = r"""
+let stage = document.getElementById('stage');
 let R3 = null;                     // live renderer state
 function loadThree(cb) {
   if (window.THREE) return cb();
@@ -668,6 +667,11 @@ function build(sc) {
     S.playing = false; document.getElementById('s3p').textContent = '▶'; S.t = t0 + (t1 - t0) * e.target.value / 1000; };
   return {stop() { cancelAnimationFrame(S.raf); ren.dispose(); ren.domElement.remove(); }};
 }
+"""
+
+S3D_OPEN = r"""
+const S3 = JSON.parse(document.getElementById('s3d-data').textContent);
+const ovl = document.getElementById('ovl'), dlg = document.getElementById('dlg');
 function open3d(n, btn) {
   const sc = S3[n]; if (!sc) return;
   const r = sc.read;
@@ -691,6 +695,7 @@ document.getElementById('s3x').onclick = close3d;
 ovl.addEventListener('click', e => { if (e.target === ovl) close3d(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && ovl.classList.contains('on')) close3d(); });
 """
+S3D_JS = S3D_CORE + S3D_OPEN
 
 
 def component_html(p: pd.DataFrame, pas: list[dict], line: dict, tiles: dict, metric_names: dict,

@@ -56,14 +56,50 @@ def refresh_stance() -> None:
         print(f"Stance board refresh skipped: {e}", flush=True)
 
 
+def _weather_stamp(season: int):
+    from core import weather
+    return weather.ROOT / "data" / "weather" / f"refreshed_{season}.txt"
+
+
+def weather_stale(season: int, today: date | None = None) -> bool:
+    """Refresh at most once a day, and not at all once the season's last game is already in the files."""
+    today = today or date.today()
+    f = _weather_stamp(season)
+    if not f.exists():
+        return True
+    try:
+        built, last_game = f.read_text().split()[:2]
+    except ValueError:
+        return True
+    if built >= today.isoformat():
+        return False                                   # already done today
+    from datetime import timedelta
+    recent = (date.fromisoformat(built) - timedelta(days=3)).isoformat()
+    return last_game >= recent                         # games were still being played when we last built
+
+
+def _mark_weather(season: int) -> None:
+    import pandas as pd
+    from core import weather
+    last = ""
+    try:
+        g = pd.read_csv(weather.ROOT / "data" / "weather" / f"games_{season}.csv")
+        col = next(c for c in ("game_date", "date", "start_utc") if c in g)
+        last = str(pd.to_datetime(g[col], errors="coerce", utc=True).max().date())
+    except Exception:
+        last = date.today().isoformat()
+    _weather_stamp(season).write_text(f"{date.today().isoformat()} {last}\n")
+
+
 def refresh_weather() -> None:
     """Current season's games + reported weather + hourly history at each park (daily during the season)."""
     try:
         from core import weather
         season = date.today().year
-        if 3 <= date.today().month <= 11:
+        if 3 <= date.today().month <= 11 and weather_stale(season):
             print(f"Weather {season}:", flush=True)
             weather.build_season(season, verbose=False, refresh_hourly=True)
+            _mark_weather(season)
             _git("add", "data/weather")
     except Exception as e:
         print(f"Weather refresh skipped: {e}", flush=True)

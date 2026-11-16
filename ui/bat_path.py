@@ -102,3 +102,104 @@ def _summary(have: pd.DataFrame) -> str:
             f'<th title="inches in front of the plate">Front</th><th title="spread of his contact depth -- how '
             f'much his timing point moves">± Depth</th><th title="inches from the middle of the plate, catcher\'s '
             f'view">Side</th><th>EV (in play)</th></tr>{body}</table></div>')
+
+
+# ----------------------------------------------------------------------------- inline 3D path (same engine as the AAR)
+_S3D_CSS = """
+*{box-sizing:border-box} body{margin:0;font-family:system-ui,sans-serif;color:#16202b;background:#fff}
+#wrap{border:1px solid #e6eaed;border-radius:10px;overflow:hidden}
+#hd{display:flex;align-items:baseline;gap:10px;padding:9px 12px;border-bottom:1px solid #e6eaed}
+#hd b{font:700 15px system-ui} #hd span{color:#6a7681;font-size:12.5px}
+#stage{position:relative;width:100%;aspect-ratio:1/1;background:#f4f7f8;cursor:grab} #stage:active{cursor:grabbing}
+#stage canvas{display:block} #stage .msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  color:#6a7681;font:13px system-ui;text-align:center;padding:30px}
+#cams{position:absolute;left:10px;top:10px;display:flex;gap:4px;flex-wrap:wrap;z-index:2}
+#cams button,#ctl button{font:600 11.5px system-ui;border:1px solid #e6eaed;background:#fff;border-radius:6px;
+  padding:4px 8px;cursor:pointer} #cams button.on{background:#4a8b96;color:#fff;border-color:#4a8b96}
+#ctl{display:flex;align-items:center;gap:8px;padding:8px 12px;border-top:1px solid #e6eaed;flex-wrap:wrap}
+#ctl select{font:12px system-ui} #ctl .scw{flex:1;position:relative;display:flex;min-width:120px}
+#ctl input[type=range]{flex:1}
+#ctl .tick{position:absolute;top:-6px;width:2px;height:8px;background:#c0392b;transform:translateX(-1px);pointer-events:none}
+#ctl .tick.bp{background:#7b5cc4} #ctl #s3bp{color:#5b3fa8}
+#ctl .clk{font:12px ui-monospace,monospace;color:#6a7681;min-width:120px;text-align:right}
+#lg{font-size:11.5px;color:#6a7681;line-height:1.55;padding:7px 12px;border-top:1px solid #e6eaed}
+#lg i{font-style:normal;font-weight:800}
+"""
+
+
+def path3d_html(scene: dict, title: str, sub: str) -> str:
+    """Self-contained page: the 3D view of one scene, square, filling its frame's width."""
+    import json
+
+    from ui.aar import S3D_CORE, THREE_JS
+    data = json.dumps(scene).replace("</", "<\\/")
+    ctl = ('<div id="ctl"><button id="s3p">❚❚</button><select id="s3sp"><option value="4">1/4 speed</option>'
+           '<option value="10" selected>1/10</option><option value="25">1/25</option><option value="60">1/60</option>'
+           '</select><span class="scw"><input id="s3sc" type="range" min="0" max="1000" value="0"><span id="s3tickbp" '
+           'class="tick bp" title="Bat parallel (inferred)"></span><span id="s3tick" class="tick" title="Contact">'
+           '</span></span><button id="s3bp">Bat parallel</button><button id="s3k">Contact</button>'
+           '<span class="clk" id="s3c"></span></div>')
+    legend = ('<div id="lg"><i style="color:#e07b24">━</i> modeled pitch &nbsp; <i style="color:#2f5fb3">━</i> his '
+              'average bat path, last 40 ms before contact (from his measured swings) &nbsp; <i style="color:#7b5cc4">┅ ●'
+              '</i> back to bat parallel + follow-through, inferred from his tilt, attack angle + direction &nbsp; '
+              '<i style="color:#c0392b">●</i> his average contact point · drag to orbit, scroll to zoom</div>')
+    js = """
+function fit() {
+  const h = document.documentElement.scrollHeight + 4;
+  window.parent.postMessage({isStreamlitMessage: true, type: 'streamlit:setFrameHeight', height: h}, '*');
+}
+const SC = JSON.parse(document.getElementById('s3d-data').textContent);
+let lastW = 0;
+function start() {
+  const w = stage.clientWidth; if (Math.abs(w - lastW) < 8) return; lastW = w;
+  document.getElementById('s3msg').style.display = 'none';
+  if (R3) R3.stop(); R3 = build(SC); fit();
+}
+loadThree(start);
+window.addEventListener('resize', () => { if (window.THREE) start(); });
+window.addEventListener('load', fit); fit();
+"""
+    return (f'<!doctype html><html><head><meta charset="utf-8"><style>{_S3D_CSS}</style></head><body>'
+            f'<div id="wrap"><div id="hd"><b>{escape(title)}</b><span>{escape(sub)}</span></div>'
+            f'<div id="stage"><div id="cams"></div><div class="msg" id="s3msg">Loading 3D…</div></div>{ctl}{legend}</div>'
+            f'<script type="application/json" id="s3d-data">{data}</script>'
+            f'<script>const THREE_SRC = "{THREE_JS}";{S3D_CORE}{js}</script></body></html>')
+
+
+def model_card_html(sc: dict, hitter_side: str) -> str:
+    """What went into the view: the modeled pitch + his averages (measured) + geometry (inferred)."""
+    m, r = sc["model"], sc["read"]
+    f = lambda v, d=1: "–" if v is None else f"{v:.{d}f}"
+    side = "pull" if (m["attack_direction"] < 0) else "oppo"
+    rows = [
+        ("§Pitch (modeled)", ""),
+        (f'{m["hand"]}HP {m["group"].lower()}', f'{m["ptype"]} · {f(m["velo"])} mph'),
+        ("Shape", f'{f(m["ivb"], 0)}″ IVB · {f(m["hb"], 0)}″ HB arm side'),
+        ("Type", m["shape"]), ("Velo", m["velo_src"]),
+        ("Coming down at", f'{f(-r["vaa"])}°'),
+        (f'§His average swing ({m["n"]} swings)', m["level"]),
+        ("Bat speed", f'{f(m["bat_speed"])} mph'), ("Swing length", f'{f(m["swing_length"])} ft'),
+        ("Attack angle", f'{f(m["attack_angle"])}°'), ("Attack direction", f'{f(m["attack_direction"])}° {side}'),
+        ("Swing tilt", f'{f(m["swing_path_tilt"])}°'),
+        ("Swing vs pitch plane", f'{r["plane_gap"]:+.1f}° (0 = matched)'),
+        (f'§His average contact ({m["n_contact"]} contacts)', m["contact_level"]),
+        ("Out front of the plate", f'{f(r["front"])}″'),
+        ("§Where the ball is there (modeled pitch)", ""),
+        ("Side (+ = 1B side)", f'{f(r["side_in"])}″'), ("Height", f'{f(r["height"])}″'),
+        ("§Geometry (inferred)", ""),
+        ("Vertical bat angle at contact", f'{f(r["vba"])}°'),
+        ("Bat parallel", f'{f(r["bp_in"], 0)}″ of path before contact' if r.get("bp_in") else "past his swing length"),
+    ]
+    body = ""
+    for k, v in rows:
+        if k.startswith("§"):
+            body += f'<tr class="h"><td colspan="2">{escape(k[1:])}{"" if not v else f" <span>· {escape(v)}</span>"}</td></tr>'
+        else:
+            body += f'<tr><td>{escape(k)}</td><td>{escape(v)}</td></tr>'
+    css = ("<style>.mc{font:13px system-ui;color:#16202b;border:1px solid #e6eaed;border-radius:10px;padding:6px 12px}"
+           ".mc table{width:100%;border-collapse:collapse}.mc td{padding:4px 0;border-bottom:1px solid #f0f2f4}"
+           ".mc td:last-child{text-align:right;font-family:ui-monospace,Menlo,monospace}"
+           ".mc tr.h td{font:700 11px system-ui;color:#6a7681;text-transform:uppercase;letter-spacing:.04em;"
+           "padding-top:11px;text-align:left;border-bottom:1px solid #d9dee2}.mc tr.h span{text-transform:none;"
+           "font-weight:400;letter-spacing:0}</style>")
+    return css + f'<div class="mc"><table>{body}</table></div>'

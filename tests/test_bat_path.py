@@ -66,3 +66,60 @@ def test_poc_uses_stance_depth():
     exp = df["intercept_ball_minus_batter_pos_y_inches"] - np.where(df["stand"] == "R", 27.0, 29.0)
     assert np.allclose(out.loc[made, "pf"], exp[made]) and out.loc[~made, "pf"].isna().all()
     assert not out["estimated"].any()
+
+
+def _tracked(n=400, seed=7):
+    df = _swings(n, seed)
+    rng = np.random.default_rng(seed)
+    df["stand"] = "R"
+    df["zone"] = rng.choice([1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14], n)
+    df["sz_top"], df["sz_bot"] = 3.4, 1.6
+    df["description"] = np.where(df["description"] == "ball", "swinging_strike", df["description"])
+    df["bat_speed"] = rng.normal(72, 4, n)
+    return df
+
+
+def test_synth_pitch_hits_its_target_and_looks_like_statcast():
+    from core import bat_path as bp, swing3d
+    for g, (pt, v, ivb, hb, _) in bp.GROUPS.items():
+        for hand in ("R", "L"):
+            p = bp.synth_pitch(v[hand], ivb, hb, hand, 0.4, 2.2)
+            x, z = swing3d.ball_at(p, 17 / 12)
+            assert abs(x - 0.4) < 1e-6 and abs(z - 2.2) < 1e-6
+            rx, rz = swing3d.ball_at(p, p["release_pos_y"])
+            assert abs(rx - p["release_pos_x"]) < 1e-6 and abs(rz - p["release_pos_z"]) < 1e-6
+    ff = bp.synth_pitch(94.3, 14, 9, "R", 0, 2.5)
+    assert -18 < ff["az"] < -13 and -13 < ff["ax"] < -8                      # typical RHP four-seam
+
+
+def test_zone_targets():
+    from core import bat_path as bp
+    assert bp.zone_target(5, 1.6, 3.4) == (0.0, 2.5)
+    x1, z1 = bp.zone_target(1, 1.6, 3.4)
+    assert x1 < 0 and z1 > 3.0
+    x14, z14 = bp.zone_target(14, 1.6, 3.4)
+    assert x14 > 0.83 and z14 < 1.6
+
+
+def test_profile_widens_and_scene_builds():
+    from core import bat_path as bp
+    sw = bp.swings(_tracked())
+    pr = bp.profile(sw, "Fastball", 5, "R", "R")
+    assert pr["n"] >= bp.MIN_SWINGS and "cy" in pr
+    thin = bp.profile(sw[sw.zone != 5], "Fastball", 5, "R", "R")
+    assert thin["level"] in ("this pitch group (all zones)", "all his swings")
+    sc = bp.model_scene(sw, "Fastball", 5, "R", 27.0, 26.0, "R")
+    assert sc and sc["model"]["ptype"] == "FF" and len(sc["arc"]) > 50 and sc["exit"] is None
+    assert abs(sc["read"]["front"] - (pr["cy"] - 27.0)) < 0.06
+    from ui.bat_path import model_card_html, path3d_html
+    h = path3d_html(sc, "t", "s")
+    assert "function build" in h and 'id="stage"' in h and "open3d" not in h
+    assert "Bat speed" in model_card_html(sc, "R")
+
+
+def test_zone_names_follow_the_hitter():
+    from core import bat_path as bp
+    assert bp.zone_name(5, "R") == "Middle-Middle"
+    assert bp.zone_name(1, "R") == "Up-In" and bp.zone_name(1, "L") == "Up-Away"
+    assert bp.zone_name(9, "R") == "Down-Away" and bp.zone_name(9, "L") == "Down-In"
+    assert bp.zone_name(13, "R") == "Chase Down-In" and bp.zone_name(12, "L") == "Chase Up-In"

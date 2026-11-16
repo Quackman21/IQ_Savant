@@ -585,6 +585,79 @@ st.markdown(("""<style>
 .stTabs [aria-selected="true"] p{color:#16202b;font-weight:800}
 </style>""").replace("ACTIVE", ACTIVE), unsafe_allow_html=True)
 
+def _pick_zone(z: int) -> None:
+    st.session_state["bp_zone"] = z
+
+
+def bat_path_view(sc: pd.DataFrame, season: int) -> None:
+    """His average bat path in 3D vs a modeled pitch: pitch group x zone x pitcher hand (default: dead-zone RHP
+    fastball, middle-middle)."""
+    import streamlit.components.v1 as components
+
+    from core import aar as aar_core
+    from core import bat_path as bpth
+    from core import swing3d
+    from ui.bat_path import model_card_html, path3d_html
+    if season < 2023:
+        show(empty_html("Bat tracking starts in 2023 -- pick a 2023+ season for his bat path."))
+        return
+    sw = bpth.swings(sc)
+    if sw.empty:
+        show(empty_html("No tracked swings for this selection."))
+        return
+    sides = sw["stand"].value_counts()
+    left, right = st.columns([1.25, 1], gap="medium")
+    with right:
+        stand = sides.index[0]
+        if len(sides) > 1:
+            stand = {"As RHB": "R", "As LHB": "L"}[seg("Side", ["As RHB", "As LHB"],
+                                                     default="As RHB" if sides.index[0] == "R" else "As LHB",
+                                                     key="bp_side", collapsed=True) or "As RHB"]
+        group = seg("Pitch group", list(bpth.GROUPS), default="Fastball", key="bp_group") or "Fastball"
+        hand = {"vs RHP": "R", "vs LHP": "L"}[seg("Pitcher", ["vs RHP", "vs LHP"], default="vs RHP",
+                                                   key="bp_hand") or "vs RHP"]
+        zone = st.session_state.setdefault("bp_zone", 5)
+        me = sw[(sw.stand == stand) & (sw.group == group)]
+        cnt = me[me.hand == hand]["zone"].value_counts()
+        st.caption("Location (catcher's view; In / Away from his side) · swings vs this pitch group + hand")
+        for r0 in (0, 3, 6):
+            cols = st.columns(3)
+            for k in range(3):
+                z = r0 + k + 1
+                cols[k].button(f"{bpth.zone_name(z, stand)} · {int(cnt.get(z, 0))}", key=f"bpz{z}",
+                               use_container_width=True,
+                               type="primary" if z == zone else "secondary", on_click=_pick_zone, args=(z,))
+        cols = st.columns(4)
+        for k, (z, arrow) in enumerate(((11, "↖"), (12, "↗"), (13, "↙"), (14, "↘"))):
+            cols[k].button(f"{arrow} {bpth.zone_name(z, stand).replace('Chase ', '')} · {int(cnt.get(z, 0))}",
+                           key=f"bpz{z}", use_container_width=True,
+                           type="primary" if z == zone else "secondary", on_click=_pick_zone, args=(z,),
+                           help="Chase: just off the corner of the zone")
+    pid_ = pid
+    views = stance_views(season)
+    depth = views.get(f"vs_{hand}", {}).get((pid_, stand)) or views.get("season", {}).get((pid_, stand))
+    est = False
+    if depth is None:                                   # not on the stance board: the AAR's calibrated estimate
+        pr = bpth.profile(sw, group, zone, hand, stand)
+        cal = aar_core.plate_calibration(sc, group=aar_core.hip_group(season), stance={}) or {}
+        c = cal.get(stand)
+        if pr.get("cy") is not None and c:
+            depth, est = pr["cy"] - (c["F0"] + c["sy"] * pr["cy"]), True
+    scene = bpth.model_scene(sw, group, zone, hand, depth, swing3d.stance_offsets(season, pid_).get(stand), stand)
+    with left:
+        if scene is None:
+            show(empty_html("Not enough measured contact to place his path for this pick."))
+        else:
+            m = scene["model"]
+            title = f'{group} · {bpth.zone_name(zone, stand)} · vs {hand}HP'
+            sub = (f'his average path ({m["n"]} swings) vs a modeled {m["ptype"]} {m["velo"]:.1f} mph'
+                   + (" · contact depth estimated (not on Savant's stance board)" if est else ""))
+            components.html(path3d_html(scene, title, sub), height=900, scrolling=False)
+    with right:
+        if scene is not None:
+            show(model_card_html(scene, stand))
+
+
 main = seg("Section", ["Summary", "Stats", "Game Log", "Sandbox"], default="Summary",
            key="pp_main", collapsed=True) or "Summary"
 
@@ -597,7 +670,7 @@ if main == "Summary":
     sub = seg("Summary view", SUB_TABS, default=SUB_TABS[0], key="pp_sub", collapsed=True) or SUB_TABS[0]
 
     # ---------------------------------------------------------------- HITTING
-    if sub == "Hitting":
+    if sub in ("Hitting", "Bat Path"):
         c = st.columns([1.5, 1.1, 1.1, 1.2, 1.9, 0.9])
         with c[0]:
             mode = seg("Mode", ["Game", "Season", "Dates"], default="Season", key="hit_mode", collapsed=True) or "Season"
@@ -646,6 +719,8 @@ if main == "Summary":
         ref = league_ref_for(season)
         ctx = {"player": f'{b["first"]} {b["last"]}', "season_label": str(season)}
         data_note([season])
+        if sub == "Bat Path":
+            bat_path_view(sc, season)
 
         # rows down the side: zone grouping + any splits (apply to Rates / Contact / Exit)
         r = st.columns([3.2, 2.2, 1.6])
@@ -660,14 +735,7 @@ if main == "Summary":
         def ref_for(labels):
             return ref.get(hm.ref_key(labels, zone_dim), {})
 
-        tabs = st.tabs(["Overview", "Rates", "Contact", "Exit", "Bat Path", "Rolling", "Spray"])
-        with tabs[0]:
-            all_vals = hm.compute(d).iloc[0] if not d.empty else None
-            show(overview_html(label, all_vals, ref.get(("all", "All"), {}), ctx))
-        for i, name in ((1, "Rates"), (2, "Contact"), (3, "Exit")):
-            with tabs[i]:
-                show(tab_html(hm.TABS[name], rows, label, ref_for, ctx, zone_dim, show_avgs=avgs))
-        with tabs[4]:
+        if sub == "Bat Path":
             for name, keys in hm.BAT_PATH.items():
                 st.markdown(f"**{name}**")
                 show(tab_html(keys, rows, label, ref_for, ctx, zone_dim, show_avgs=avgs))
@@ -686,17 +754,25 @@ if main == "Summary":
                     "result": sc["events"].fillna(sc["description"]).astype(str).str.replace("_", " ").str.capitalize(),
                 })[made]
                 show(poc_map_html(m, color_by, estimated=bool(poc.loc[made, "estimated"].any())))
-        with tabs[5]:
-            roll = hitting.rolling(sc)
-            if roll.empty:
-                show(empty_html("Not enough plate appearances for a rolling chart."))
-            else:
-                st.caption("Rolling 50 plate appearances — full Rolling view comes in v13.")
-                st.line_chart(roll)
-        with tabs[6]:
-            if not sc.empty:
-                spray_chart(sc)
-        st.caption("Hover a column name for its definition. Click a number to compare it with MLB average.")
+        else:
+            tabs = st.tabs(["Overview", "Rates", "Contact", "Exit", "Rolling", "Spray"])
+            with tabs[0]:
+                all_vals = hm.compute(d).iloc[0] if not d.empty else None
+                show(overview_html(label, all_vals, ref.get(("all", "All"), {}), ctx))
+            for i, name in ((1, "Rates"), (2, "Contact"), (3, "Exit")):
+                with tabs[i]:
+                    show(tab_html(hm.TABS[name], rows, label, ref_for, ctx, zone_dim, show_avgs=avgs))
+            with tabs[4]:
+                roll = hitting.rolling(sc)
+                if roll.empty:
+                    show(empty_html("Not enough plate appearances for a rolling chart."))
+                else:
+                    st.caption("Rolling 50 plate appearances — full Rolling view comes in v13.")
+                    st.line_chart(roll)
+            with tabs[5]:
+                if not sc.empty:
+                    spray_chart(sc)
+            st.caption("Hover a column name for its definition. Click a number to compare it with MLB average.")
 
     # ---------------------------------------------------------------- CORE 4
     elif sub == "Core 4":

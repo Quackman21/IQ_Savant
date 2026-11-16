@@ -155,7 +155,7 @@ def summary_tabs(primary: str, games: dict[str, int], career_pa: int, career_pit
     if pitcher and primary in ("P", "TWP"):
         tabs.append("Pitching")
     if hitter:
-        tabs += ["Hitting", "Core 4"]
+        tabs += ["Hitting"] + (["Bat Path"] if primary not in ("P",) else []) + ["Core 4"]
         if plays({"C"}, primary == "C") or plays(INFIELD, primary in INFIELD) or plays(OUTFIELD, primary in OUTFIELD):
             tabs.append("Defense")          # Catching / Infield / Outfield live under Defense
         tabs.append("Baserunning")

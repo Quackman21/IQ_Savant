@@ -52,3 +52,18 @@ def test_light_update_only_adds_new_games(monkeypatch, capsys):
     update.main(["--light"])
     out = capsys.readouterr().out
     assert ran == ["2026"] and "HEAVY: 1 season(s)" in out and "2019" in out
+
+
+def test_weather_refresh_only_when_new_games(tmp_path, monkeypatch):
+    from datetime import date
+    from core import weather
+    from pipeline import update
+    monkeypatch.setattr(weather, "ROOT", tmp_path)
+    (tmp_path / "data" / "weather").mkdir(parents=True)
+    assert update.weather_stale(2026, date(2026, 11, 16))                     # never built
+    f = tmp_path / "data" / "weather" / "refreshed_2026.txt"
+    f.write_text("2026-11-16 2026-11-01\n")
+    assert not update.weather_stale(2026, date(2026, 11, 16))                 # built today
+    assert not update.weather_stale(2026, date(2026, 11, 20))                 # season over, nothing new
+    f.write_text("2026-07-01 2026-06-30\n")
+    assert update.weather_stale(2026, date(2026, 7, 2))                       # mid-season, next day
