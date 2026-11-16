@@ -1012,7 +1012,7 @@ if main == "Summary":
             cat = st.selectbox("Stat Category", ["Regular", "Postseason", "Reg + Post"], key="pit_cat")
         with c[2]:
             split_pick = st.multiselect("Splits", list(pm.SPLITS), key="pit_splits",
-                                        help="Cluster is waiting on our pitch-cluster model")
+                                        help="Cluster = league shape archetype (velo, movement, fastball differences)")
         if not periods:
             st.caption("Pick at least one period.")
             st.stop()
@@ -1112,8 +1112,9 @@ if main == "Summary":
             else:
                 show(empty_html("No pitches in those seasons."))
 
-        st.caption("Grades, expected rates, shape, command, spin efficiency, seam-shifted movement, zone-adjusted "
-                   "approach angles and clusters stay blank until our pitch models are built.")
+        st.caption("Command and miss distance need the intended location (video); spin efficiency and seam-shifted "
+                   "movement need seam orientation (video). Grades, expected rates and clusters fill in once "
+                   "pipeline.train_pitch_models has run.")
 
 # =============================================================================
 # STATS

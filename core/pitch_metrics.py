@@ -39,7 +39,8 @@ SUMMARY = [*_NP, "|",
            "|",
            ("ARESULTS", "aResults", "20-80 Grade, Actual Results Produced by Pitch", G),
            ("XRESULTS", "xResults", "20-80 Grade, Results expected out of pitcher", G),
-           ("COMMAND", "Command", "The miss distance or expected miss distance of a pitch converted to the 20-80 scale", G),
+           ("COMMAND", "Command", "The miss distance or expected miss distance of a pitch converted to the 20-80 scale "
+                                  "(needs the intended location -- video / SAM3)", B),
            ("ACTL", "ActL", "20-80 Action Grade, Versus LHH", G),
            ("ACTR", "ActR", "20-80 Action Grade, Versus RHH", G),
            ("LOCATION", "Location", "20-80 Grade, Location of Pitch", G)]
@@ -73,7 +74,8 @@ PILLARS = [*_NP, "|",
                                    "shape versus left", G),
            ("SHAPE_R", "Shape vR", "The action grade of a pitch when substituting the expected velocity based on "
                                    "shape versus right", G), "|",
-           ("COMMAND", "Command", "The miss distance or expected miss distance of a pitch converted to the 20-80 scale", G),
+           ("COMMAND", "Command", "The miss distance or expected miss distance of a pitch converted to the 20-80 scale "
+                                  "(needs the intended location -- video / SAM3)", B),
            ("MISS", "Miss", "The distance between the final plate location and intended location (needs the "
                             "catcher's target — not public)", B)]
 RATES = [*_NP, "|",
@@ -81,17 +83,29 @@ RATES = [*_NP, "|",
          ("AWF", "aWf%", "Actual Misses on Swings Rate", "pct"),
          ("AIPRV", "aIPRV", "Actual Average Run Value on Balls In Play (batting team's run value; lower = better "
                             "for the pitcher)", "num2"), "|",
-         ("XSW", "xSw%", "Expected Swing Rate (our model — coming)", B),
-         ("XBL", "xBl%", "Expected Balls on Takes Rate (our model — coming)", B),
-         ("XWF", "xWf%", "Expected Misses on Swings Rate (our model — coming)", B),
-         ("XIPRV", "xIPRV", "Expected Average Run Value on Balls In Play (our model — coming)", B)]
+         ("XSW", "xSw%", "Expected Swing Rate: how often hitters swing at pitches with this velo, movement, release, "
+                         "location and count", "pct"),
+         ("XBL", "xBl%", "Expected Balls on Takes Rate: on the pitches he actually got taken, how often they're "
+                         "called balls for that location and count", "pct"),
+         ("XWF", "xWf%", "Expected Misses on Swings Rate: on the pitches actually swung at, how often that pitch "
+                         "(flight + location + count) gets missed", "pct"),
+         ("XIPRV", "xIPRV", "Expected Average Run Value on Balls In Play, from the pitch (flight + location + count), "
+                            "batting team's run value; lower = better for the pitcher", "num2")]
 TABLE_TABS = {"Summary": SUMMARY, "Details": DETAILS, "Pillars": PILLARS, "Rates": RATES}
 
 # Splits (the "Splits" dropdown)
 SPLITS = {"Games": "game", "Batter Hand": "hand", "Count": "count", "RISP": "risp", "Cluster": "cluster"}
 SPLIT_LABEL = {"game": "DATE", "hand": "HAND", "count": "COUNT", "risp": "RISP", "cluster": "CLUSTER"}
 COUNT_ORDER = ["First Pitch", "Hitter's Count", "Pitcher's Count"]
-MODEL_SPLITS = {"cluster"}               # blank until our cluster model exists
+def _model_splits() -> set:
+    try:
+        from models import pitch_models
+        return set() if pitch_models.trained() else {"cluster"}
+    except Exception:
+        return {"cluster"}
+
+
+MODEL_SPLITS = _model_splits()           # cluster is blank until the pitch models are trained
 
 
 def count_group(balls: pd.Series, strikes: pd.Series) -> pd.Series:
@@ -155,6 +169,11 @@ def prep(df: pd.DataFrame) -> pd.DataFrame:
     from models import pitch_quality                     # IQ Stuff+ / Location+ (blank until trained)
     q = pitch_quality.score(df)
     d["stuff_plus"], d["loc_plus"] = q["stuff_plus"], q["loc_plus"]
+    from models import pitch_models                      # expected rates, grade inputs, clusters (blank until trained)
+    m = pitch_models.score(df)
+    for k in pitch_models.COLS:
+        d[k] = m[k]
+    d["cluster"] = m["cluster"]
     return d
 
 
@@ -170,6 +189,26 @@ def _circ_mean(deg: pd.Series) -> float:
     return (np.degrees(np.arctan2(np.sin(r).mean(), np.cos(r).mean())) + 360) % 360
 
 
+def _mean(g: pd.DataFrame, col: str) -> float:
+    return pd.to_numeric(g[col], errors="coerce").mean() if col in g and len(g) else np.nan
+
+
+def _grades(g: pd.DataFrame) -> dict:
+    """{KEY_Z: z} for the graded columns (the table shows z on the chosen scale); none until trained."""
+    try:
+        from models import pitch_models
+        if not pitch_models.trained():
+            return {}
+        out = {}
+        for key in pitch_models.GRADED:
+            z = pitch_models.grade_z(g, key)
+            if z is not None:
+                out[f"{key}_Z"] = z
+        return out
+    except Exception:
+        return {}
+
+
 def row_values(g: pd.DataFrame, total: int) -> dict:
     sw, tk, bip = g["swing"].sum(), g["take"].sum(), g["bip"]
     return {
@@ -183,6 +222,9 @@ def row_values(g: pd.DataFrame, total: int) -> dict:
         "ASW": sw / len(g) if len(g) else np.nan, "ABL": g["ball"].sum() / tk if tk else np.nan,
         "AWF": g["whiff"].sum() / sw if sw else np.nan,
         "AIPRV": g.loc[bip, "rv"].mean() if bip.any() else np.nan,
+        "XSW": _mean(g, "xsw"), "XBL": _mean(g[g["take"]], "xbl"), "XWF": _mean(g[g["swing"]], "xwf"),
+        "XIPRV": _mean(g[bip], "xiprv"),
+        **_grades(g),
         "STUFF": g["stuff_plus"].mean() if "stuff_plus" in g else np.nan,
         "LOC": g["loc_plus"].mean() if "loc_plus" in g else np.nan,
     }

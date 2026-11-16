@@ -35,6 +35,12 @@ def _desc(desc: str, f: str, scale: str) -> str:
         return desc
     d = desc.replace("20-80 Grade", SCALE_WORD[scale]).replace("20-80 Action Grade", f"{SCALE_WORD[scale]}, Action")
     d = d.replace("converted to the 20-80 scale", f"converted to the {scale} scale")
+    try:
+        from models import pitch_models
+        if pitch_models.trained():
+            return d + "\n(vs every pitcher's season with this pitch type; small samples pulled toward average)"
+    except Exception:
+        pass
     return d + "\n(blank until our pitch model is built)"
 
 

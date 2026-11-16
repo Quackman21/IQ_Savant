@@ -117,6 +117,9 @@ def _run(argv: list[str]) -> None:
     step("train IQ Stuff+ / Location+", lambda: __import__("pipeline.train_pitch_quality", fromlist=["main"]).main(
         ["--since", str(FIRST)]), results)
 
+    step("train IQ pitch models (expected rates, grades, clusters)",
+         lambda: __import__("pipeline.train_pitch_models", fromlist=["main"]).main(["--since", str(FIRST)]), results)
+
     def push_models():
         git("add", "-A")
         if git("diff", "--cached", "--quiet") != 0:
