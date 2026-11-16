@@ -597,19 +597,40 @@ def home_park_for(abbr: str | None, season: int) -> dict:
         return {}
 
 
-def _pick_zone(z: int) -> None:
-    st.session_state["bp_zone"] = z
+def _zone_toggle(z: int) -> None:
+    cur = set(st.session_state.get("bp_zones", [5]))
+    cur ^= {z}
+    st.session_state["bp_zones"] = sorted(cur)
+
+
+def _zone_all() -> None:
+    st.session_state["bp_zones"] = list(range(1, 10))
+
+
+ZONE_CSS = """<style>
+.st-key-bp_zgrid [data-testid="stHorizontalBlock"]{gap:0!important}
+.st-key-bp_zgrid [data-testid="stColumn"]{padding:0!important;min-width:0!important}
+.st-key-bp_zgrid{max-width:240px;margin:6px auto 4px;border:2px solid #16202b;background:#eef3ef}
+.st-key-bp_zgrid button{border-radius:0!important;min-height:64px;width:100%;border:1px solid #16202b!important;
+  background:rgba(255,255,255,.55)!important;color:#6a7681!important;box-shadow:none!important;margin:0!important}
+.st-key-bp_zgrid button p{font-size:11px!important}
+.st-key-bp_zgrid button[kind="primary"],.st-key-bp_zgrid button[data-testid="stBaseButton-primary"]{
+  background:rgba(214,51,40,.38)!important;color:#16202b!important}
+.st-key-bp_zgrid [data-testid="stVerticalBlock"]{gap:0!important}
+</style>"""
 
 
 def bat_path_view(sc: pd.DataFrame, season: int, poc: pd.DataFrame | None = None) -> None:
-    """Pickers on top; his average bat path in 3D on the left (square, half the width); that cell's spray chart
-    (top right) and point of contact (bottom right). Default: dead-zone RHP fastball, middle-middle."""
+    """Build swing groups (location + pitch types + pitcher hand + count) and load them; every loaded group is drawn
+    on the 3D path (left half, square), the spray chart (top right) and the point of contact (bottom right), each
+    chart with its own on/off chips, plus a side-by-side table. Starts with one group: middle-middle, every pitch,
+    every count, both hands (a dead-zone RHP fastball in 3D)."""
     import streamlit.components.v1 as components
 
     from core import aar as aar_core
     from core import bat_path as bpth
     from core import swing3d
-    from ui.bat_path import COLOR_BY, framed, model_card_html, path3d_html, poc_map_html, spray_html
+    from ui.bat_path import COLOR_BY, compare_html, framed, path3d_html, poc_map_html, spray_html
     if season < 2023:
         show(empty_html("Bat tracking starts in 2023 -- pick a 2023+ season for his bat path."))
         return
@@ -618,71 +639,119 @@ def bat_path_view(sc: pd.DataFrame, season: int, poc: pd.DataFrame | None = None
         show(empty_html("No tracked swings for this selection."))
         return
     sides = sw["stand"].value_counts()
-    # ---- pickers
-    top_l, top_r = st.columns([1, 1.25], gap="medium")
-    with top_l:
+    all_types = [t for t in sw["ptype"].value_counts().index if t and t != "nan"]
+    gkey = f"bp_groups_{pid}_{season}"
+    groups = st.session_state.setdefault(gkey, [dict(bpth.DEFAULT_GROUP)])
+
+    # ---- builder: pick the variables, then load the swing
+    st.markdown("**Build a swing** · pick the variables, then *Load swing* (up to "
+                f"{bpth.MAX_GROUPS} on the charts at once)")
+    zm, zr = st.columns([1.3, 1.2], gap="large")
+    with zm:
         stand = sides.index[0]
         if len(sides) > 1:
-            stand = {"As RHB": "R", "As LHB": "L"}[seg("Side", ["As RHB", "As LHB"],
-                                                     default="As RHB" if sides.index[0] == "R" else "As LHB",
-                                                     key="bp_side") or "As RHB"]
-        group = seg("Pitch group", list(bpth.GROUPS), default="Fastball", key="bp_group") or "Fastball"
-        hand = {"vs RHP": "R", "vs LHP": "L"}[seg("Pitcher", ["vs RHP", "vs LHP"], default="vs RHP",
-                                                   key="bp_hand") or "vs RHP"]
-    zone = st.session_state.setdefault("bp_zone", 5)
-    me = sw[(sw.stand == stand) & (sw.group == group)]
-    cnt = me[me.hand == hand]["zone"].value_counts()
-    with top_r:
-        st.caption("Location (catcher's view; In / Away from his side) · swings vs this pitch group + hand")
-        for r0 in (0, 3, 6):
-            cols = st.columns(3)
-            for k in range(3):
-                z = r0 + k + 1
-                cols[k].button(f"{bpth.zone_name(z, stand)} · {int(cnt.get(z, 0))}", key=f"bpz{z}",
-                               use_container_width=True, type="primary" if z == zone else "secondary",
-                               on_click=_pick_zone, args=(z,))
-        cols = st.columns(4)
-        for k, (z, arrow) in enumerate(((11, "↖"), (12, "↗"), (13, "↙"), (14, "↘"))):
-            cols[k].button(f"{arrow} {bpth.zone_name(z, stand).replace('Chase ', '')} · {int(cnt.get(z, 0))}",
-                           key=f"bpz{z}", use_container_width=True, type="primary" if z == zone else "secondary",
-                           on_click=_pick_zone, args=(z,), help="Chase: just off the corner of the zone")
-    # ---- the model
+            stand = {"As RHB": "R", "As LHB": "L"}[st.selectbox("Side", ["As RHB", "As LHB"],
+                                                               index=0 if sides.index[0] == "R" else 1, key="bp_side2")]
+        a, b_ = st.columns(2)
+        with a:
+            types = st.multiselect("Pitch types", all_types, default=all_types, key=f"bp_types_{pid}_{season}")
+        narrowed = None if not types or set(types) >= set(all_types) else list(types)
+        with b_:
+            hand = st.selectbox("Pitcher", list(bpth.HANDS), key="bp_hand2")
+        a, b_ = st.columns(2)
+        with a:
+            count = st.selectbox("Count", bpth.COUNTS, key="bp_count")
+        zsel = st.session_state.setdefault("bp_zones", [5])
+        zone = bpth.zones_of(zsel)
+        cnt = sw[bpth.pick(sw, narrowed, hand, count, stand=stand)]["zone"].value_counts().to_dict()
+        with b_:
+            st.markdown(ZONE_CSS, unsafe_allow_html=True)
+            st.caption("Location")
+            with st.popover(bpth.zones_label(zsel, stand), use_container_width=True):
+                st.caption("Catcher's view · click boxes to pick them (as many as you like)")
+                with st.container(key="bp_zgrid"):
+                    for r0 in (0, 3, 6):
+                        cols = st.columns(3)
+                        for c in range(3):
+                            z = r0 + c + 1
+                            cols[c].button(str(int(cnt.get(z, 0))), key=f"bpz_{z}", on_click=_zone_toggle, args=(z,),
+                                           type="primary" if z in zsel else "secondary", use_container_width=True,
+                                           help=f"{bpth.zone_name(z, stand)} · {int(cnt.get(z, 0))} swings")
+                st.button("Select all", on_click=_zone_all, use_container_width=True, key="bpz_all")
+                st.caption("Numbers = his swings there with these filters")
+        new_g = {"types": narrowed, "hand": hand, "count": count, "zone": zone}
+        st.markdown(f"Next swing: **{bpth.group_label(new_g, stand)}**")
+        full = len(groups) >= bpth.MAX_GROUPS
+        if st.button("Load swing", type="primary", disabled=full or new_g in groups, use_container_width=True,
+                     help="Already loaded" if new_g in groups else (f"Remove one first (max {bpth.MAX_GROUPS})"
+                                                                    if full else None)):
+            groups.append(new_g)
+            st.rerun()
+    with zr:
+        st.markdown("**Loaded swings**")
+        for k, g in enumerate(list(groups)):
+            c1, c2 = st.columns([6, 1])
+            c1.markdown(f'<span style="color:{bpth.GROUP_COLORS[k]};font-weight:800">● {chr(65 + k)}</span> '
+                        f'{bpth.group_label(g, stand)}', unsafe_allow_html=True)
+            if c2.button("✕", key=f"bp_rm_{k}", help="Remove this swing", disabled=len(groups) == 1):
+                groups.pop(k)
+                st.rerun()
+        if st.button("Reset to middle-middle", key="bp_reset"):
+            st.session_state[gkey] = [dict(bpth.DEFAULT_GROUP)]
+            st.rerun()
+
+    # ---- the models
     views = stance_views(season)
-    depth = views.get(f"vs_{hand}", {}).get((pid, stand)) or views.get("season", {}).get((pid, stand))
-    est = False
-    if depth is None:                                   # not on the stance board: the AAR's calibrated estimate
-        pr = bpth.profile(sw, group, zone, hand, stand)
-        cal = aar_core.plate_calibration(sc, group=aar_core.hip_group(season), stance={}) or {}
+    cal = {}
+
+    def depth_for(h: str, g: dict):
+        nonlocal cal
+        ph = bpth.HANDS.get(h)
+        d = (views.get(f"vs_{ph}", {}).get((pid, stand)) if ph else None) or views.get("season", {}).get((pid, stand))
+        if d is not None:
+            return d
+        pr = bpth.profile(sw, g.get("types"), h, g.get("count", "All"), g.get("zone"), stand)  # not on the board
+        cal = cal or aar_core.plate_calibration(sc, group=aar_core.hip_group(season), stance={}) or {}
         c = cal.get(stand)
-        if pr.get("cy") is not None and c:
-            depth, est = pr["cy"] - (c["F0"] + c["sy"] * pr["cy"]), True
-    scene = bpth.model_scene(sw, group, zone, hand, depth, swing3d.stance_offsets(season, pid).get(stand), stand)
-    cell = bpth.cell_balls(sc, poc if poc is not None else pd.DataFrame(index=sc.index), group, zone, hand, stand)
-    where = f'{group} · {bpth.zone_name(zone, stand)} · vs {hand}HP'
+        return pr["cy"] - (c["F0"] + c["sy"] * pr["cy"]) if pr.get("cy") is not None and c else None
+
+    est = not ((views.get("season", {}) or {}).get((pid, stand)))
+    scenes = bpth.group_scenes(sw, groups, stand, depth_for, swing3d.stance_offsets(season, pid).get(stand), all_types)
+    pocdf = poc if poc is not None else pd.DataFrame(index=sc.index)
+    cells = []
+    for k, g in enumerate(groups):
+        c = bpth.cell_balls(sc, pocdf, g.get("types"), g.get("hand", "All"), g.get("count", "All"), g.get("zone"), stand)
+        cells.append(c.assign(grp=k, gname=bpth.group_label(g, stand), gcolor=bpth.GROUP_COLORS[k]))
+    cell = pd.concat(cells) if cells else pd.DataFrame()
+
+    st.divider()
     left, right = st.columns(2, gap="medium")
     with left:
-        if scene is None:
-            show(empty_html("Not enough measured contact to place his path for this pick."))
+        ok = [x for x in scenes if x]
+        missing = [chr(65 + k) for k, x in enumerate(scenes) if x is None]
+        if not ok:
+            show(empty_html("Not enough measured contact to place his path for these swings."))
         else:
-            m = scene["model"]
-            sub = (f'his average path ({m["n"]} swings) vs a modeled {m["ptype"]} {m["velo"]:.1f} mph'
-                   + (" · contact depth estimated (not on Savant's stance board)" if est else ""))
-            components.html(path3d_html(scene, where, sub), height=900, scrolling=False)
+            sub = ("each colour = a swing group · drag to orbit" +
+                   (f" · not enough contact to draw {', '.join(missing)}" if missing else "") +
+                   (" · contact depth estimated (not on Savant's stance board)" if est else ""))
+            components.html(path3d_html(ok, "Bat path", sub),
+                            height=900, scrolling=False)
     with right:
         k = st.columns([1, 1.6])
         with k[0]:
             display = seg("Display", ["Points", "Heat Map"], default="Points", key="bp_disp") or "Points"
         with k[1]:
             color_by = st.selectbox("Color by", COLOR_BY, key="bp_cby",
-                                    help="Heat Map + Exit Velo / Launch Angle = the average there; "
+                                    help="Swing Group = each loaded swing in its colour (shapes: A ● B ■ C ▲ D ◆). "
+                                         "Heat Map + Exit Velo / Launch Angle = the average there; "
                                          "Heat Map + anything else = how often")
-        components.html(framed(spray_html(cell[cell["bip"]], f"Spray · {where}",
-                                          home_park_for(bpth.home_team(sc), season), color_by, display)), height=470)
-        components.html(framed(poc_map_html(cell, color_by, estimated=est, summary=False,
-                                            title=f"Point of contact · {where}", display=display)), height=560)
-    if scene is not None:
-        with st.expander("What's in the 3D view", expanded=False):
-            show(model_card_html(scene, stand))
+        components.html(framed(spray_html(cell[cell["bip"]] if not cell.empty else cell, "Spray",
+                                          home_park_for(bpth.home_team(sc), season), color_by, display)), height=500)
+        components.html(framed(poc_map_html(cell, color_by, estimated=est, summary=False, title="Point of contact",
+                                            display=display)), height=600)
+    if [x for x in scenes if x]:
+        show(compare_html(scenes))
 
 
 main = seg("Section", ["Summary", "Stats", "Game Log", "Sandbox"], default="Summary",

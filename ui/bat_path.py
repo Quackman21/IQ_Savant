@@ -18,13 +18,14 @@ CSS = """<style>
 .bp .leg{font-size:12px;color:#33404c;margin-top:6px;max-width:460px;line-height:1.45}
 .bp table{border-collapse:collapse;font-size:13px}
 .bp th{font-weight:700;padding:5px 9px;border-bottom:1.5px solid #9aa4ad;text-align:right}
-.bp th:first-child,.bp td:first-child{text-align:left}
+.bp th:first-child,.bp td:first-child{text-align:left;font-family:system-ui,sans-serif}
 .bp td{padding:5px 9px;border-bottom:1px solid #e6eaed;text-align:right;font-family:ui-monospace,Menlo,monospace}
 </style>"""
 
 
 # ----------------------------------------------------------------------------- colour coding + heat maps
-COLOR_BY = ["Exit Velo", "Launch Angle", "Hit Type", "Result", "Contact Type", "Pitch Type", "Pitch Group"]
+COLOR_BY = ["Swing Group", "Exit Velo", "Launch Angle", "Hit Type", "Result", "Contact Type", "Pitch Type",
+            "Pitch Group"]
 DISPLAY = ["Points", "Heat Map"]
 NUMERIC = {"Exit Velo": ("ev", 70.0, 106.0, " mph", "soft", "hard"),
            "Launch Angle": ("la", -20.0, 50.0, "°", "on the ground", "in the air")}
@@ -75,6 +76,8 @@ def _cat_colors(mode: str) -> dict:
 
 
 def point_color(r, mode: str) -> str:
+    if mode == "Swing Group":
+        return getattr(r, "gcolor", "#2f5fb3") or "#2f5fb3"
     if mode in NUMERIC:
         col, lo, hi = NUMERIC[mode][:3]
         return _scale(getattr(r, col, None), lo, hi)
@@ -82,6 +85,14 @@ def point_color(r, mode: str) -> str:
 
 
 def legend_html(d: pd.DataFrame, mode: str, display: str) -> str:
+    sg = _groups_of(d)
+    if mode == "Swing Group" or (display == "Heat Map" and mode not in NUMERIC and sg):
+        if not sg:
+            return "one swing group" + (" · heat = how often" if display == "Heat Map" else "")
+        return ((("heat = how often, in each group's colour · " if display == "Heat Map" else "")) +
+                " ".join(f'<span style="white-space:nowrap" title="{escape(n)}"><i style="color:{c};font-style:normal">'
+                         f'{ {"circle": "●", "square": "■", "triangle": "▲", "diamond": "◆"}[SHAPES[k % 4]] }</i> '
+                         f'{chr(65 + k)}</span>' for k, (n, c) in enumerate(sg)))
     if display == "Heat Map" and mode not in NUMERIC:
         bar = "linear-gradient(90deg,rgba(214,51,40,.08),rgba(214,51,40,.9))"
         return (f'<span style="display:inline-flex;align-items:center;gap:6px">heat = how often · rare '
@@ -101,7 +112,7 @@ def legend_html(d: pd.DataFrame, mode: str, display: str) -> str:
 
 
 def heat_layer(px: np.ndarray, py: np.ndarray, vals: np.ndarray | None, W: float, H: float, mode: str,
-               cell: float = 8.0, sigma: float = 14.0, unit: str = "") -> list[str]:
+               cell: float = 8.0, sigma: float = 14.0, unit: str = "", tint: str | None = None) -> list[str]:
     """Smoothed heat cells (SVG rects). vals=None -> how often (density); else the smoothed average of vals."""
     if len(px) == 0:
         return []
@@ -116,7 +127,7 @@ def heat_layer(px: np.ndarray, py: np.ndarray, vals: np.ndarray | None, W: float
         for j, i in zip(*np.nonzero(dens > 0.06 * top)):
             a = 0.08 + 0.82 * dens[j, i] / top
             out.append(f'<rect x="{i * cell:.1f}" y="{j * cell:.1f}" width="{cell + .3:.1f}" height="{cell + .3:.1f}" '
-                       f'fill="#d63328" fill-opacity="{a:.2f}"/>')
+                       f'fill="{tint or "#d63328"}" fill-opacity="{a:.2f}"/>')
         return out
     ok = ~np.isnan(vals)
     if not ok.any():
@@ -133,10 +144,52 @@ def heat_layer(px: np.ndarray, py: np.ndarray, vals: np.ndarray | None, W: float
     return out
 
 
+SHAPES = ["circle", "square", "triangle", "diamond"]
+
+
+def _marker(k: int, x: float, y: float, r: float, style: str, tip: str) -> str:
+    """Swing group k's marker shape (A circle, B square, C triangle, D diamond)."""
+    t = f"<title>{escape(tip)}</title>"
+    shape = SHAPES[k % 4]
+    if shape == "square":
+        return f'<rect class="g{k}" x="{x - r:.1f}" y="{y - r:.1f}" width="{2 * r:.1f}" height="{2 * r:.1f}" {style}>{t}</rect>'
+    if shape == "triangle":
+        return (f'<polygon class="g{k}" points="{x:.1f},{y - 1.2 * r:.1f} {x + 1.1 * r:.1f},{y + .8 * r:.1f} '
+                f'{x - 1.1 * r:.1f},{y + .8 * r:.1f}" {style}>{t}</polygon>')
+    if shape == "diamond":
+        return (f'<polygon class="g{k}" points="{x:.1f},{y - 1.3 * r:.1f} {x + 1.3 * r:.1f},{y:.1f} {x:.1f},'
+                f'{y + 1.3 * r:.1f} {x - 1.3 * r:.1f},{y:.1f}" {style}>{t}</polygon>')
+    return f'<circle class="g{k}" cx="{x:.1f}" cy="{y:.1f}" r="{r}" {style}>{t}</circle>'
+
+
+def _chips(cid: str, groups: list[tuple]) -> str:
+    """This chart's own on/off chips, one per swing group (groups = [(name, colour), ...])."""
+    if len(groups) < 2:
+        return ""
+    glyph = {"circle": "●", "square": "■", "triangle": "▲", "diamond": "◆"}
+    btn = "".join(f'<button class="on" data-k="{k}" title="{escape(n)}" style="--c:{c}">'
+                  f'<span style="color:{c}">{glyph[SHAPES[k % 4]]}</span> {chr(65 + k)}</button>'
+                  for k, (n, c) in enumerate(groups))
+    js = (f"<script>document.querySelectorAll('#{cid} .chips button').forEach(b=>b.onclick=()=>{{"
+          f"b.classList.toggle('on');const on=b.classList.contains('on');"
+          f"document.querySelectorAll('#{cid} .g'+b.dataset.k).forEach(e=>e.style.display=on?'':'none');}});</script>")
+    css = ("<style>.chips{display:flex;gap:5px;margin:2px 0 4px}.chips button{font:700 12px system-ui;border:1px solid "
+           "#d9dee2;background:#fff;border-radius:6px;padding:3px 9px;cursor:pointer;color:#9aa4ad}"
+           ".chips button.on{color:#16202b;border-color:var(--c)}.chips button:not(.on) span{opacity:.3}</style>")
+    return css + f'<div class="chips">{btn}</div>' + js
+
+
+def _groups_of(d: pd.DataFrame) -> list[tuple]:
+    if "grp" not in d or d.empty:
+        return []
+    g = d.drop_duplicates("grp").sort_values("grp")
+    return list(zip(g["gname"], g["gcolor"]))
+
+
 def poc_map_html(d: pd.DataFrame, color_by: str = "Exit Velo", estimated: bool = False, summary: bool = True,
                  title: str = "Point of contact", display: str = "Points") -> str:
     """d: one row per contact with pf, pxc, ev, la, result, pgroup, bip, date, ptype."""
-    have = d[d["pf"].notna() & d["pxc"].notna()]
+    have = d[d["pf"].notna() & d["pxc"].notna()] if {"pf", "pxc"} <= set(d.columns) else d.iloc[0:0]
     if have.empty:
         return CSS + '<div class="bp"><div class="card">No measured contact points for this selection.</div></div>'
     if summary:                                                   # whole season: fixed frame, +30" .. -40"
@@ -160,37 +213,52 @@ def poc_map_html(d: pd.DataFrame, color_by: str = "Exit Velo", estimated: bool =
     g.append(f'<polygon points="{xs(-h):.1f},{ys(0):.1f} {xs(h):.1f},{ys(0):.1f} {xs(h):.1f},{ys(-h):.1f} '
              f'{xs(0):.1f},{ys(-17):.1f} {xs(-h):.1f},{ys(-h):.1f}" fill="#f6f8f9" stroke="#0e7c86" stroke-width="1.8"/>')
     g.append(f'<text x="{W - 10}" y="{ys(top) + 10:.1f}" class="ax" text-anchor="end">toward the pitcher ↑</text>')
+    sg = _groups_of(have)
+    gk = have["grp"].to_numpy(int) if sg else np.zeros(len(have), int)
     if display == "Heat Map":
-        px, py = xs(have["pxc"].to_numpy(float)), ys(have["pf"].to_numpy(float))
-        vals = have[NUMERIC[color_by][0]].to_numpy(float) if color_by in NUMERIC else None
-        g[1:1] = heat_layer(px, py, vals, W, H, color_by, cell=6.0, sigma=2.2 * S, unit=NUMERIC.get(color_by, ("",) * 4)[3])
+        for k in sorted(set(gk)):
+            hk = have[gk == k]
+            px, py = xs(hk["pxc"].to_numpy(float)), ys(hk["pf"].to_numpy(float))
+            vals = hk[NUMERIC[color_by][0]].to_numpy(float) if color_by in NUMERIC else None
+            g.insert(1, f'<g class="g{k}">' + "".join(heat_layer(px, py, vals, W, H, color_by, cell=6.0, sigma=2.2 * S,
+                     unit=NUMERIC.get(color_by, ("",) * 4)[3], tint=sg[k][1] if sg and vals is None else None)) + "</g>")
     else:
-        fouls, inplay = have[~have["bip"]], have[have["bip"]]
-        for part, hollow in ((fouls, True), (inplay, False)):
-            for r in part.itertuples():
-                col = point_color(r, color_by)
-                x, y = float(np.clip(xs(r.pxc), 8, W - 8)), float(np.clip(ys(r.pf), 8, H - 18))
-                tip = (f"{r.date} · {r.ptype} · {r.result}" + (f" · {r.ev:.0f} mph, {r.la:.0f}°" if not pd.isna(r.ev) else "")
-                       + f" · {r.pf:+.1f}\" front, {r.pxc:+.1f}\" side")
-                style = (f'fill="#fff" fill-opacity=".6" stroke="{col}" stroke-width="1.6"' if hollow
-                         else f'fill="{col}" fill-opacity=".88" stroke="#33404c" stroke-width=".6"')
-                g.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{4 if hollow else 5}" {style}><title>{escape(tip)}</title></circle>')
-    for grp, gg in have.groupby("pgroup"):                        # average point by pitch group
+        order = np.argsort(have["bip"].to_numpy())                     # fouls first, balls in play on top
+        for i in order:
+            r = next(have.iloc[[i]].itertuples())
+            hollow, k = not r.bip, int(gk[i])
+            col = sg[k][1] if color_by == "Swing Group" and sg else point_color(r, color_by)
+            x, y = float(np.clip(xs(r.pxc), 8, W - 8)), float(np.clip(ys(r.pf), 8, H - 18))
+            tip = ((f"{chr(65 + k)}: " if sg else "") + f"{r.date} · {r.ptype} · {r.result}"
+                   + (f" · {r.ev:.0f} mph, {r.la:.0f}°" if not pd.isna(r.ev) else "")
+                   + f" · {r.pf:+.1f}\" front, {r.pxc:+.1f}\" side")
+            style = (f'fill="#fff" fill-opacity=".6" stroke="{col}" stroke-width="1.6"' if hollow
+                     else f'fill="{col}" fill-opacity=".88" stroke="#33404c" stroke-width=".6"')
+            g.append(_marker(k, x, y, 4 if hollow else 5, style, tip))
+    if summary:
+        groups = [(grp, gg, GROUP_COLOR.get(grp, "#33404c"), "") for grp, gg in have.groupby("pgroup")]
+    elif sg:
+        groups = [(k, have[gk == k], sg[k][1], f' class="g{k}"') for k in range(len(sg))]
+    else:
+        groups = [("All", have, "#ffffff", "")]
+    for grp, gg, col, cls in groups:
         if len(gg) < 3:
             continue
-        x, y, col = xs(gg["pxc"].mean()), ys(gg["pf"].mean()), GROUP_COLOR.get(grp, "#33404c")
-        g.append(f'<g stroke="#16202b" stroke-width="3"><line x1="{x - 8:.1f}" y1="{y:.1f}" x2="{x + 8:.1f}" '
+        x, y = xs(gg["pxc"].mean()), ys(gg["pf"].mean())
+        g.append(f'<g{cls} stroke="#16202b" stroke-width="3"><line x1="{x - 8:.1f}" y1="{y:.1f}" x2="{x + 8:.1f}" '
                  f'y2="{y:.1f}"/><line x1="{x:.1f}" y1="{y - 8:.1f}" x2="{x:.1f}" y2="{y + 8:.1f}"/></g>'
-                 f'<g stroke="{col}" stroke-width="1.6"><line x1="{x - 7:.1f}" y1="{y:.1f}" x2="{x + 7:.1f}" '
+                 f'<g{cls} stroke="{col}" stroke-width="1.6"><line x1="{x - 7:.1f}" y1="{y:.1f}" x2="{x + 7:.1f}" '
                  f'y2="{y:.1f}"/><line x1="{x:.1f}" y1="{y - 7:.1f}" x2="{x:.1f}" y2="{y + 7:.1f}"/></g>')
     how = ("<b>*</b> front to back estimated -- not on Savant's stance board yet. " if estimated else "") + \
         "Front to back = MLB's contact point vs the plate (Statcast's contact from his hips − his stance depth); " \
         "side to side = where the ball was. "
     key = legend_html(have, color_by, display) + ("" if display == "Heat Map" else " · filled = in play, hollow = foul")
     legend = (" ".join(f'<span style="color:{c}">✚</span> {k} avg' for k, c in GROUP_COLOR.items()) if summary
-              else "✚ his average here")
-    chart = (f'<div class="card" style="flex:1 1 380px;max-width:{"560px" if summary else "100%"}"><div class="t">{escape(title)}{"*" if estimated else ""} '
-             f'<span class="faint">· {len(have)} contacts · inches · catcher\'s view</span></div>'
+              else " ".join(f'<span style="color:{c}">✚</span> {chr(65 + k)} avg' for k, (n, c) in enumerate(sg))
+              if sg else "✚ his average here")
+    cid = f"poc{abs(hash((title, len(have), color_by, display))) % 10 ** 8}"
+    chart = (f'<div class="card" id="{cid}" style="flex:1 1 380px;max-width:{"560px" if summary else "100%"}"><div class="t">{escape(title)}{"*" if estimated else ""} '
+             f'<span class="faint">· {len(have)} contacts · inches · catcher\'s view</span></div>{_chips(cid, sg)}'
              f'<svg viewBox="0 0 {W} {H}" style="width:100%;height:auto;max-height:{"none" if summary else "400px"}">'
              f'{"".join(g)}</svg>'
              f'<div class="leg">{key}<br>{legend}. {"Hover a dot for the pitch. " if display == "Points" else ""}'
@@ -234,15 +302,25 @@ _S3D_CSS = """
 #ctl .tick.bp{background:#7b5cc4} #ctl #s3bp{color:#5b3fa8}
 #ctl .clk{font:12px ui-monospace,monospace;color:#6a7681;min-width:120px;text-align:right}
 #lg{font-size:11.5px;color:#6a7681;line-height:1.55;padding:7px 12px;border-top:1px solid #e6eaed}
+#grp{position:absolute;right:10px;top:10px;display:flex;gap:4px;z-index:2}
+#grp button{font:700 12px system-ui;border:1px solid #d9dee2;background:#fff;border-radius:6px;padding:4px 9px;
+  cursor:pointer;display:inline-flex;align-items:center;gap:5px;color:#9aa4ad}
+#grp button i{display:inline-block;width:10px;height:10px;border-radius:50%;background:#d9dee2}
+#grp button.on{color:#16202b;border-color:var(--c)} #grp button.on i{background:var(--c)}
 #lg i{font-style:normal;font-weight:800}
 """
 
 
-def path3d_html(scene: dict, title: str, sub: str) -> str:
-    """Self-contained page: the 3D view of one scene, square, filling its frame's width."""
+def path3d_html(scene, title: str, sub: str) -> str:
+    """Self-contained page: the 3D view, square, filling its frame's width. scene = one scene, or a list of swing-
+    group scenes (each with name + color) -> all drawn together, with a toggle chip per group on this chart."""
     import json
 
     from ui.aar import S3D_CORE, THREE_JS
+    if isinstance(scene, list):
+        scs = [x for x in scene if x]
+        scene = {**scs[0], "extra": [{k: x[k] for k in ("pitch", "arc", "contact", "O", "bp", "color", "name")}
+                                     for x in scs[1:]]}
     data = json.dumps(scene).replace("</", "<\\/")
     ctl = ('<div id="ctl"><button id="s3p">❚❚</button><select id="s3sp"><option value="4">1/4 speed</option>'
            '<option value="10" selected>1/10</option><option value="25">1/25</option><option value="60">1/60</option>'
@@ -250,7 +328,12 @@ def path3d_html(scene: dict, title: str, sub: str) -> str:
            'class="tick bp" title="Bat parallel (inferred)"></span><span id="s3tick" class="tick" title="Contact">'
            '</span></span><button id="s3bp">Bat parallel</button><button id="s3k">Contact</button>'
            '<span class="clk" id="s3c"></span></div>')
-    legend = ('<div id="lg"><i style="color:#e07b24">━</i> modeled pitch &nbsp; <i style="color:#2f5fb3">━</i> his '
+    multi = bool(scene.get("name"))
+    legend = ('<div id="lg">Each colour = one swing group (A, B, … -- toggle them top right). Solid tube = his average '
+              'bat path, last 40 ms before contact (measured); dashed + dot = back to bat parallel + follow-through '
+              '(inferred); thin line = that group\'s modeled pitch; big dot = his average contact point · drag to '
+              'orbit, scroll to zoom</div>') if multi else \
+             ('<div id="lg"><i style="color:#e07b24">━</i> modeled pitch &nbsp; <i style="color:#2f5fb3">━</i> his '
               'average bat path, last 40 ms before contact (from his measured swings) &nbsp; <i style="color:#7b5cc4">┅ ●'
               '</i> back to bat parallel + follow-through, inferred from his tilt, attack angle + direction &nbsp; '
               '<i style="color:#c0392b">●</i> his average contact point · drag to orbit, scroll to zoom</div>')
@@ -260,11 +343,20 @@ function fit() {
   window.parent.postMessage({isStreamlitMessage: true, type: 'streamlit:setFrameHeight', height: h}, '*');
 }
 const SC = JSON.parse(document.getElementById('s3d-data').textContent);
+const GRP = SC.name ? [{name: SC.name, color: SC.color}].concat(SC.extra || []) : [];
+const ON = GRP.map(() => true);
+const chips = document.getElementById('grp');
+GRP.forEach((g, k) => {
+  const b = document.createElement('button'); b.className = 'on'; b.style.setProperty('--c', g.color);
+  b.innerHTML = `<i></i>${String.fromCharCode(65 + k)}`; b.title = g.name;
+  b.onclick = () => { ON[k] = !ON[k]; b.classList.toggle('on', ON[k]); if (R3) R3.setOn(k, ON[k]); };
+  chips.appendChild(b);
+});
 let lastW = 0;
 function start() {
   const w = stage.clientWidth; if (Math.abs(w - lastW) < 8) return; lastW = w;
   document.getElementById('s3msg').style.display = 'none';
-  if (R3) R3.stop(); R3 = build(SC); fit();
+  if (R3) R3.stop(); R3 = build(SC); ON.forEach((on, k) => R3.setOn(k, on)); fit();
 }
 loadThree(start);
 window.addEventListener('resize', () => { if (window.THREE) start(); });
@@ -272,7 +364,8 @@ window.addEventListener('load', fit); fit();
 """
     return (f'<!doctype html><html><head><meta charset="utf-8"><style>{_S3D_CSS}</style></head><body>'
             f'<div id="wrap"><div id="hd"><b>{escape(title)}</b><span>{escape(sub)}</span></div>'
-            f'<div id="stage"><div id="cams"></div><div class="msg" id="s3msg">Loading 3D…</div></div>{ctl}{legend}</div>'
+            f'<div id="stage"><div id="cams"></div><div id="grp"></div><div class="msg" id="s3msg">Loading 3D…</div></div>'
+            f'{ctl}{legend}</div>'
             f'<script type="application/json" id="s3d-data">{data}</script>'
             f'<script>const THREE_SRC = "{THREE_JS}";{S3D_CORE}{js}</script></body></html>')
 
@@ -322,7 +415,8 @@ def spray_html(d: pd.DataFrame, title: str = "Spray chart", park: dict | None = 
     a generic park if neither is known), coloured by exit velo. d: hc_x, hc_y, ev, la, result, date, ptype."""
     from ui.aar import DEFAULT_DIMS, LINE_ANGLES, _around_center, _by_spray, _poly
     park = park or {}
-    b = d.dropna(subset=["hc_x", "hc_y"])
+    b = d.dropna(subset=["hc_x", "hc_y"]) if {"hc_x", "hc_y"} <= set(d.columns) else \
+        pd.DataFrame(columns=["hc_x", "hc_y", "ev", "la", "result", "date", "ptype"])
     W, H = 440, 330
     dims = park.get("dims") or DEFAULT_DIMS
     segs = (park.get("outline") or {}).get("segments") or {}
@@ -371,21 +465,27 @@ def spray_html(d: pd.DataFrame, title: str = "Spray chart", park: dict | None = 
             x, y = pt(ax_, ay_)
             g.append(f'<text x="{x + dx:.1f}" y="{y - 5:.1f}" class="ax" text-anchor="{anchor}">{dims[k]:.0f}</text>')
     fx_all, fy_all = (b["hc_x"].to_numpy(float) - 125.42) * 2.5, (198.27 - b["hc_y"].to_numpy(float)) * 2.5
+    sg = _groups_of(b)
+    gk = b["grp"].to_numpy(int) if sg else np.zeros(len(b), int)
+    cid = f"spr{abs(hash((title, len(b), color_by, display))) % 10 ** 8}"
     if display == "Heat Map" and not b.empty:
         hxp, hyp = hx + fx_all * S, hy - fy_all * S
-        vals = b[NUMERIC[color_by][0]].to_numpy(float) if color_by in NUMERIC else None
-        cid = f"fence{abs(hash((title, len(b)))) % 10 ** 8}"
-        g.append(f'<clipPath id="{cid}"><polygon points="{fence_poly}"/></clipPath><g clip-path="url(#{cid})">'
-                 + "".join(heat_layer(hxp, hyp, vals, W, H, color_by, cell=5.0, sigma=22 * S,
-                                      unit=NUMERIC.get(color_by, ("",) * 4)[3])) + "</g>")
+        g.append(f'<clipPath id="{cid}c"><polygon points="{fence_poly}"/></clipPath>')
+        for k in sorted(set(gk)):
+            m = gk == k
+            vals = b[NUMERIC[color_by][0]].to_numpy(float)[m] if color_by in NUMERIC else None
+            g.append(f'<g class="g{k}" clip-path="url(#{cid}c)">'
+                     + "".join(heat_layer(hxp[m], hyp[m], vals, W, H, color_by, cell=5.0, sigma=22 * S,
+                                          unit=NUMERIC.get(color_by, ("",) * 4)[3],
+                                          tint=sg[k][1] if sg and vals is None else None)) + "</g>")
     else:
-        for r, x, y in zip(b.itertuples(), fx_all, fy_all):
+        for r, x, y, k in zip(b.itertuples(), fx_all, fy_all, gk):
             px, py = pt(x, y)
-            tip = (f"{r.date} · {r.ptype} · {r.result}" + (f" · {r.ev:.0f} mph, {r.la:.0f}°" if not pd.isna(r.ev) else "")
-                   + f" · {math.hypot(x, y):.0f} ft")
-            g.append(f'<circle cx="{np.clip(px, 6, W - 6):.1f}" cy="{np.clip(py, 6, H - 6):.1f}" r="5" '
-                     f'fill="{point_color(r, color_by)}" fill-opacity=".9" stroke="#33404c" stroke-width=".6">'
-                     f'<title>{escape(tip)}</title></circle>')
+            col = sg[k][1] if color_by == "Swing Group" and sg else point_color(r, color_by)
+            tip = ((f"{chr(65 + k)}: " if sg else "") + f"{r.date} · {r.ptype} · {r.result}"
+                   + (f" · {r.ev:.0f} mph, {r.la:.0f}°" if not pd.isna(r.ev) else "") + f" · {math.hypot(x, y):.0f} ft")
+            g.append(_marker(int(k), float(np.clip(px, 6, W - 6)), float(np.clip(py, 6, H - 6)), 5,
+                             f'fill="{col}" fill-opacity=".9" stroke="#33404c" stroke-width=".6"', tip))
     where = park.get("venue") or ""
     approx = "" if segs or not park.get("dims") else " (approximate fence)"
     sub = f' <span class="faint">· {escape(where)}{approx}</span>' if where else \
@@ -394,8 +494,8 @@ def spray_html(d: pd.DataFrame, title: str = "Spray chart", park: dict | None = 
             f'{len(b)} balls in play · avg EV {b["ev"].mean():.1f} · hard-hit {(b["ev"] >= 95).mean():.0%}')
     note += " · all games, drawn on his home park" + (" · hover a dot" if display == "Points" else "")
     note = legend_html(b, color_by, display) + "<br>" + note
-    return CSS + (f'<div class="bp"><div class="card" style="flex:1" title="{escape((park.get("outline") or {}).get("note", ""))}">'
-                  f'<div class="t">{escape(title)}{sub}</div>'
+    return CSS + (f'<div class="bp"><div class="card" id="{cid}" style="flex:1" title="{escape((park.get("outline") or {}).get("note", ""))}">'
+                  f'<div class="t">{escape(title)}{sub}</div>{_chips(cid, sg)}'
                   f'<svg viewBox="0 0 {W} {H}" style="width:100%;height:auto;max-height:330px">{"".join(g)}</svg>'
                   f'<div class="leg">{note}</div></div></div>')
 
@@ -407,3 +507,30 @@ def framed(html: str) -> str:
           "window.addEventListener('resize',fit);new ResizeObserver(fit).observe(document.body);fit();</script>")
     return ('<!doctype html><html><head><meta charset="utf-8"></head><body style="margin:0;font-family:system-ui,'
             f'sans-serif">{html}{js}</body></html>')
+
+
+def compare_html(scenes: list) -> str:
+    """The swing groups side by side: what was averaged, the measured swing, the inferred geometry."""
+    scs = [x for x in scenes if x]
+    if not scs:
+        return ""
+    f = lambda v, d=1: "–" if v is None or (isinstance(v, float) and math.isnan(v)) else f"{v:.{d}f}"
+    rows = [("Swings averaged", lambda s: f'{s["model"]["n"]} <span class="faint">({escape(s["model"]["level"])})</span>'),
+            ("Modeled pitch", lambda s: f'{s["model"]["hand"]}HP {s["model"]["ptype"]} {f(s["model"]["velo"])} mph'),
+            ("Bat speed", lambda s: f'{f(s["model"]["bat_speed"])} mph'),
+            ("Swing length", lambda s: f'{f(s["model"]["swing_length"])} ft'),
+            ("Attack angle", lambda s: f'{f(s["model"]["attack_angle"])}°'),
+            ("Attack direction", lambda s: f'{f(s["model"]["attack_direction"])}° '
+                                           f'{"pull" if s["model"]["attack_direction"] < 0 else "oppo"}'),
+            ("Swing tilt", lambda s: f'{f(s["model"]["swing_path_tilt"])}°'),
+            ("Swing vs pitch plane", lambda s: f'{s["read"]["plane_gap"]:+.1f}°'),
+            ("Contact out front", lambda s: f'{f(s["read"]["front"])}″'),
+            ("Contact height", lambda s: f'{f(s["read"]["height"])}″'),
+            ("Vertical bat angle (inferred)", lambda s: f'{f(s["read"]["vba"])}°'),
+            ("Bat parallel before contact (inferred)", lambda s: f'{f(s["read"].get("bp_in"), 0)}″')]
+    head = "".join(f'<th style="border-bottom:3px solid {s["color"]}" title="{escape(s["name"])}">'
+                   f'{chr(65 + s["gid"])}<div class="faint" style="font-weight:400;font-size:11px">{escape(s["name"])}</div></th>'
+                   for s in scs)
+    body = "".join(f'<tr><td>{k}</td>' + "".join(f"<td>{fn(s)}</td>" for s in scs) + "</tr>" for k, fn in rows)
+    return CSS + (f'<div class="bp"><div class="card" style="flex:1"><div class="t">Swing groups side by side</div>'
+                  f'<table style="width:100%"><tr><th></th>{head}</tr>{body}</table></div></div>')

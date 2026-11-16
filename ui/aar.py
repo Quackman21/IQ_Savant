@@ -568,29 +568,52 @@ function build(sc) {
   // his strike zone at the front of the plate
   scene.add(line([[-8.5, 0, sc.sz[0]], [8.5, 0, sc.sz[0]], [8.5, 0, sc.sz[1]], [-8.5, 0, sc.sz[1]], [-8.5, 0, sc.sz[0]]],
     new THREE.LineDashedMaterial({color: 0x16202b, dashSize: 2, gapSize: 1.5})));
-  // ghosts of the whole thing
-  scene.add(line(sc.pitch, new THREE.LineBasicMaterial({color: 0xe07b24, transparent: true, opacity: .25})));
-  const dashed = new THREE.LineDashedMaterial({color: 0x7b5cc4, dashSize: 2.2, gapSize: 1.6});
+  // ghosts of the whole thing (a swing group draws in its own colour: sc.color; more groups: sc.extra)
+  const g0 = scene.children.length, HC = c => parseInt(c.slice(1), 16), MC = sc.color ? HC(sc.color) : null;
+  const cc = d => (MC !== null ? MC : d);
+  scene.add(line(sc.pitch, new THREE.LineBasicMaterial({color: cc(0xe07b24), transparent: true, opacity: .25})));
+  const dashed = new THREE.LineDashedMaterial({color: cc(0x7b5cc4), dashSize: 2.2, gapSize: 1.6});
   const pre = sc.arc.filter(q => q[3] === 2 && q[4] < 0), post = sc.arc.filter(q => q[3] === 2 && q[4] > 0);
   const m0 = sc.arc.find(q => q[3] === 1), m1 = [...sc.arc].reverse().find(q => q[3] === 1);
   if (pre.length) scene.add(line(pre.concat([m0]), dashed));
   if (post.length) scene.add(line([m1].concat(post), dashed));
-  if (sc.bp) { const m = new THREE.Mesh(new THREE.SphereGeometry(1.8, 16, 12), new THREE.MeshBasicMaterial({color: 0x7b5cc4}));
+  if (sc.bp) { const m = new THREE.Mesh(new THREE.SphereGeometry(1.8, 16, 12), new THREE.MeshBasicMaterial({color: cc(0x7b5cc4)}));
     m.position.copy(V(sc.bp.at)); scene.add(m); }
   const meas = sc.arc.filter(q => q[3] === 1);
   if (meas.length > 1) scene.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(meas.map(V)), 40, 0.6, 8),
-    new THREE.MeshLambertMaterial({color: 0x2f5fb3})));
+    new THREE.MeshLambertMaterial({color: cc(0x2f5fb3)})));
   if (sc.exit) scene.add(line(sc.exit, new THREE.LineBasicMaterial({color: 0x2e9d5b, transparent: true, opacity: .3})));
   // live pieces
-  const trail = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({color: 0xe07b24}));
+  const trail = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({color: cc(0xe07b24)}));
   const etrail = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({color: 0x2e9d5b}));
   scene.add(trail, etrail);
   const ball = new THREE.Mesh(new THREE.SphereGeometry(1.45, 20, 14), new THREE.MeshLambertMaterial({color: 0xffffff, emissive: 0x332211}));
   scene.add(ball);
   const bat = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 0.55, 33, 16), new THREE.MeshLambertMaterial({color: 0x9a7b52}));
   scene.add(bat);
-  const hit = new THREE.Mesh(new THREE.SphereGeometry(2.2, 18, 12), new THREE.MeshBasicMaterial({color: 0xc0392b}));
+  const hit = new THREE.Mesh(new THREE.SphereGeometry(2.2, 18, 12), new THREE.MeshBasicMaterial({color: cc(0xc0392b)}));
   hit.position.copy(V(sc.contact)); scene.add(hit);
+  const GR = [{objs: scene.children.slice(g0), on: true}];
+  (sc.extra || []).forEach(g => {                        // more swing groups: same pieces, each in its colour
+    const s0 = scene.children.length, C = HC(g.color);
+    scene.add(line(g.pitch, new THREE.LineBasicMaterial({color: C, transparent: true, opacity: .25})));
+    const dm = new THREE.LineDashedMaterial({color: C, dashSize: 2.2, gapSize: 1.6});
+    const pr = g.arc.filter(q => q[3] === 2 && q[4] < 0), po = g.arc.filter(q => q[3] === 2 && q[4] > 0);
+    const a0 = g.arc.find(q => q[3] === 1), a1 = [...g.arc].reverse().find(q => q[3] === 1);
+    if (pr.length) scene.add(line(pr.concat([a0]), dm));
+    if (po.length) scene.add(line([a1].concat(po), dm));
+    if (g.bp) { const m = new THREE.Mesh(new THREE.SphereGeometry(1.8, 16, 12), new THREE.MeshBasicMaterial({color: C}));
+      m.position.copy(V(g.bp.at)); scene.add(m); }
+    const ms = g.arc.filter(q => q[3] === 1);
+    if (ms.length > 1) scene.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(ms.map(V)), 40, 0.6, 8),
+      new THREE.MeshLambertMaterial({color: C})));
+    const tr = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({color: C}));
+    const bl = new THREE.Mesh(new THREE.SphereGeometry(1.45, 20, 14), new THREE.MeshLambertMaterial({color: 0xffffff, emissive: 0x332211}));
+    const bt = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 0.55, 33, 16), new THREE.MeshLambertMaterial({color: 0x9a7b52}));
+    const hh = new THREE.Mesh(new THREE.SphereGeometry(2.2, 18, 12), new THREE.MeshBasicMaterial({color: C}));
+    hh.position.copy(V(g.contact)); scene.add(tr, bl, bt, hh);
+    GR.push({objs: scene.children.slice(s0), on: true, live: {tr, bl, bt, hh, g}});
+  });
   // camera: orbit around the contact point
   const tgt = V([sc.contact[0] * 0.5, sc.contact[1] * 0.5 - 4, 30]);
   const st = {th: 0, ph: 1.25, r: 190};
@@ -619,7 +642,18 @@ function build(sc) {
   place();
   // time
   const T = q => q[q.length - 1];
-  const t0 = T(sc.pitch[0]), t1 = Math.max(sc.exit ? 0.12 : 0.02, T(sc.arc[sc.arc.length - 1]));
+  const all = [sc].concat(sc.extra || []);
+  const t0 = Math.min(...all.map(g => T(g.pitch[0]))),
+        t1 = Math.max(sc.exit ? 0.12 : 0.02, ...all.map(g => T(g.arc[g.arc.length - 1])));
+  function batAt(mesh, g, t) {
+    const P = t < T(g.arc[0]) ? null : at(g.arc, Math.min(t, T(g.arc[g.arc.length - 1])));
+    mesh.visible = !!P;
+    if (P) {
+      const u = new THREE.Vector3(g.O[0] - P[0], g.O[2] - P[2], -(g.O[1] - P[1])).normalize();
+      mesh.position.copy(V(P).add(u.clone().multiplyScalar(10.5)));
+      mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), u);
+    }
+  }
   const S = {t: t0, playing: true, last: null, raf: 0};
   function frame(t) {
     const bt = upto(sc.pitch, t).map(V);
@@ -637,6 +671,16 @@ function build(sc) {
       bat.position.copy(mid); bat.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), u);
     }
     hit.visible = t >= 0;
+    if (!GR[0].on) { ball.visible = bat.visible = hit.visible = trail.visible = etrail.visible = false; }
+    else { trail.visible = etrail.visible = true; }
+    for (let k = 1; k < GR.length; k++) {
+      const L = GR[k].live, g = L.g, on = GR[k].on;
+      const pts = upto(g.pitch, t).map(V);
+      L.tr.geometry.dispose(); L.tr.geometry = new THREE.BufferGeometry().setFromPoints(pts.length > 1 ? pts : [V(g.pitch[0]), V(g.pitch[0])]);
+      const Bk = t <= 0 ? at(g.pitch, t) : null;
+      L.bl.visible = on && !!Bk; if (Bk) L.bl.position.copy(V(Bk));
+      batAt(L.bt, g, t); L.bt.visible = on && L.bt.visible; L.hh.visible = on && t >= 0; L.tr.visible = on;
+    }
     const pre = sc.arc.find(q => q[3] === 1), winStart = pre ? T(pre) : 0;
     document.getElementById('s3c').textContent = ((sc.bp && t < winStart && t >= T(sc.arc[0])) || (t > 0 && !sc.exit))
       ? 'inferred path · time not measured' : `${t >= 0 ? '+' : ''}${(t * 1000).toFixed(0)} ms from contact`;
@@ -665,7 +709,8 @@ function build(sc) {
   } else { bpb.style.display = bpt.style.display = 'none'; }
   document.getElementById('s3sc').oninput = e => {
     S.playing = false; document.getElementById('s3p').textContent = '▶'; S.t = t0 + (t1 - t0) * e.target.value / 1000; };
-  return {stop() { cancelAnimationFrame(S.raf); ren.dispose(); ren.domElement.remove(); }};
+  return {stop() { cancelAnimationFrame(S.raf); ren.dispose(); ren.domElement.remove(); },
+          setOn(k, on) { if (!GR[k]) return; GR[k].on = on; GR[k].objs.forEach(o => { o.visible = on; }); }};
 }
 """
 

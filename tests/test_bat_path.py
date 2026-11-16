@@ -104,13 +104,14 @@ def test_zone_targets():
 def test_profile_widens_and_scene_builds():
     from core import bat_path as bp
     sw = bp.swings(_tracked())
-    pr = bp.profile(sw, "Fastball", 5, "R", "R")
-    assert pr["n"] >= bp.MIN_SWINGS and "cy" in pr
-    thin = bp.profile(sw[sw.zone != 5], "Fastball", 5, "R", "R")
-    assert thin["level"] in ("this pitch group (all zones)", "all his swings")
-    sc = bp.model_scene(sw, "Fastball", 5, "R", 27.0, 26.0, "R")
+    pr = bp.profile(sw, ["FF"], "All", "All", 5, "R")
+    assert pr["n"] >= bp.MIN_SWINGS and "cy" in pr and pr["level"] == "your filters, here"
+    thin = bp.profile(sw[sw.zone != 5], ["FF"], "All", "All", 5, "R")
+    assert thin["level"] == "your filters, all locations"
+    sc = bp.model_scene(sw, None, "All", "All", 5, "R", 27.0, 26.0)
     assert sc and sc["model"]["ptype"] == "FF" and len(sc["arc"]) > 50 and sc["exit"] is None
-    assert abs(sc["read"]["front"] - (pr["cy"] - 27.0)) < 0.06
+    pall = bp.profile(sw, None, "All", "All", 5, "R")
+    assert abs(sc["read"]["front"] - (pall["cy"] - 27.0)) < 0.06
     from ui.bat_path import model_card_html, path3d_html
     h = path3d_html(sc, "t", "s")
     assert "function build" in h and 'id="stage"' in h and "open3d" not in h
@@ -131,7 +132,7 @@ def test_cell_spray_and_poc():
     df = _tracked()
     df["p_throws"] = "R"
     poc = pd.DataFrame({"pf": df["intercept_ball_minus_batter_pos_y_inches"] - 27, "pxc": 0.0}, index=df.index)
-    cell = bp.cell_balls(df, poc, "Fastball", 5, "R", "R")
+    cell = bp.cell_balls(df, poc, ["FF"], "RHP", "All", 5, "R")
     exp = df["description"].isin(["foul", "hit_into_play"]) & df["pitch_type"].eq("FF") & df["zone"].eq(5)
     assert len(cell) == exp.sum() and cell["pf"].notna().all()
     h = spray_html(cell[cell["bip"]])
@@ -178,3 +179,59 @@ def test_framed_chart_is_a_page_that_sizes_itself():
     from ui.bat_path import framed
     h = framed("<svg viewBox='0 0 10 10'></svg>")
     assert h.startswith("<!doctype html>") and "<svg" in h and "setFrameHeight" in h
+
+
+def test_filters_and_demo_pitch():
+    from core import bat_path as bp
+    df = _tracked()
+    df["p_throws"] = np.where(np.arange(len(df)) % 2, "L", "R")
+    sw = bp.swings(df)
+    alltypes = list(sw["ptype"].unique())
+    assert bp.pick(sw).all()
+    assert (sw[bp.pick(sw, hand="LHP")]["hand"] == "L").all()
+    assert bp.demo_group(None, alltypes) == "Fastball" and bp.demo_group(alltypes, alltypes) == "Fastball"
+    assert bp.demo_group(["SL"], alltypes) == "Breaking" and bp.demo_group(["CH"], alltypes) == "Offspeed"
+    assert bp.demo_group(["SL", "CH"], alltypes) == "Fastball"            # mixed -> default
+    sc = bp.model_scene(sw, ["SL"], "LHP", "All", None, "R", 27.0, 26.0, alltypes)
+    assert sc["model"]["ptype"] == "SL" and sc["model"]["hand"] == "L" and sc["model"]["zone"] is None
+    d = bp.model_scene(sw, None, "All", "All", None, "R", 27.0, 26.0, alltypes)
+    assert d["model"]["ptype"] == "FF" and d["model"]["hand"] == "R"      # dead-zone RHP fastball by default
+
+
+def test_zone_lists():
+    from core import bat_path as bp
+    assert bp.zones_of(None) is None and bp.zones_of(list(range(1, 10))) is None and bp.zones_of([]) is None
+    assert bp.zones_of(5) == [5] and bp.zones_of([6, 3, 3]) == [3, 6]
+    assert bp.zones_label([5], "R") == "Middle-Middle" and bp.zones_label([1, 2], "R") == "Up-In + Up-Middle"
+    assert bp.zones_label([1, 2, 3], "R") == "3 zones" and bp.zones_label(None, "L") == "All locations"
+    df = _tracked()
+    sw = bp.swings(df)
+    assert set(sw[bp.pick(sw, zone=[1, 2])]["zone"]) == {1, 2}
+    sc = bp.model_scene(sw, None, "All", "All", [1, 3], "R", 27.0, 26.0)       # aimed between up-in and up-away
+    assert abs(sc["pitch"][-1][0]) < 3
+
+
+def test_swing_groups_on_every_chart():
+    from core import bat_path as bp
+    from ui.bat_path import compare_html, path3d_html, poc_map_html, spray_html
+    df = _tracked(1500)
+    df["p_throws"] = "R"
+    sw = bp.swings(df)
+    groups = [dict(bp.DEFAULT_GROUP), {"types": ["SL"], "hand": "All", "count": "All", "zone": 9}]
+    scs = bp.group_scenes(sw, groups, "R", lambda h, g: 27.0, 26.0, list(sw.ptype.unique()))
+    assert [s["gid"] for s in scs] == [0, 1] and scs[0]["model"]["ptype"] == "FF" and scs[1]["model"]["ptype"] == "SL"
+    h = path3d_html(scs, "Bat path", "x")
+    assert '"extra"' in h and 'id="grp"' in h and "setOn" in h
+    poc = pd.DataFrame({"pf": df["intercept_ball_minus_batter_pos_y_inches"] - 27, "pxc": 0.0}, index=df.index)
+    cells = [bp.cell_balls(df, poc, g["types"], g["hand"], g["count"], g["zone"], "R")
+             .assign(grp=k, gname=bp.group_label(g, "R"), gcolor=bp.GROUP_COLORS[k]) for k, g in enumerate(groups)]
+    cell = pd.concat(cells)
+    for disp in ("Points", "Heat Map"):
+        p = poc_map_html(cell, "Swing Group", summary=False, display=disp)
+        s = spray_html(cell[cell["bip"]], "Spray", {}, "Swing Group", disp)
+        assert 'class="chips"' in p and 'class="chips"' in s and 'class="g1"' in p and 'class="g1"' in s
+    assert "<rect class=\"g1\"" in poc_map_html(cell, "Exit Velo", summary=False)      # B = squares
+    t = compare_html(scs)
+    assert "Swing groups side by side" in t and "Attack angle" in t
+    assert "No measured" in poc_map_html(pd.DataFrame(), summary=False)
+    assert "no balls in play" in spray_html(pd.DataFrame())

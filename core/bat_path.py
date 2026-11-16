@@ -103,16 +103,60 @@ def synth_pitch(velo: float, ivb: float, hb_arm: float, hand: str, plate_x: floa
             "release_speed": velo, "pfx_x": pfx_x, "pfx_z": ivb / 12, "release_extension": ext}
 
 
-def cell_balls(sc: pd.DataFrame, poc: pd.DataFrame, group: str, zone: int, hand: str, stand: str) -> pd.DataFrame:
-    """Every contact (fouls + balls in play) in this exact cell, for the cell's spray chart + point of contact."""
-    from core import hit_metrics as hm
+HANDS = {"All": None, "RHP": "R", "LHP": "L"}
+COUNTS = ["All", "First Pitch", "Ahead", "Even", "Behind", "Two Strikes"]
+
+
+def zones_of(zone) -> list[int] | None:
+    """zone = one zone, a list of zones, or None (every location) -> list or None. All nine = every location."""
+    if zone is None:
+        return None
+    zs = sorted({int(z) for z in (zone if isinstance(zone, (list, tuple, set)) else [zone])})
+    return None if not zs or set(zs) >= set(range(1, 10)) else zs
+
+
+def zones_label(zone, stand: str) -> str:
+    zs = zones_of(zone)
+    if zs is None:
+        return "All locations"
+    if len(zs) <= 2:
+        return " + ".join(zone_name(z, stand) for z in zs)
+    return f"{len(zs)} zones"
+
+
+def pick(df: pd.DataFrame, types=None, hand: str = "All", count: str = "All", zone: int | None = None,
+         stand: str | None = None) -> pd.Series:
+    """Rows matching the filters (types = None / empty -> every pitch type; zone None -> every location)."""
+    m = pd.Series(True, index=df.index)
+    if types:
+        m &= df["ptype"].isin(list(types))
+    if HANDS.get(hand):
+        m &= df["hand"].eq(HANDS[hand])
+    if count and count != "All":
+        m &= df["count"].eq(count)
+    zs = zones_of(zone)
+    if zs is not None:
+        m &= df["zone"].isin(zs)
+    if stand:
+        m &= df["stand"].eq(stand)
+    return m
+
+
+def cell_balls(sc: pd.DataFrame, poc: pd.DataFrame, types=None, hand: str = "All", count: str = "All",
+               zone: int | None = None, stand: str | None = None) -> pd.DataFrame:
+    """Every contact (fouls + balls in play) matching the filters, for the spray chart + point of contact."""
     c = contact_rows(sc, poc)
-    if c.empty:
-        return c
-    num = lambda k: pd.to_numeric(sc[k], errors="coerce") if k in sc else pd.Series(np.nan, index=sc.index)
-    m = (hm.pitch_group(sc).eq(group) & num("zone").eq(zone) & sc["p_throws"].astype(str).eq(hand)
-         & sc["stand"].astype(str).eq(stand)).reindex(c.index)
-    return c[m.fillna(False)]
+    return c if c.empty else c[pick(c, types, hand, count, zone, stand)]
+
+
+def demo_group(types, all_types) -> str:
+    """Which modeled pitch to throw: a dead-zone fastball unless every pitch type picked is one breaking or
+    offspeed group."""
+    from core import hit_metrics as hm
+    if not types or set(types) >= set(all_types):
+        return "Fastball"
+    gs = set(hm.pitch_group(pd.DataFrame({"pitch_type": list(types)})).dropna())
+    return gs.pop() if len(gs) == 1 else "Fastball"
 
 
 def contact_rows(sc: pd.DataFrame, poc: pd.DataFrame) -> pd.DataFrame:
@@ -136,6 +180,8 @@ def contact_rows(sc: pd.DataFrame, poc: pd.DataFrame) -> pd.DataFrame:
         "hc_x": num("hc_x").where(desc.eq("hit_into_play")), "hc_y": num("hc_y").where(desc.eq("hit_into_play")),
         "pgroup": hm.pitch_group(sc), "ptype": sc["pitch_type"].astype(str) if "pitch_type" in sc else "",
         "p_throws": sc["p_throws"].astype(str), "zone_io": np.where(num("zone").le(9), "In Zone", "Out of Zone"),
+        "hand": sc["p_throws"].astype(str), "zone": num("zone"), "count": hm.count_group(sc),
+        "stand": sc["stand"].astype(str),
         "date": sc["game_date"].astype(str).str[:10],
         "result": (sc["events"].fillna(sc["description"]) if "events" in sc else desc).astype(str)
                   .str.replace("_", " ").str.capitalize()}, index=sc.index)
@@ -152,6 +198,7 @@ def swings(sc: pd.DataFrame) -> pd.DataFrame:
     made = aar.made_contact(sc)
     out = pd.DataFrame({
         "group": hm.pitch_group(sc), "zone": num("zone"), "hand": sc["p_throws"].astype(str),
+        "ptype": sc["pitch_type"].astype(str) if "pitch_type" in sc else "", "count": hm.count_group(sc),
         "stand": sc["stand"].astype(str), "bat_speed": d["bat_speed"], "swing_length": num("swing_length"),
         "attack_angle": num("attack_angle"), "attack_direction": num("attack_direction"),
         "swing_path_tilt": num("swing_path_tilt"), "velo": num("release_speed"),
@@ -160,15 +207,16 @@ def swings(sc: pd.DataFrame) -> pd.DataFrame:
     return out[out["bat_speed"].notna()]
 
 
-def profile(sw: pd.DataFrame, group: str, zone: int, hand: str, stand: str | None = None) -> dict:
-    """His average swing for group x zone x hand, widening the sample until there are enough swings."""
+def profile(sw: pd.DataFrame, types=None, hand: str = "All", count: str = "All", zone: int | None = None,
+            stand: str | None = None) -> dict:
+    """His average swing for the filters, widening (drop the location, then the filters) when there are too few."""
     if sw.empty:
         return {}
     s = sw if stand is None else sw[sw["stand"] == stand]
-    levels = [("this pitch group, zone + pitcher hand", (s.group == group) & (s.zone == zone) & (s.hand == hand)),
-              ("this pitch group + zone (both hands)", (s.group == group) & (s.zone == zone)),
-              ("this zone (all pitches)", s.zone == zone),
-              ("this pitch group (all zones)", s.group == group),
+    here = "here" if zones_of(zone) is not None else "all locations"
+    levels = [(f"your filters, {here}", pick(s, types, hand, count, zone)),
+              ("your filters, all locations", pick(s, types, hand, count)),
+              (f"every pitch, {here}", pick(s, zone=zone)),
               ("all his swings", pd.Series(True, index=s.index))]
     out = {}
     for name, m in levels:
@@ -184,27 +232,36 @@ def profile(sw: pd.DataFrame, group: str, zone: int, hand: str, stand: str | Non
     return out
 
 
-def velo_for(sw: pd.DataFrame, group: str, hand: str) -> tuple[float, str]:
-    v = sw[(sw.group == group) & (sw.hand == hand)]["velo"].dropna() if not sw.empty else pd.Series(dtype=float)
+def velo_for(sw: pd.DataFrame, group: str, hand: str, types=None) -> tuple[float, str]:
+    m = (sw.group == group) & (sw.hand == hand) if not sw.empty else None
+    if m is not None and types:
+        m &= sw["ptype"].isin(list(types))
+    v = sw[m]["velo"].dropna() if m is not None else pd.Series(dtype=float)
     if len(v) >= 20:
         return float(v.mean()), f"average {hand}HP {group.lower()} he swung at"
     return GROUPS[group][1][hand], f"typical {hand}HP {group.lower()}"
 
 
-def model_scene(sw: pd.DataFrame, group: str, zone: int, hand: str, depth: float | None,
-                stance_x: float | None, stand: str) -> dict | None:
-    """The 3D scene (core.swing3d format) for his average swing vs the modeled pitch, plus what went into it."""
+def model_scene(sw: pd.DataFrame, types=None, hand: str = "All", count: str = "All", zone: int | None = None,
+                stand: str = "R", depth: float | None = None, stance_x: float | None = None,
+                all_types=None) -> dict | None:
+    """The 3D scene (core.swing3d format): his average swing for the filters vs a modeled pitch -- a dead-zone
+    fastball unless the pitch types picked are all one other group; RHP unless filtered to LHP; middle-middle
+    unless a location is picked."""
     from core import swing3d
-    pr = profile(sw, group, zone, hand, stand)
+    pr = profile(sw, types, hand, count, zone, stand)
     if not pr or "cy" not in pr or depth is None:
         return None
+    group = demo_group(types, all_types if all_types is not None else sw["ptype"].unique())
+    ph = HANDS.get(hand) or "R"
     ptype, _, ivb, hb, desc = GROUPS[group]
-    velo, vsrc = velo_for(sw[sw["stand"] == stand], group, hand)
     me = sw[sw["stand"] == stand]
+    velo, vsrc = velo_for(me, group, ph, types)
     top = float(me["sz_top"].mean()) if me["sz_top"].notna().any() else 3.4
     bot = float(me["sz_bot"].mean()) if me["sz_bot"].notna().any() else 1.6
-    px, pz = zone_target(zone, bot, top)
-    row = {**synth_pitch(velo, ivb, hb, hand, px, pz), "description": "foul", "stand": stand, "p_throws": hand,
+    tg = [zone_target(z, bot, top) for z in (zones_of(zone) or [5])]          # middle-middle unless picked
+    px, pz = float(np.mean([t[0] for t in tg])), float(np.mean([t[1] for t in tg]))
+    row = {**synth_pitch(velo, ivb, hb, ph, px, pz), "description": "foul", "stand": stand, "p_throws": ph,
            "bat_speed": pr["bat_speed"], "swing_length": pr["swing_length"], "attack_angle": pr["attack_angle"],
            "attack_direction": pr["attack_direction"], "swing_path_tilt": pr["swing_path_tilt"],
            aar.CONTACT_Y: pr["cy"], aar.CONTACT_X: pr["cx"], "sz_top": top, "sz_bot": bot}
@@ -213,7 +270,7 @@ def model_scene(sw: pd.DataFrame, group: str, zone: int, hand: str, depth: float
         return None
     sc["read"].update({"ptype": ptype, "count": "", "result": "", "video": ""})
     sc["model"] = {**pr, "velo": velo, "velo_src": vsrc, "ivb": ivb, "hb": hb, "shape": desc, "ptype": ptype,
-                   "zone": zone, "hand": hand, "group": group, "depth": depth}
+                   "zone": zone, "hand": ph, "group": group, "depth": depth}
     return sc
 
 
@@ -248,3 +305,31 @@ def home_park(abbr: str, season: int) -> dict:
         pass
     return {"team": name, "venue": venue.get("name", ""), "dims": dims,
             "outline": aar.park_outline(name, dims or None, venue=venue.get("name", ""))}
+
+
+
+# ----------------------------------------------------------------------------- swing groups (compare several swings)
+GROUP_COLORS = ["#2f5fb3", "#e07b24", "#2e9d5b", "#8e44ad"]
+MAX_GROUPS = len(GROUP_COLORS)
+DEFAULT_GROUP = {"types": None, "hand": "All", "count": "All", "zone": [5]}
+
+
+def group_label(g: dict, stand: str) -> str:
+    bits = [zones_label(g.get("zone"), stand),
+            ", ".join(g["types"]) if g.get("types") else "All pitches",
+            g["count"] if g.get("count", "All") != "All" else "All counts",
+            f'vs {g["hand"]}' if g.get("hand", "All") != "All" else "Both hands"]
+    return " · ".join(bits)
+
+
+def group_scenes(sw: pd.DataFrame, groups: list[dict], stand: str, depth_for, stance_x, all_types) -> list:
+    """One 3D scene per swing group (None where there isn't enough), tagged with its name + colour.
+    depth_for(hand) -> his stance depth for that pitcher-hand filter."""
+    out = []
+    for k, g in enumerate(groups):
+        sc = model_scene(sw, g.get("types"), g.get("hand", "All"), g.get("count", "All"), g.get("zone"), stand,
+                         depth_for(g.get("hand", "All"), g), stance_x, all_types)
+        if sc is not None:
+            sc["name"], sc["color"], sc["gid"] = group_label(g, stand), GROUP_COLORS[k % MAX_GROUPS], k
+        out.append(sc)
+    return out
