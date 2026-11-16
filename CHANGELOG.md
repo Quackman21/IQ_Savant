@@ -1,5 +1,16 @@
 # IQ Savant – version history
 
+## v23.0 – 2026-11-15
+- pipeline/backfill_era.py: one long, resumable job for the whole bat-tracking era (2023 -> now). Per season: Savant's
+  stance board (season / playoff / vs LHP / RHP), every MLB contact swing, league-wide contact-type calibration
+  (data/calibration/batted_ball_<season>.json), hip-position fallback (data/hip_group_<season>.json); then the regular
+  data update (league reference + grades) and one commit + push. Each step skips itself when done; a failing season
+  is logged and the rest carry on; log in data/calibration/backfill_log.txt.
+- Contact types use each season's league-wide centres once the backfill has written them.
+- pipeline/fetch_league_swings.py is now a function (used by the backfill) and keeps hit distance + swing tilt.
+- AAR Compare tiles: a window that can't be computed shows a "–" you can hover for the reason (also printed in the
+  terminal as "[AAR tiles] ... failed: ..."), instead of failing silently.
+
 ## v22.10 – 2026-11-15
 - AAR Compare tiles: Decision runs / 100 removed from the metric picker.
 

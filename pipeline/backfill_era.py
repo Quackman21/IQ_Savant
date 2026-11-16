@@ -1,0 +1,116 @@
+"""One long job: everything the site has been built on, for the whole bat-tracking era (2023 -> now).
+
+    caffeinate -i .venv/bin/python -m pipeline.backfill_era            # every season
+    caffeinate -i .venv/bin/python -m pipeline.backfill_era 2025 2026  # just these
+    ... --force                                                        # redo steps that already finished
+
+Per season, in order (each step skips itself when its output already exists, so it's safe to stop and re-run):
+  1. Savant's batting-stance board -- season, playoff, vs LHP / RHP (point of contact vs the plate, every hitter)
+  2. every MLB contact swing (pipeline.fetch_league_swings; ~30-60 min a season, saved to ~/Desktop/swing_data)
+  3. contact-type calibration -- where squared-up balls leave vs the bat's path, league-wide
+     -> data/calibration/batted_ball_<season>.json
+  4. hip-position fallback for hitters not on the stance board -> data/hip_group_<season>.json
+Then the regular data update (league reference + grades for every season that needs it) and one commit + push.
+A log of the whole run goes to data/calibration/backfill_log.txt.
+"""
+from __future__ import annotations
+
+import json
+import sys
+import time
+from datetime import date
+from pathlib import Path
+
+import pandas as pd
+
+ROOT = Path(__file__).resolve().parents[1]
+CAL = ROOT / "data" / "calibration"
+FIRST = 2023
+
+
+def log(msg: str) -> None:
+    line = f"{time.strftime('%H:%M:%S')}  {msg}"
+    print(line, flush=True)
+    CAL.mkdir(parents=True, exist_ok=True)
+    with open(CAL / "backfill_log.txt", "a") as f:
+        f.write(line + "\n")
+
+
+def season_steps(season: int, force: bool) -> None:
+    from core import batted_ball, stance_feed
+    from pipeline import fetch_league_swings, hip_group
+
+    log(f"===== {season} =====")
+    # 1 stance board
+    if force or not (stance_feed.DIR / str(season) / "refreshed.txt").exists() or season == date.today().year:
+        if not stance_feed.FEED.exists():
+            log("stance board: finding Savant's download options")
+            stance_feed.discover(season, verbose=False)
+        wrote = stance_feed.refresh(season, verbose=False)
+        log(f"stance board: {', '.join(wrote) or 'nothing (Savant has no board for this season)'}")
+    else:
+        log("stance board: already have it")
+    # 2 league contact swings
+    lg_file = fetch_league_swings.DEFAULT_DIR / f"league_{season}.csv.gz"
+    if force or not lg_file.exists() or season == date.today().year:
+        log("league contact swings: downloading (resumable)")
+        fetch_league_swings.fetch(season, verbose=True)
+    lg = pd.read_csv(lg_file, low_memory=False)
+    log(f"league contact swings: {len(lg):,} ({lg['batter'].nunique() if len(lg) else 0} hitters)")
+    tracked = len(lg) and "attack_angle" in lg and lg["attack_angle"].notna().any()
+    if not tracked:
+        log("no bat tracking this season -- skipping the calibrations")
+        return
+    # 3 contact-type calibration
+    out = CAL / f"batted_ball_{season}.json"
+    if force or not out.exists():
+        c = batted_ball.calibrate(lg)
+        out.write_text(json.dumps(c))
+        log(f"contact-type centres: launch {c['v_center']:+.1f} deg vs attack angle, spray {c['h_center']:+.1f} deg "
+            f"vs attack direction ({c['n_squared_up']:,} squared-up balls)")
+    else:
+        log("contact-type centres: already have them")
+    # 4 hip fallback
+    if force or not (ROOT / "data" / f"hip_group_{season}.json").exists():
+        hip_group.main([str(lg_file)])
+        log("hip-position fallback: done")
+    else:
+        log("hip-position fallback: already have it")
+
+
+def main(argv: list[str]) -> None:
+    force = "--force" in argv
+    yrs = [int(a) for a in argv if a.isdigit()]
+    today = date.today()
+    last = today.year if today.month >= 3 else today.year - 1
+    seasons = yrs or list(range(FIRST, last + 1))
+    t0 = time.time()
+    log(f"backfill: seasons {seasons}")
+    for season in seasons:
+        try:
+            season_steps(season, force)
+        except Exception as e:                       # one season failing shouldn't stop the others
+            log(f"{season} FAILED: {type(e).__name__}: {e} -- re-run to retry")
+    log("regular data update (league reference + grades)")
+    try:
+        from pipeline import update
+        update.main([])
+    except SystemExit:
+        pass
+    except Exception as e:
+        log(f"data update FAILED: {type(e).__name__}: {e}")
+    try:
+        from pipeline.update import _git
+        paths = ["data/calibration", "data/stance", *[f"data/hip_group_{s}.json" for s in seasons],
+                 *[f"data/batting_stance_{s}.csv" for s in seasons]]
+        _git("add", *[p for p in paths if (ROOT / p).exists()])
+        if _git("diff", "--cached", "--quiet") != 0:
+            _git("commit", "-m", f"Backfill: bat-tracking era {seasons[0]}-{seasons[-1]}")
+            _git("push")
+    except Exception as e:
+        log(f"commit/push skipped: {e}")
+    log(f"backfill done in {(time.time() - t0) / 3600:.1f} h")
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

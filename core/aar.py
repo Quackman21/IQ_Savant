@@ -535,12 +535,18 @@ def metric_values(last30: pd.DataFrame, season_sc: pd.DataFrame, league: dict,
     from core import hit_metrics as hm
     from ui.hitting import color as _color
     keys = list(GAME_METRICS)
-    parts = []
+    parts, why = [], {}
     for lab, df in (("This game", game), ("Last 30 PA", last30), ("Season", season_sc)):
-        if df is not None and not df.empty:
-            parts.append((lab, hm.compute(hm.prep(df), keys=keys).iloc[0]))
-        else:
+        if df is None or df.empty:
             parts.append((lab, None))
+            why[lab] = "no pitches for this window"
+            continue
+        try:
+            parts.append((lab, hm.compute(hm.prep(df), keys=keys).iloc[0]))
+        except Exception as e:                       # one bad window shouldn't blank the others -- say why instead
+            parts.append((lab, None))
+            why[lab] = f"{type(e).__name__}: {e}"[:200]
+            print(f"[AAR tiles] {lab} failed: {why[lab]}", flush=True)
     lg = league.get(("all", "All"), {})
     out = {}
     for k in keys:
@@ -554,7 +560,11 @@ def metric_values(last30: pd.DataFrame, season_sc: pd.DataFrame, league: dict,
                     st = _color(k, (float(val) - float(ref[0])) / float(ref[1]))
             except Exception:
                 st = ""
-            row.append((lab, hm.fmt(k, val) if val is not None else "-", st))
+            txt = hm.fmt(k, val) if val is not None else "-"
+            if txt in ("-", "", "nan") and lab in why:
+                st = (st + ";" if st else "") + "cursor:help"
+                txt = f'<span title="{why[lab]}">–</span>'
+            row.append((lab, txt, st))
         row.append(("MLB season", hm.fmt(k, ref[0]) if ref else "-", ""))
         out[k] = row
     return out

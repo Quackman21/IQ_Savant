@@ -15,8 +15,41 @@ from __future__ import annotations
 
 import math
 
-V_CENTER, H_CENTER = 3.8, -9.7      # degrees; recalibrate from a full league season when it's pulled
+V_CENTER, H_CENTER = 3.8, -9.7      # degrees; defaults -- pipeline.backfill_era writes each season's league-wide values
 V_CUT, H_CUT = 10.0, 20.0
+_CAL: dict = {}
+
+
+def centers(season: int | None) -> tuple[float, float]:
+    """(vertical, horizontal) centre for a season: data/calibration/batted_ball_<season>.json (league-wide squared-up
+    balls) when the backfill has written it, else the defaults."""
+    if season is None:
+        return V_CENTER, H_CENTER
+    if season not in _CAL:
+        import json
+        from pathlib import Path
+        f = Path(__file__).resolve().parents[1] / "data" / "calibration" / f"batted_ball_{season}.json"
+        try:
+            c = json.loads(f.read_text())
+            _CAL[season] = (float(c["v_center"]), float(c["h_center"]))
+        except Exception:
+            _CAL[season] = (V_CENTER, H_CENTER)
+    return _CAL[season]
+
+
+def calibrate(league: "pd.DataFrame") -> dict:
+    """League-wide centres from squared-up balls in play (EV >= 85% of max)."""
+    import numpy as np
+    b = league[league["description"].eq("hit_into_play")].dropna(
+        subset=["launch_speed", "launch_angle", "bat_speed", "attack_angle", "release_speed"]).copy()
+    b = b[b["launch_speed"] >= 0.85 * (1.23 * b["bat_speed"] + 0.23 * b["release_speed"])]
+    v = float((b["launch_angle"] - b["attack_angle"]).median())
+    a = b.dropna(subset=["hc_x", "hc_y", "attack_direction"])
+    a = a[a["launch_angle"] >= 10]
+    ang = np.degrees(np.arctan2(a["hc_x"] - 125.42, 198.27 - a["hc_y"]))
+    spray = np.where(a["stand"].eq("R"), ang, -ang)
+    h = float(np.median(spray - a["attack_direction"]))
+    return {"v_center": round(v, 2), "h_center": round(h, 2), "n_squared_up": int(len(b)), "n_air": int(len(a))}
 
 LABELS = {"Optimal": "squared up and in the air at a good angle -- the ball traveled",
           "Backspin": "hit under the ball -- it left well above the bat's path",
@@ -53,13 +86,18 @@ def spin_label(row) -> dict | None:
     if la is None or aa is None or _f(row, "launch_speed") is None:
         return None
     q = contact_quality(row)
-    v_gap = la - aa - V_CENTER
+    try:
+        season = int(str(row.get("game_year") or str(row.get("game_date", ""))[:4]))
+    except ValueError:
+        season = None
+    vc, hc = centers(season)
+    v_gap = la - aa - vc
     h_gap = None
     hx, hy = _f(row, "hc_x"), _f(row, "hc_y")
     if ad is not None and hx is not None and hy is not None and la >= 10:
         ang = math.degrees(math.atan2(hx - 125.42, 198.27 - hy))
         spray = ang if str(row.get("stand", "R")) == "R" else -ang       # negative = pull side
-        h_gap = spray - ad - H_CENTER
+        h_gap = spray - ad - hc
     barrel = _f(row, "launch_speed_angle") == 6
     if barrel or (q.get("squared_up_pct", 0) >= 90 and 8 <= la <= 32):
         lab = "Optimal"
