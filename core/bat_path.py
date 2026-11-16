@@ -104,6 +104,10 @@ def synth_pitch(velo: float, ivb: float, hb_arm: float, hand: str, plate_x: floa
 
 
 HANDS = {"All": None, "RHP": "R", "LHP": "L"}
+PITCH_NAMES = {"FF": "4-Seam", "FA": "Fastball", "SI": "Sinker", "FC": "Cutter", "SL": "Slider", "ST": "Sweeper",
+               "SV": "Slurve", "CU": "Curveball", "KC": "Knuckle Curve", "CS": "Slow Curve", "CH": "Changeup",
+               "FS": "Splitter", "FO": "Forkball", "SC": "Screwball", "KN": "Knuckleball", "EP": "Eephus",
+               "PO": "Pitchout"}
 COUNTS = ["All", "First Pitch", "Ahead", "Even", "Behind", "Two Strikes"]
 
 

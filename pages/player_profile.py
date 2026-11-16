@@ -616,7 +616,9 @@ ZONE_CSS = """<style>
 .st-key-bp_zgrid button p{font-size:11px!important}
 .st-key-bp_zgrid button[kind="primary"],.st-key-bp_zgrid button[data-testid="stBaseButton-primary"]{
   background:rgba(214,51,40,.38)!important;color:#16202b!important}
-.st-key-bp_zgrid [data-testid="stVerticalBlock"]{gap:0!important}
+.st-key-bp_zgrid, .st-key-bp_zgrid [data-testid="stVerticalBlock"]{gap:0!important}
+.st-key-bp_zgrid [data-testid="stHorizontalBlock"], .st-key-bp_zgrid [data-testid="stElementContainer"],
+.st-key-bp_zgrid [data-testid="stLayoutWrapper"], .st-key-bp_zgrid .stButton{margin:0!important;padding:0!important}
 </style>"""
 
 
@@ -654,7 +656,8 @@ def bat_path_view(sc: pd.DataFrame, season: int, poc: pd.DataFrame | None = None
                                                                index=0 if sides.index[0] == "R" else 1, key="bp_side2")]
         a, b_ = st.columns(2)
         with a:
-            types = st.multiselect("Pitch types", all_types, default=all_types, key=f"bp_types_{pid}_{season}")
+            types = st.multiselect("Pitch types", all_types, default=all_types, key=f"bp_types_{pid}_{season}",
+                                   format_func=lambda t: f"{t} - {bpth.PITCH_NAMES.get(t, t)}")
         narrowed = None if not types or set(types) >= set(all_types) else list(types)
         with b_:
             hand = st.selectbox("Pitcher", list(bpth.HANDS), key="bp_hand2")
