@@ -1,0 +1,2479 @@
+game_pk,venue_id,start_utc,game_type,status,rep_temp_f,rep_condition,rep_wind,rep_wind_mph,rep_wind_field_deg
+718780,3309,2023-03-30T17:05:00Z,R,Final,45,Sunny,"8 mph, Out To RF",8.0,45.0
+718781,3313,2023-03-30T17:05:00Z,R,Final,39,Sunny,"13 mph, L To R",13.0,90.0
+718782,3,2023-03-30T18:10:00Z,R,Final,38,Sunny,"12 mph, L To R",12.0,90.0
+718777,17,2023-03-30T18:20:00Z,R,Final,42,Sunny,"10 mph, R To L",10.0,-90.0
+718776,12,2023-03-30T19:10:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+718779,5325,2023-03-30T20:05:00Z,R,Final,69,Cloudy,"12 mph, Varies",12.0,
+718773,2602,2023-03-30T20:10:00Z,R,Final,61,Sunny,"6 mph, In From RF",6.0,-135.0
+718772,2889,2023-03-30T20:10:00Z,R,Final,70,Sunny,"16 mph, Out To LF",16.0,-45.0
+718775,7,2023-03-30T20:10:00Z,R,Final,67,Cloudy,"20 mph, R To L",20.0,-90.0
+718774,4169,2023-03-30T20:10:00Z,R,Final,76,Roof Closed,"0 mph, None",0.0,
+718768,2392,2023-03-30T23:08:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+718778,2680,2023-03-31T01:40:00Z,R,Final,56,Partly Cloudy,"7 mph, L To R",7.0,90.0
+718769,10,2023-03-31T02:07:00Z,R,Final,52,Partly Cloudy,"10 mph, Out To RF",10.0,45.0
+718770,22,2023-03-31T02:10:00Z,R,Final,54,Clear,"4 mph, Out To RF",4.0,45.0
+718767,680,2023-03-31T02:10:00Z,R,Final,54,Partly Cloudy,"11 mph, Out To LF",11.0,-45.0
+718771,4169,2023-03-31T22:40:00Z,R,Final,80,Partly Cloudy,"13 mph, In From LF",13.0,135.0
+718764,2392,2023-04-01T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+718766,2680,2023-04-01T01:40:00Z,R,Final,58,Partly Cloudy,"8 mph, L To R",8.0,90.0
+718765,22,2023-04-01T02:10:00Z,R,Final,56,Partly Cloudy,"9 mph, L To R",9.0,90.0
+718763,680,2023-04-01T02:10:00Z,R,Final,45,Roof Closed,"0 mph, None",0.0,
+718760,2392,2023-04-01T18:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+718759,2889,2023-04-01T18:15:00Z,R,Final,46,Cloudy,"23 mph, Out To RF",23.0,45.0
+718758,17,2023-04-01T18:20:00Z,R,Final,39,Cloudy,"23 mph, In From LF",23.0,135.0
+718752,5325,2023-04-01T20:05:00Z,R,Final,71,Sunny,"8 mph, In From CF",8.0,180.0
+718753,3309,2023-04-01T20:05:00Z,R,Final,73,Partly Cloudy,"18 mph, Out To LF",18.0,-45.0
+718762,3313,2023-04-01T20:05:00Z,R,Final,68,Sunny,"16 mph, Out To LF",16.0,-45.0
+718757,10,2023-04-01T20:07:00Z,R,Final,58,Sunny,"7 mph, Out To RF",7.0,45.0
+718761,3,2023-04-01T20:10:00Z,R,Final,56,Partly Cloudy,"4 mph, Varies",4.0,
+718756,2602,2023-04-01T20:10:00Z,R,Final,45,Cloudy,"23 mph, Varies",23.0,
+718754,12,2023-04-01T20:10:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+718751,7,2023-04-01T20:10:00Z,R,Final,55,Sunny,"12 mph, L To R",12.0,90.0
+718755,4169,2023-04-01T20:10:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+718750,2680,2023-04-02T00:40:00Z,R,Final,60,Clear,"12 mph, L To R",12.0,90.0
+718749,22,2023-04-02T01:10:00Z,R,Final,64,Clear,"7 mph, Out To CF",7.0,0.0
+718746,680,2023-04-02T01:40:00Z,R,Final,47,Partly Cloudy,"11 mph, Out To CF",11.0,0.0
+718742,12,2023-04-02T17:10:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+718748,3,2023-04-02T17:35:00Z,R,Final,43,Sunny,"8 mph, Out To RF",8.0,45.0
+718743,3309,2023-04-02T17:35:00Z,R,Final,54,Sunny,"10 mph, Out To RF",10.0,45.0
+718747,3313,2023-04-02T17:35:00Z,R,Final,47,Sunny,"15 mph, L To R",15.0,90.0
+718744,2602,2023-04-02T17:40:00Z,R,Final,49,Partly Cloudy,"6 mph, R To L",6.0,-90.0
+718741,4169,2023-04-02T17:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+718745,7,2023-04-02T18:10:00Z,R,Final,72,Sunny,"23 mph, R To L",23.0,-90.0
+718740,2392,2023-04-02T18:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+718737,2889,2023-04-02T18:15:00Z,R,Final,63,Sunny,"13 mph, In From RF",13.0,-135.0
+718738,17,2023-04-02T18:20:00Z,R,Final,47,Sunny,"7 mph, Out To CF",7.0,0.0
+718734,10,2023-04-02T20:07:00Z,R,Final,56,Partly Cloudy,"14 mph, Out To RF",14.0,45.0
+718736,22,2023-04-02T20:10:00Z,R,Final,68,Sunny,"5 mph, Out To CF",5.0,0.0
+718733,2680,2023-04-02T20:10:00Z,R,Final,62,Sunny,"8 mph, L To R",8.0,90.0
+718735,680,2023-04-02T20:10:00Z,R,Final,44,Cloudy,"4 mph, Out To CF",4.0,0.0
+718739,5325,2023-04-02T23:08:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+718731,32,2023-04-03T18:10:00Z,R,Final,65,Roof Closed,"0 mph, None",0.0,
+718730,4,2023-04-03T19:10:00Z,R,Final,57,Cloudy,"9 mph, In From LF",9.0,135.0
+718728,2602,2023-04-03T22:40:00Z,R,Final,71,Clear,"12 mph, R To L",12.0,-90.0
+718729,4169,2023-04-03T22:40:00Z,R,Final,83,Partly Cloudy,"11 mph, Out To LF",11.0,-45.0
+718732,3309,2023-04-03T23:05:00Z,R,Final,70,Partly Cloudy,"4 mph, R To L",4.0,-90.0
+718725,3313,2023-04-03T23:05:00Z,R,Final,53,Partly Cloudy,"17 mph, Out To LF",17.0,-45.0
+718724,3,2023-04-03T23:10:00Z,R,Final,50,Clear,"6 mph, Out To LF",6.0,-45.0
+718719,7,2023-04-03T23:40:00Z,R,Final,73,Clear,"6 mph, L To R",6.0,90.0
+718727,2889,2023-04-03T23:45:00Z,R,Final,77,Clear,"15 mph, R To L",15.0,-90.0
+718726,5325,2023-04-04T00:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+718723,2392,2023-04-04T00:10:00Z,R,Final,73,Clear,"0 mph, None",0.0,
+718721,10,2023-04-04T01:40:00Z,R,Final,54,Partly Cloudy,"28 mph, Varies",28.0,
+718722,2680,2023-04-04T01:40:00Z,R,Final,56,Partly Cloudy,"16 mph, Out To RF",16.0,45.0
+718720,680,2023-04-04T01:40:00Z,R,Final,45,Partly Cloudy,"2 mph, L To R",2.0,90.0
+718718,22,2023-04-04T02:10:00Z,R,Final,57,Clear,"11 mph, L To R",11.0,90.0
+718717,2680,2023-04-04T20:10:00Z,R,Final,57,Sunny,"13 mph, L To R",13.0,90.0
+718716,2602,2023-04-04T22:40:00Z,R,Final,76,Cloudy,"8 mph, Varies",8.0,
+718714,4169,2023-04-04T22:40:00Z,R,Final,83,Clear,"10 mph, In From LF",10.0,135.0
+718715,3309,2023-04-04T23:05:00Z,R,Final,80,Partly Cloudy,"2 mph, R To L",2.0,-90.0
+718710,3313,2023-04-04T23:05:00Z,R,Final,65,Cloudy,"8 mph, R To L",8.0,-90.0
+718713,3,2023-04-04T23:10:00Z,R,Final,50,Cloudy,"4 mph, In From CF",4.0,180.0
+718708,7,2023-04-04T23:40:00Z,R,Final,80,Overcast,"22 mph, R To L",22.0,-90.0
+718712,32,2023-04-04T23:40:00Z,R,Final,63,Roof Closed,"0 mph, None",0.0,
+718711,2889,2023-04-04T23:45:00Z,R,Final,82,Overcast,"18 mph, Out To LF",18.0,-45.0
+718709,5325,2023-04-05T00:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+718705,2392,2023-04-05T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+718707,10,2023-04-05T01:40:00Z,R,Final,54,Partly Cloudy,"13 mph, Varies",13.0,
+718706,680,2023-04-05T01:40:00Z,R,Final,50,Partly Cloudy,"2 mph, Out To RF",2.0,45.0
+718703,22,2023-04-05T02:10:00Z,R,Final,58,Partly Cloudy,"9 mph, L To R",9.0,90.0
+718704,3309,2023-04-05T17:05:00Z,R,Final,83,Partly Cloudy,"11 mph, Out To CF",11.0,0.0
+718699,3313,2023-04-05T17:05:00Z,R,Final,48,Drizzle,"15 mph, L To R",15.0,90.0
+718701,4169,2023-04-05T17:10:00Z,R,Final,84,Partly Cloudy,"14 mph, In From LF",14.0,135.0
+718697,2889,2023-04-05T17:15:00Z,R,Final,60,Cloudy,"10 mph, Out To RF",10.0,45.0
+718702,3,2023-04-05T17:35:00Z,R,Final,41,Cloudy,"5 mph, Out To RF",5.0,45.0
+718698,32,2023-04-05T17:40:00Z,R,Final,66,Roof Closed,"0 mph, None",0.0,
+718694,5325,2023-04-05T18:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+718696,2392,2023-04-05T18:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+718695,4,2023-04-05T18:10:00Z,R,Final,67,Overcast,"23 mph, Out To LF",23.0,-45.0
+718689,10,2023-04-05T19:37:00Z,R,Final,57,Partly Cloudy,"7 mph, Out To RF",7.0,45.0
+718691,680,2023-04-05T20:10:00Z,R,Final,48,Partly Cloudy,"2 mph, Out To LF",2.0,-45.0
+718692,7,2023-04-05T23:40:00Z,R,Final,52,Clear,"14 mph, L To R",14.0,90.0
+718690,2394,2023-04-06T17:10:00Z,R,Final,47,Cloudy,"14 mph, Out To LF",14.0,-45.0
+718686,7,2023-04-06T18:10:00Z,R,Final,51,Sunny,"12 mph, L To R",12.0,90.0
+718687,4,2023-04-06T18:10:00Z,R,Final,46,Sunny,"10 mph, Out To LF",10.0,-45.0
+718682,19,2023-04-06T20:10:00Z,R,Final,51,Sunny,"5 mph, Out To LF",5.0,-45.0
+718681,4705,2023-04-06T23:20:00Z,R,Final,81,Cloudy,"3 mph, R To L",3.0,-90.0
+718683,15,2023-04-07T02:10:00Z,R,Final,75,Partly Cloudy,"6 mph, L To R",6.0,90.0
+718693,3289,2023-04-07T17:10:00Z,R,Final,56,Cloudy,"6 mph, L To R",6.0,90.0
+718675,17,2023-04-07T18:20:00Z,R,Final,43,Sunny,"11 mph, In From RF",11.0,-135.0
+718685,2681,2023-04-07T19:05:00Z,R,Final,57,Partly Cloudy,"10 mph, L To R",10.0,90.0
+718688,2,2023-04-07T19:05:00Z,R,Final,55,Overcast,"6 mph, Out To RF",6.0,45.0
+718677,5,2023-04-07T20:10:00Z,R,Final,41,Partly Cloudy,"9 mph, In From RF",9.0,-135.0
+718684,3312,2023-04-07T20:10:00Z,R,Final,47,Sunny,"10 mph, R To L",10.0,-90.0
+718679,31,2023-04-07T20:12:00Z,R,Final,53,Partly Cloudy,"7 mph, Out To CF",7.0,0.0
+718680,2395,2023-04-07T20:35:00Z,R,Final,57,Cloudy,"12 mph, R To L",12.0,-90.0
+718678,12,2023-04-07T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+718676,4705,2023-04-07T23:20:00Z,R,Final,66,Cloudy,"5 mph, R To L",5.0,-90.0
+718674,32,2023-04-08T00:10:00Z,R,Final,64,Roof Closed,"0 mph, None",0.0,
+718673,19,2023-04-08T00:40:00Z,R,Final,64,Partly Cloudy,"5 mph, In From LF",5.0,135.0
+718670,1,2023-04-08T01:38:00Z,R,Final,64,Partly Cloudy,"6 mph, Out To CF",6.0,0.0
+718671,15,2023-04-08T01:40:00Z,R,Final,77,Clear,"9 mph, L To R",9.0,90.0
+718666,3312,2023-04-08T18:10:00Z,R,Final,56,Sunny,"8 mph, R To L",8.0,-90.0
+718672,2395,2023-04-08T20:05:00Z,R,Final,59,Overcast,"6 mph, Varies",6.0,
+718669,17,2023-04-08T20:05:00Z,R,Final,57,Sunny,"10 mph, Out To LF",10.0,-45.0
+718668,2681,2023-04-08T20:05:00Z,R,Final,53,Cloudy,"3 mph, R To L",3.0,-90.0
+718667,2394,2023-04-08T20:10:00Z,R,Final,50,Sunny,"6 mph, In From CF",6.0,180.0
+718665,12,2023-04-08T20:10:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+718661,3289,2023-04-08T20:10:00Z,R,Final,52,Cloudy,"2 mph, In From LF",2.0,135.0
+718663,5,2023-04-08T22:10:00Z,R,Final,45,Clear,"5 mph, In From CF",5.0,180.0
+718662,31,2023-04-08T22:35:00Z,R,Final,51,Partly Cloudy,"4 mph, In From LF",4.0,135.0
+718664,2,2023-04-08T23:05:00Z,R,Final,51,Overcast,"7 mph, In From LF",7.0,135.0
+718660,32,2023-04-08T23:10:00Z,R,Final,65,Roof Closed,"0 mph, None",0.0,
+718659,4705,2023-04-08T23:20:00Z,R,Final,44,Cloudy,"12 mph, L To R",12.0,90.0
+718656,15,2023-04-09T00:10:00Z,R,Final,81,Clear,"4 mph, Out To CF",4.0,0.0
+718658,19,2023-04-09T00:10:00Z,R,Final,65,Cloudy,"9 mph, In From LF",9.0,135.0
+718657,1,2023-04-09T01:07:00Z,R,Final,63,Clear,"8 mph, Out To CF",8.0,0.0
+718652,2681,2023-04-09T17:05:00Z,R,Final,58,Sunny,"5 mph, In From LF",5.0,135.0
+718654,2394,2023-04-09T17:10:00Z,R,Final,55,Sunny,"7 mph, In From CF",7.0,180.0
+718655,12,2023-04-09T17:10:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+718653,31,2023-04-09T17:35:00Z,R,Final,56,Sunny,"8 mph, In From CF",8.0,180.0
+718651,2,2023-04-09T17:35:00Z,R,Final,55,Partly Cloudy,"6 mph, R To L",6.0,-90.0
+718646,5,2023-04-09T17:40:00Z,R,Final,52,Sunny,"7 mph, In From CF",7.0,180.0
+718647,3289,2023-04-09T17:40:00Z,R,Final,49,Sunny,"6 mph, In From CF",6.0,180.0
+718649,3312,2023-04-09T18:10:00Z,R,Final,62,Partly Cloudy,"14 mph, Out To LF",14.0,-45.0
+718650,32,2023-04-09T18:10:00Z,R,Final,63,Sunny,"12 mph, R To L",12.0,-90.0
+718642,17,2023-04-09T18:20:00Z,R,Final,63,Partly Cloudy,"6 mph, Out To LF",6.0,-45.0
+718645,19,2023-04-09T19:10:00Z,R,Final,63,Partly Cloudy,"3 mph, R To L",3.0,-90.0
+718643,2395,2023-04-09T20:05:00Z,R,Final,65,Partly Cloudy,"7 mph, Out To RF",7.0,45.0
+718644,1,2023-04-09T20:07:00Z,R,Final,72,Sunny,"5 mph, Out To CF",5.0,0.0
+718639,15,2023-04-09T20:10:00Z,R,Final,86,Sunny,"5 mph, Calm",5.0,
+718648,4705,2023-04-09T23:10:00Z,R,Final,63,Clear,"8 mph, L To R",8.0,90.0
+718640,3312,2023-04-10T18:10:00Z,R,Final,66,Partly Cloudy,"7 mph, Out To RF",7.0,45.0
+718637,5,2023-04-10T22:10:00Z,R,Final,56,Partly Cloudy,"2 mph, In From RF",2.0,-135.0
+718635,2,2023-04-10T22:35:00Z,R,Final,64,Clear,"6 mph, Out To LF",6.0,-45.0
+718632,31,2023-04-10T22:35:00Z,R,Final,69,Clear,"3 mph, Out To LF",3.0,-45.0
+718638,12,2023-04-10T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+718633,2681,2023-04-10T22:40:00Z,R,Final,64,Clear,"9 mph, Out To CF",9.0,0.0
+718634,3289,2023-04-10T23:10:00Z,R,Final,55,Clear,"9 mph, Out To LF",9.0,-45.0
+718636,4705,2023-04-10T23:20:00Z,R,Final,65,Clear,"9 mph, L To R",9.0,90.0
+718628,17,2023-04-10T23:40:00Z,R,Final,67,Clear,"8 mph, Out To LF",8.0,-45.0
+718630,5325,2023-04-11T00:05:00Z,R,Final,73,Partly Cloudy,"9 mph, In From LF",9.0,135.0
+718629,19,2023-04-11T00:40:00Z,R,Final,75,Clear,"6 mph, In From CF",6.0,180.0
+718631,1,2023-04-11T01:38:00Z,R,Final,66,Clear,"6 mph, Out To CF",6.0,0.0
+718627,15,2023-04-11T01:40:00Z,R,Final,94,Clear,"2 mph, Out To RF",2.0,45.0
+718641,2395,2023-04-11T01:45:00Z,R,Final,55,Cloudy,"12 mph, Out To CF",12.0,0.0
+718626,5,2023-04-11T22:10:00Z,R,Final,59,Clear,"5 mph, Out To RF",5.0,45.0
+718618,2,2023-04-11T22:35:00Z,R,Final,76,Partly Cloudy,"5 mph, Out To RF",5.0,45.0
+718623,31,2023-04-11T22:35:00Z,R,Final,72,Clear,"13 mph, Out To CF",13.0,0.0
+718625,12,2023-04-11T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+718619,2681,2023-04-11T22:40:00Z,R,Final,70,Partly Cloudy,"13 mph, L To R",13.0,90.0
+718622,14,2023-04-11T23:07:00Z,R,Final,68,Roof Closed,"0 mph, None",0.0,
+718621,3289,2023-04-11T23:10:00Z,R,Final,69,Partly Cloudy,"8 mph, Out To RF",8.0,45.0
+718620,4705,2023-04-11T23:20:00Z,R,Final,71,Clear,"4 mph, L To R",4.0,90.0
+718617,17,2023-04-11T23:40:00Z,R,Final,76,Partly Cloudy,"13 mph, Out To CF",13.0,0.0
+718616,3312,2023-04-11T23:40:00Z,R,Final,78,Clear,"11 mph, R To L",11.0,-90.0
+718615,5325,2023-04-12T00:05:00Z,R,Final,73,Partly Cloudy,"10 mph, In From RF",10.0,-135.0
+718613,19,2023-04-12T00:40:00Z,R,Final,82,Clear,"8 mph, In From CF",8.0,180.0
+718614,1,2023-04-12T01:38:00Z,R,Final,63,Partly Cloudy,"8 mph, R To L",8.0,-90.0
+718611,15,2023-04-12T01:40:00Z,R,Final,93,Clear,"5 mph, Calm",5.0,
+718624,2395,2023-04-12T01:45:00Z,R,Final,56,Partly Cloudy,"23 mph, Varies",23.0,
+718608,31,2023-04-12T16:35:00Z,R,Final,77,Sunny,"13 mph, Out To LF",13.0,-45.0
+718610,3289,2023-04-12T17:10:00Z,R,Final,77,Sunny,"12 mph, L To R",12.0,90.0
+718605,3312,2023-04-12T17:10:00Z,R,Final,76,Sunny,"14 mph, Out To LF",14.0,-45.0
+718604,5,2023-04-12T17:10:00Z,R,Final,70,Sunny,"3 mph, In From LF",3.0,135.0
+718606,17,2023-04-12T18:20:00Z,R,Final,77,Sunny,"19 mph, Out To CF",19.0,0.0
+718607,19,2023-04-12T19:10:00Z,R,Final,85,Partly Cloudy,"10 mph, Out To LF",10.0,-45.0
+718598,15,2023-04-12T19:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+718609,2681,2023-04-12T20:05:00Z,R,Final,84,Sunny,"15 mph, Out To RF",15.0,45.0
+718602,1,2023-04-12T20:07:00Z,R,Final,65,Cloudy,"7 mph, Out To CF",7.0,0.0
+718599,2,2023-04-12T22:35:00Z,R,Final,84,Clear,"14 mph, Out To RF",14.0,45.0
+718600,12,2023-04-12T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+718603,14,2023-04-12T23:07:00Z,R,Final,61,Clear,"16 mph, Out To CF",16.0,0.0
+718601,4705,2023-04-12T23:20:00Z,R,Final,75,Clear,"7 mph, L To R",7.0,90.0
+718595,5325,2023-04-13T00:05:00Z,R,Final,75,Clear,"12 mph, Varies",12.0,
+718612,2395,2023-04-13T01:45:00Z,R,Final,55,Clear,"19 mph, Out To RF",19.0,45.0
+718596,2,2023-04-13T17:05:00Z,R,Final,84,Sunny,"6 mph, Out To LF",6.0,-45.0
+718594,12,2023-04-13T17:10:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+718597,2602,2023-04-13T22:40:00Z,R,Final,82,Clear,"5 mph, In From RF",5.0,-135.0
+718590,3313,2023-04-13T23:05:00Z,R,Final,86,Clear,"12 mph, Out To CF",12.0,0.0
+718593,14,2023-04-13T23:07:00Z,R,Final,59,Clear,"5 mph, Out To RF",5.0,45.0
+718591,2889,2023-04-13T23:45:00Z,R,Final,79,Clear,"10 mph, Out To LF",10.0,-45.0
+718589,2680,2023-04-14T01:40:00Z,R,Final,55,Cloudy,"8 mph, L To R",8.0,90.0
+718585,2394,2023-04-14T22:40:00Z,R,Final,80,Partly Cloudy,"9 mph, In From LF",9.0,135.0
+718586,2602,2023-04-14T22:40:00Z,R,Final,81,Partly Cloudy,"6 mph, In From RF",6.0,-135.0
+718584,4169,2023-04-14T22:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+718592,3309,2023-04-14T23:05:00Z,R,Final,73,Cloudy,"7 mph, Out To LF",7.0,-45.0
+718588,3313,2023-04-14T23:05:00Z,R,Final,78,Partly Cloudy,"14 mph, Out To LF",14.0,-45.0
+718587,14,2023-04-14T23:07:00Z,R,Final,59,Clear,"11 mph, Out To LF",11.0,-45.0
+718580,3,2023-04-14T23:10:00Z,R,Final,58,Partly Cloudy,"4 mph, Out To LF",4.0,-45.0
+718583,4,2023-04-14T23:10:00Z,R,Final,72,Partly Cloudy,"9 mph, Out To RF",9.0,45.0
+718581,2392,2023-04-15T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+718579,7,2023-04-15T00:10:00Z,R,Final,77,Partly Cloudy,"12 mph, R To L",12.0,-90.0
+718582,2889,2023-04-15T00:15:00Z,R,Final,78,Clear,"12 mph, R To L",12.0,-90.0
+718578,10,2023-04-15T01:40:00Z,R,Final,56,Clear,"12 mph, Out To RF",12.0,45.0
+718574,2680,2023-04-15T01:40:00Z,R,Final,59,Partly Cloudy,"8 mph, L To R",8.0,90.0
+718575,22,2023-04-15T02:10:00Z,R,Final,59,Clear,"4 mph, L To R",4.0,90.0
+718577,680,2023-04-15T02:10:00Z,R,Final,56,Clear,"0 mph, Calm",0.0,
+718572,3313,2023-04-15T17:05:00Z,R,Final,68,Overcast,"11 mph, In From CF",11.0,180.0
+718571,2394,2023-04-15T17:10:00Z,R,Final,76,Partly Cloudy,"4 mph, In From CF",4.0,180.0
+718570,4,2023-04-15T18:10:00Z,R,Final,77,Partly Cloudy,"10 mph, Out To LF",10.0,-45.0
+718568,2889,2023-04-15T18:15:00Z,R,Final,70,Rain,"10 mph, In From RF",10.0,-135.0
+718569,14,2023-04-15T19:07:00Z,R,Final,63,Partly Cloudy,"9 mph, R To L",9.0,-90.0
+718573,3309,2023-04-15T20:05:00Z,R,Final,72,Cloudy,"7 mph, Out To CF",7.0,0.0
+718560,2680,2023-04-15T20:05:00Z,R,Final,64,Sunny,"9 mph, L To R",9.0,90.0
+718565,10,2023-04-15T20:07:00Z,R,Final,58,Sunny,"6 mph, Out To RF",6.0,45.0
+718576,3,2023-04-15T20:10:00Z,R,Final,56,Cloudy,"4 mph, In From RF",4.0,-135.0
+718566,2602,2023-04-15T20:10:00Z,R,Final,79,Partly Cloudy,"8 mph, Varies",8.0,
+718563,7,2023-04-15T20:10:00Z,R,Final,46,Overcast,"16 mph, L To R",16.0,90.0
+718567,4169,2023-04-15T20:10:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+718562,2392,2023-04-15T23:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+718564,22,2023-04-16T01:10:00Z,R,Final,64,Clear,"6 mph, Out To RF",6.0,45.0
+718561,680,2023-04-16T01:40:00Z,R,Final,51,Roof Closed,"0 mph, Calm",0.0,
+718559,3,2023-04-16T17:35:00Z,R,Final,54,Cloudy,"3 mph, R To L",3.0,-90.0
+718555,3309,2023-04-16T17:35:00Z,R,Final,79,Cloudy,"2 mph, Out To CF",2.0,0.0
+718557,3313,2023-04-16T17:35:00Z,R,Final,65,Cloudy,"6 mph, R To L",6.0,-90.0
+718556,14,2023-04-16T17:37:00Z,R,Final,66,Sunny,"12 mph, R To L",12.0,-90.0
+718554,2602,2023-04-16T17:40:00Z,R,Final,57,Partly Cloudy,"17 mph, Out To LF",17.0,-45.0
+718550,4169,2023-04-16T17:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+718551,7,2023-04-16T18:10:00Z,R,Final,51,Partly Cloudy,"21 mph, L To R",21.0,90.0
+718553,4,2023-04-16T18:10:00Z,R,Final,43,Overcast,"8 mph, In From LF",8.0,135.0
+718548,2889,2023-04-16T18:15:00Z,R,Final,47,Overcast,"17 mph, Out To RF",17.0,45.0
+718546,10,2023-04-16T20:07:00Z,R,Final,59,Partly Cloudy,"15 mph, Varies",15.0,
+718547,22,2023-04-16T20:10:00Z,R,Final,63,Partly Cloudy,"5 mph, L To R",5.0,90.0
+718545,680,2023-04-16T20:10:00Z,R,Final,48,Roof Closed,"0 mph, Calm",0.0,
+718549,2680,2023-04-16T20:10:00Z,R,Final,62,Overcast,"7 mph, L To R",7.0,90.0
+718552,2392,2023-04-16T23:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+718540,3,2023-04-17T15:10:00Z,R,Final,50,Cloudy,"3 mph, Out To RF",3.0,45.0
+718542,2602,2023-04-17T22:40:00Z,R,Final,52,Partly Cloudy,"12 mph, Out To LF",12.0,-45.0
+718544,4169,2023-04-17T22:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+718539,7,2023-04-17T23:40:00Z,R,Final,69,Clear,"6 mph, L To R",6.0,90.0
+718538,2889,2023-04-17T23:45:00Z,R,Final,67,Clear,"17 mph, Out To RF",17.0,45.0
+718537,2392,2023-04-18T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+718535,19,2023-04-18T00:40:00Z,R,Final,72,Partly Cloudy,"4 mph, In From CF",4.0,180.0
+718536,10,2023-04-18T01:40:00Z,R,Final,56,Partly Cloudy,"15 mph, Out To RF",15.0,45.0
+718533,2680,2023-04-18T01:40:00Z,R,Final,58,Cloudy,"6 mph, L To R",6.0,90.0
+718534,680,2023-04-18T01:40:00Z,R,Final,48,Cloudy,"9 mph, Out To LF",9.0,-45.0
+718532,22,2023-04-18T02:10:00Z,R,Final,58,Clear,"4 mph, L To R",4.0,90.0
+718530,2394,2023-04-18T17:10:00Z,R,Final,39,Cloudy,"16 mph, R To L",16.0,-90.0
+718541,2394,2023-04-18T17:15:00Z,R,Final,46,Partly Cloudy,"17 mph, Out To LF",17.0,-45.0
+718525,4,2023-04-18T20:10:00Z,R,Final,53,Sunny,"9 mph, Out To CF",9.0,0.0
+718543,4,2023-04-18T20:15:00Z,R,Final,54,Clear,"6 mph, In From CF",6.0,180.0
+718526,2602,2023-04-18T22:40:00Z,R,Final,66,Clear,"11 mph, Out To LF",11.0,-45.0
+718528,4169,2023-04-18T22:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+718531,3309,2023-04-18T23:05:00Z,R,Final,69,Clear,"12 mph, Out To RF",12.0,45.0
+718529,3313,2023-04-18T23:05:00Z,R,Final,52,Clear,"16 mph, Varies",16.0,
+718524,3,2023-04-18T23:10:00Z,R,Final,54,Cloudy,"5 mph, Varies",5.0,
+718522,7,2023-04-18T23:40:00Z,R,Final,80,Clear,"15 mph, R To L",15.0,-90.0
+718527,2889,2023-04-18T23:45:00Z,R,Final,71,Partly Cloudy,"10 mph, In From LF",10.0,135.0
+718520,2392,2023-04-19T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+718521,19,2023-04-19T00:40:00Z,R,Final,73,Partly Cloudy,"12 mph, L To R",12.0,90.0
+718523,10,2023-04-19T01:40:00Z,R,Final,53,Clear,"16 mph, Out To RF",16.0,45.0
+718519,2680,2023-04-19T01:40:00Z,R,Final,60,Partly Cloudy,"9 mph, L To R",9.0,90.0
+718517,680,2023-04-19T01:40:00Z,R,Final,46,Roof Closed,"0 mph, Calm",0.0,
+718516,22,2023-04-19T02:10:00Z,R,Final,59,Partly Cloudy,"2 mph, L To R",2.0,90.0
+718515,2602,2023-04-19T16:35:00Z,R,Final,68,Sunny,"6 mph, Varies",6.0,
+718513,2394,2023-04-19T17:10:00Z,R,Final,47,Sunny,"6 mph, L To R",6.0,90.0
+718511,4169,2023-04-19T17:10:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+718512,2889,2023-04-19T17:15:00Z,R,Final,78,Sunny,"16 mph, In From RF",16.0,-135.0
+718514,7,2023-04-19T18:10:00Z,R,Final,73,Cloudy,"18 mph, R To L",18.0,-90.0
+718510,4,2023-04-19T18:10:00Z,R,Final,60,Partly Cloudy,"14 mph, In From CF",14.0,180.0
+718508,22,2023-04-19T19:10:00Z,R,Final,68,Sunny,"3 mph, Out To RF",3.0,45.0
+718509,19,2023-04-19T19:10:00Z,R,Final,55,Cloudy,"9 mph, R To L",9.0,-90.0
+718506,10,2023-04-19T19:37:00Z,R,Final,56,Partly Cloudy,"8 mph, Varies",8.0,
+718507,2680,2023-04-19T20:10:00Z,R,Final,64,Partly Cloudy,"11 mph, L To R",11.0,90.0
+718502,680,2023-04-19T20:10:00Z,R,Final,48,Roof Closed,"0 mph, Calm",0.0,
+718518,3309,2023-04-19T23:05:00Z,R,Final,74,Clear,"2 mph, Out To LF",2.0,-45.0
+718504,3313,2023-04-19T23:05:00Z,R,Final,61,Clear,"9 mph, L To R",9.0,90.0
+718505,3,2023-04-19T23:10:00Z,R,Final,46,Cloudy,"4 mph, L To R",4.0,90.0
+718501,2392,2023-04-20T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+718497,3,2023-04-20T17:35:00Z,R,Final,55,Sunny,"4 mph, L To R",4.0,90.0
+718496,3313,2023-04-20T20:05:00Z,R,Final,63,Sunny,"7 mph, Out To LF",7.0,-45.0
+718500,31,2023-04-20T22:35:00Z,R,Final,83,Partly Cloudy,"12 mph, Out To LF",12.0,-45.0
+718498,2681,2023-04-20T22:40:00Z,R,Final,75,Clear,"3 mph, Out To LF",3.0,-45.0
+718499,17,2023-04-20T23:40:00Z,R,Final,70,Cloudy,"14 mph, Out To CF",14.0,0.0
+718494,15,2023-04-21T01:40:00Z,R,Final,82,Clear,"4 mph, R To L",4.0,-90.0
+718503,2395,2023-04-21T01:45:00Z,R,Final,59,Clear,"12 mph, Out To CF",12.0,0.0
+718491,17,2023-04-21T18:20:00Z,R,Final,53,Partly Cloudy,"9 mph, Out To LF",9.0,-45.0
+718492,31,2023-04-21T22:35:00Z,R,Final,82,Clear,"11 mph, Out To LF",11.0,-45.0
+718486,12,2023-04-21T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+718495,2,2023-04-21T23:05:00Z,R,Final,80,Clear,"8 mph, Out To LF",8.0,-45.0
+718493,2681,2023-04-21T23:05:00Z,R,Final,73,Clear,"7 mph, Out To LF",7.0,-45.0
+718487,3313,2023-04-21T23:05:00Z,R,Final,60,Partly Cloudy,"11 mph, Out To LF",11.0,-45.0
+718489,4705,2023-04-21T23:20:00Z,R,Final,75,Overcast,"7 mph, L To R",7.0,90.0
+718490,5325,2023-04-22T00:05:00Z,R,Final,73,Partly Cloudy,"7 mph, Varies",7.0,
+718482,3312,2023-04-22T00:10:00Z,R,Final,37,Cloudy,"9 mph, Out To CF",9.0,0.0
+718483,32,2023-04-22T00:10:00Z,R,Final,62,Roof Closed,"0 mph, None",0.0,
+718485,1,2023-04-22T01:38:00Z,R,Final,83,Clear,"8 mph, R To L",8.0,-90.0
+718484,15,2023-04-22T01:40:00Z,R,Final,85,Clear,"8 mph, L To R",8.0,90.0
+718481,680,2023-04-22T02:10:00Z,R,Final,52,Cloudy,"1 mph, Calm",1.0,
+718480,2395,2023-04-22T02:15:00Z,R,Final,62,Partly Cloudy,"8 mph, Out To CF",8.0,0.0
+718476,3313,2023-04-22T17:05:00Z,R,Final,60,Sunny,"16 mph, In From RF",16.0,-135.0
+718468,3312,2023-04-22T18:10:00Z,R,Final,35,Cloudy,"12 mph, In From LF",12.0,135.0
+718479,17,2023-04-22T18:20:00Z,R,Final,41,Overcast,"14 mph, Out To RF",14.0,45.0
+718475,2681,2023-04-22T19:05:00Z,R,Final,78,Partly Cloudy,"8 mph, Out To CF",8.0,0.0
+718473,5,2023-04-22T19:10:00Z,R,Final,50,Partly Cloudy,"6 mph, Calm",6.0,
+718488,5,2023-04-22T19:15:00Z,R,Final,49,Cloudy,"5 mph, Varies",5.0,
+718478,2395,2023-04-22T20:05:00Z,R,Final,66,Sunny,"12 mph, Out To CF",12.0,0.0
+718477,12,2023-04-22T20:05:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+718474,31,2023-04-22T22:35:00Z,R,Final,56,Partly Cloudy,"9 mph, Out To LF",9.0,-45.0
+718472,2,2023-04-22T23:05:00Z,R,Final,59,Overcast,"0 mph, Calm",0.0,
+718469,5325,2023-04-22T23:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+718470,32,2023-04-22T23:10:00Z,R,Final,62,Roof Closed,"0 mph, None",0.0,
+718471,4705,2023-04-22T23:20:00Z,R,Final,68,Clear,"5 mph, Out To LF",5.0,-45.0
+718467,15,2023-04-23T00:10:00Z,R,Final,93,Partly Cloudy,"5 mph, L To R",5.0,90.0
+718466,1,2023-04-23T01:07:00Z,R,Final,77,Partly Cloudy,"7 mph, R To L",7.0,-90.0
+718464,680,2023-04-23T01:40:00Z,R,Final,59,Cloudy,"6 mph, In From LF",6.0,135.0
+718458,2681,2023-04-23T16:05:00Z,R,Final,63,Sunny,"13 mph, L To R",13.0,90.0
+718459,2,2023-04-23T17:35:00Z,R,Final,64,Cloudy,"10 mph, L To R",10.0,90.0
+718463,31,2023-04-23T17:35:00Z,R,Final,47,Cloudy,"12 mph, Out To LF",12.0,-45.0
+718462,4705,2023-04-23T17:35:00Z,R,Final,64,Sunny,"8 mph, R To L",8.0,-90.0
+718465,3313,2023-04-23T17:35:00Z,R,Final,62,Cloudy,"6 mph, In From RF",6.0,-135.0
+718457,12,2023-04-23T17:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+718460,5,2023-04-23T17:40:00Z,R,Final,46,Cloudy,"13 mph, L To R",13.0,90.0
+718454,3312,2023-04-23T18:10:00Z,R,Final,40,Cloudy,"10 mph, Out To CF",10.0,0.0
+718461,32,2023-04-23T18:10:00Z,R,Final,61,Roof Closed,"0 mph, None",0.0,
+718451,17,2023-04-23T18:20:00Z,R,Final,42,Cloudy,"4 mph, Out To RF",4.0,45.0
+718453,5325,2023-04-23T18:35:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+718452,1,2023-04-23T20:07:00Z,R,Final,76,Sunny,"9 mph, Out To LF",9.0,-45.0
+718456,15,2023-04-23T20:10:00Z,R,Final,76,Roof Closed,"0 mph, None",0.0,
+718450,680,2023-04-23T20:10:00Z,R,Final,54,Cloudy,"15 mph, Out To LF",15.0,-45.0
+718455,2395,2023-04-23T23:10:00Z,R,Final,61,Partly Cloudy,"18 mph, Out To CF",18.0,0.0
+718448,5,2023-04-24T22:10:00Z,R,Final,44,Clear,"11 mph, Out To LF",11.0,-45.0
+718447,2,2023-04-24T22:35:00Z,R,Final,59,Partly Cloudy,"8 mph, Out To RF",8.0,45.0
+718449,12,2023-04-24T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+718445,2602,2023-04-24T22:40:00Z,R,Final,51,Partly Cloudy,"7 mph, Out To CF",7.0,0.0
+718444,14,2023-04-24T23:07:00Z,R,Final,68,Roof Closed,"0 mph, None",0.0,
+718443,4705,2023-04-24T23:20:00Z,R,Final,65,Clear,"2 mph, Calm",2.0,
+718442,3312,2023-04-24T23:40:00Z,R,Final,49,Partly Cloudy,"7 mph, In From LF",7.0,135.0
+718441,32,2023-04-24T23:40:00Z,R,Final,62,Roof Closed,"0 mph, None",0.0,
+718437,1,2023-04-25T01:38:00Z,R,Final,67,Clear,"8 mph, Out To LF",8.0,-45.0
+718438,15,2023-04-25T01:40:00Z,R,Final,87,Partly Cloudy,"5 mph, In From RF",5.0,-135.0
+718446,2395,2023-04-25T01:45:00Z,R,Final,58,Partly Cloudy,"15 mph, Out To CF",15.0,0.0
+718440,5,2023-04-25T22:10:00Z,R,Final,45,Overcast,"0 mph, Calm",0.0,
+718435,2,2023-04-25T22:35:00Z,R,Final,59,Partly Cloudy,"4 mph, Out To LF",4.0,-45.0
+718432,31,2023-04-25T22:35:00Z,R,Final,56,Partly Cloudy,"6 mph, Out To CF",6.0,0.0
+718436,12,2023-04-25T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+718434,2602,2023-04-25T22:40:00Z,R,Final,60,Cloudy,"7 mph, L To R",7.0,90.0
+718430,2681,2023-04-25T22:40:00Z,R,Final,57,Partly Cloudy,"6 mph, Out To RF",6.0,45.0
+718433,14,2023-04-25T23:07:00Z,R,Final,68,Roof Closed,"0 mph, None",0.0,
+718431,3289,2023-04-25T23:10:00Z,R,Final,57,Partly Cloudy,"4 mph, Out To RF",4.0,45.0
+718429,4705,2023-04-25T23:20:00Z,R,Final,69,Cloudy,"6 mph, L To R",6.0,90.0
+718426,17,2023-04-25T23:40:00Z,R,Final,41,Clear,"13 mph, In From LF",13.0,135.0
+718427,3312,2023-04-25T23:40:00Z,R,Final,50,Partly Cloudy,"8 mph, In From CF",8.0,180.0
+718428,32,2023-04-25T23:40:00Z,R,Final,64,Roof Closed,"0 mph, None",0.0,
+718425,1,2023-04-26T01:38:00Z,R,Final,65,Partly Cloudy,"8 mph, R To L",8.0,-90.0
+718422,15,2023-04-26T01:40:00Z,R,Final,86,Clear,"15 mph, Out To RF",15.0,45.0
+718439,2395,2023-04-26T01:45:00Z,R,Final,63,Clear,"16 mph, Out To CF",16.0,0.0
+718424,2602,2023-04-26T16:35:00Z,R,Final,58,Partly Cloudy,"5 mph, Varies",5.0,
+718416,2,2023-04-26T17:05:00Z,R,Final,61,Partly Cloudy,"7 mph, Out To LF",7.0,-45.0
+718420,14,2023-04-26T17:07:00Z,R,Final,68,Roof Closed,"0 mph, None",0.0,
+718421,5,2023-04-26T17:10:00Z,R,Final,46,Sunny,"7 mph, In From CF",7.0,180.0
+718417,3312,2023-04-26T17:10:00Z,R,Final,50,Sunny,"6 mph, R To L",6.0,-90.0
+718419,32,2023-04-26T17:40:00Z,R,Final,63,Roof Closed,"0 mph, None",0.0,
+718418,15,2023-04-26T19:40:00Z,R,Final,82,Roof Closed,"0 mph, None",0.0,
+718413,31,2023-04-26T22:35:00Z,R,Final,61,Clear,"11 mph, In From LF",11.0,135.0
+718414,12,2023-04-26T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+718415,2681,2023-04-26T22:40:00Z,R,Final,54,Cloudy,"4 mph, In From LF",4.0,135.0
+718412,3289,2023-04-26T23:10:00Z,R,Final,54,Partly Cloudy,"9 mph, Out To LF",9.0,-45.0
+718411,4705,2023-04-26T23:20:00Z,R,Final,55,Overcast,"7 mph, Out To RF",7.0,45.0
+718407,17,2023-04-26T23:40:00Z,R,Final,43,Clear,"10 mph, In From RF",10.0,-135.0
+718408,1,2023-04-27T01:38:00Z,R,Final,73,Clear,"7 mph, Out To LF",7.0,-45.0
+718423,2395,2023-04-27T01:45:00Z,R,Final,62,Partly Cloudy,"11 mph, Out To CF",11.0,0.0
+718410,4705,2023-04-27T16:20:00Z,R,Final,57,Overcast,"5 mph, L To R",5.0,90.0
+718403,31,2023-04-27T16:35:00Z,R,Final,60,Sunny,"6 mph, In From CF",6.0,180.0
+718404,2681,2023-04-27T17:05:00Z,R,Final,55,Cloudy,"5 mph, R To L",5.0,-90.0
+718406,17,2023-04-27T18:20:00Z,R,Final,60,Sunny,"9 mph, R To L",9.0,-90.0
+718409,2395,2023-04-27T19:45:00Z,R,Final,67,Sunny,"5 mph, Varies",5.0,
+718402,1,2023-04-27T20:07:00Z,R,Final,74,Sunny,"8 mph, Out To CF",8.0,0.0
+718405,2394,2023-04-27T22:40:00Z,R,Final,58,Clear,"7 mph, In From LF",7.0,135.0
+718398,3289,2023-04-27T23:10:00Z,R,Final,55,Partly Cloudy,"7 mph, Out To LF",7.0,-45.0
+718396,4,2023-04-27T23:10:00Z,R,Final,56,Partly Cloudy,"15 mph, In From LF",15.0,135.0
+718400,3312,2023-04-27T23:40:00Z,R,Final,58,Overcast,"9 mph, In From LF",9.0,135.0
+718397,5325,2023-04-28T00:05:00Z,R,Final,67,Partly Cloudy,"8 mph, In From LF",8.0,135.0
+718387,3312,2023-04-28T20:10:00Z,R,Final,48,Overcast,"12 mph, In From LF",12.0,135.0
+718391,4169,2023-04-28T22:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+718392,14,2023-04-28T23:07:00Z,R,Final,68,Roof Closed,"0 mph, None",0.0,
+718395,3,2023-04-28T23:10:00Z,R,Final,52,Cloudy,"3 mph, Out To LF",3.0,-45.0
+718394,3289,2023-04-28T23:10:00Z,R,Completed Early,52,Cloudy,"5 mph, In From RF",5.0,-135.0
+718393,4,2023-04-28T23:10:00Z,R,Final,55,Partly Cloudy,"10 mph, Out To RF",10.0,45.0
+718388,5325,2023-04-29T00:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+718389,2392,2023-04-29T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+718386,32,2023-04-29T00:10:00Z,R,Final,65,Roof Closed,"0 mph, None",0.0,
+718390,19,2023-04-29T00:40:00Z,R,Final,57,Partly Cloudy,"9 mph, In From LF",9.0,135.0
+718380,10,2023-04-29T01:40:00Z,R,Final,64,Partly Cloudy,"8 mph, Out To RF",8.0,45.0
+718382,22,2023-04-29T02:10:00Z,R,Final,62,Clear,"5 mph, L To R",5.0,90.0
+718381,2394,2023-04-29T16:10:00Z,R,Final,53,Overcast,"11 mph, R To L",11.0,-90.0
+718401,2394,2023-04-29T21:10:00Z,R,Final,63,Cloudy,"11 mph, R To L",11.0,-90.0
+718383,3309,2023-04-29T17:05:00Z,R,Final,60,Overcast,"3 mph, In From LF",3.0,135.0
+718399,3309,2023-04-29T22:05:00Z,R,Final,69,Cloudy,"1 mph, R To L",1.0,-90.0
+718378,3312,2023-04-29T18:10:00Z,R,Final,47,Overcast,"10 mph, Out To RF",10.0,45.0
+718379,14,2023-04-29T19:07:00Z,R,Final,68,Roof Closed,"0 mph, None",0.0,
+718375,4169,2023-04-29T20:05:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+718377,10,2023-04-29T20:07:00Z,R,Final,63,Partly Cloudy,"9 mph, Out To RF",9.0,45.0
+718385,3,2023-04-29T20:10:00Z,R,Final,49,Overcast,"6 mph, In From RF",6.0,-135.0
+718372,2392,2023-04-29T21:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+718384,5340,2023-04-29T22:05:00Z,R,Final,81,Cloudy,"9 mph, Out To RF",9.0,45.0
+718374,5325,2023-04-29T23:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+718373,4,2023-04-29T23:10:00Z,R,Final,56,Cloudy,"13 mph, Out To CF",13.0,0.0
+718376,32,2023-04-29T23:10:00Z,R,Final,66,Roof Closed,"0 mph, None",0.0,
+718366,19,2023-04-30T00:10:00Z,R,Final,72,Partly Cloudy,"7 mph, In From CF",7.0,180.0
+718369,22,2023-04-30T01:10:00Z,R,Final,66,Clear,"7 mph, Out To RF",7.0,45.0
+718364,4169,2023-04-30T16:05:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+718370,3,2023-04-30T17:35:00Z,R,Final,51,Drizzle,"4 mph, In From CF",4.0,180.0
+718367,3309,2023-04-30T17:35:00Z,R,Final,62,Overcast,"2 mph, L To R",2.0,90.0
+718363,14,2023-04-30T17:37:00Z,R,Final,68,Roof Closed,"0 mph, None",0.0,
+718360,2394,2023-04-30T17:40:00Z,R,Final,51,Cloudy,"5 mph, R To L",5.0,-90.0
+718362,3312,2023-04-30T18:10:00Z,R,Final,45,Cloudy,"18 mph, Out To RF",18.0,45.0
+718355,4,2023-04-30T18:10:00Z,R,Final,46,Rain,"7 mph, Out To LF",7.0,-45.0
+718365,32,2023-04-30T18:10:00Z,R,Final,64,Roof Closed,"0 mph, None",0.0,
+718356,5325,2023-04-30T18:35:00Z,R,Final,82,Sunny,"6 mph, Varies",6.0,
+718358,19,2023-04-30T19:10:00Z,R,Final,65,Partly Cloudy,"8 mph, In From CF",8.0,180.0
+718368,5340,2023-04-30T20:05:00Z,R,Final,80,Sunny,"5 mph, In From CF",5.0,180.0
+718357,10,2023-04-30T20:07:00Z,R,Final,63,Partly Cloudy,"14 mph, Out To RF",14.0,45.0
+718359,22,2023-04-30T20:10:00Z,R,Final,67,Overcast,"3 mph, Out To CF",3.0,0.0
+718354,2392,2023-04-30T23:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+718352,3289,2023-05-01T17:10:00Z,R,Final,59,Partly Cloudy,"15 mph, Out To RF",15.0,45.0
+718361,3289,2023-05-01T17:15:00Z,R,Final,62,Partly Cloudy,"7 mph, Out To CF",7.0,0.0
+718349,3309,2023-05-01T23:05:00Z,R,Final,57,Cloudy,"8 mph, Out To RF",8.0,45.0
+718351,3313,2023-05-01T23:05:00Z,R,Final,58,Cloudy,"13 mph, R To L",13.0,-90.0
+718353,3,2023-05-01T23:10:00Z,R,Final,59,Partly Cloudy,"6 mph, Out To CF",6.0,0.0
+718350,2392,2023-05-02T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+718345,2680,2023-05-02T01:40:00Z,R,Final,60,Cloudy,"10 mph, R To L",10.0,-90.0
+718343,22,2023-05-02T02:10:00Z,R,Final,59,Partly Cloudy,"6 mph, Out To RF",6.0,45.0
+718347,12,2023-05-02T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+718346,4169,2023-05-02T22:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+718344,3309,2023-05-02T23:05:00Z,R,Final,53,Overcast,"2 mph, In From LF",2.0,135.0
+718339,3313,2023-05-02T23:05:00Z,R,Final,55,Partly Cloudy,"13 mph, R To L",13.0,-90.0
+718341,3,2023-05-02T23:10:00Z,R,Final,50,Rain,"3 mph, Varies",3.0,
+718340,4,2023-05-02T23:10:00Z,R,Final,48,Overcast,"7 mph, Out To RF",7.0,45.0
+718336,7,2023-05-02T23:40:00Z,R,Final,67,Clear,"14 mph, L To R",14.0,90.0
+718338,2889,2023-05-02T23:45:00Z,R,Final,66,Clear,"21 mph, Out To RF",21.0,45.0
+718342,5325,2023-05-03T00:05:00Z,R,Final,78,Cloudy,"9 mph, In From RF",9.0,-135.0
+718337,2392,2023-05-03T00:10:00Z,R,Final,76,Cloudy,"7 mph, Out To LF",7.0,-45.0
+718334,19,2023-05-03T00:40:00Z,R,Final,66,Cloudy,"9 mph, L To R",9.0,90.0
+718335,2680,2023-05-03T01:40:00Z,R,Final,61,Partly Cloudy,"10 mph, L To R",10.0,90.0
+718332,10,2023-05-03T01:40:00Z,R,Final,54,Cloudy,"7 mph, Out To LF",7.0,-45.0
+718331,22,2023-05-03T02:10:00Z,R,Final,57,Clear,"8 mph, L To R",8.0,90.0
+718348,2394,2023-05-03T17:40:00Z,R,Final,50,Sunny,"14 mph, L To R",14.0,90.0
+718329,2394,2023-05-03T22:40:00Z,R,Final,52,Cloudy,"14 mph, Out To LF",14.0,-45.0
+718325,5325,2023-05-03T18:05:00Z,R,Final,79,Partly Cloudy,"10 mph, In From RF",10.0,-135.0
+718326,2392,2023-05-03T18:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+718330,2680,2023-05-03T20:10:00Z,R,Final,63,Partly Cloudy,"9 mph, L To R",9.0,90.0
+718327,22,2023-05-03T20:10:00Z,R,Final,64,Cloudy,"7 mph, Out To RF",7.0,45.0
+718328,12,2023-05-03T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+718321,4169,2023-05-03T22:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+718333,3309,2023-05-03T23:05:00Z,R,Final,54,Cloudy,"11 mph, L To R",11.0,90.0
+718324,3313,2023-05-03T23:05:00Z,R,Final,53,Drizzle,"8 mph, R To L",8.0,-90.0
+718323,3,2023-05-03T23:10:00Z,R,Final,50,Overcast,"4 mph, In From CF",4.0,180.0
+718322,4,2023-05-03T23:10:00Z,R,Final,48,Clear,"9 mph, In From LF",9.0,135.0
+718314,7,2023-05-03T23:40:00Z,R,Final,72,Clear,"3 mph, L To R",3.0,90.0
+718320,2889,2023-05-03T23:45:00Z,R,Final,68,Clear,"9 mph, Out To RF",9.0,45.0
+718315,19,2023-05-04T00:40:00Z,R,Final,77,Cloudy,"7 mph, R To L",7.0,-90.0
+718319,10,2023-05-04T01:40:00Z,R,Final,53,Overcast,"8 mph, Out To RF",8.0,45.0
+718317,3309,2023-05-04T17:05:00Z,R,Final,60,Partly Cloudy,"9 mph, In From LF",9.0,135.0
+718318,2394,2023-05-04T17:10:00Z,R,Final,59,Cloudy,"5 mph, Out To CF",5.0,0.0
+718309,12,2023-05-04T17:10:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+718311,2889,2023-05-04T17:15:00Z,R,Final,72,Sunny,"5 mph, In From RF",5.0,-135.0
+718312,7,2023-05-04T18:10:00Z,R,Final,72,Overcast,"8 mph, R To L",8.0,-90.0
+718310,4,2023-05-04T18:10:00Z,R,Final,63,Sunny,"4 mph, In From LF",4.0,135.0
+718313,19,2023-05-04T19:10:00Z,R,Final,70,Cloudy,"15 mph, Out To CF",15.0,0.0
+718304,10,2023-05-04T19:37:00Z,R,Final,59,Cloudy,"7 mph, Out To RF",7.0,45.0
+718308,4169,2023-05-04T20:10:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+718316,3,2023-05-04T22:10:00Z,R,Final,47,Cloudy,"3 mph, In From CF",3.0,180.0
+718303,17,2023-05-05T18:20:00Z,R,Final,69,Partly Cloudy,"17 mph, Out To LF",17.0,-45.0
+718307,31,2023-05-05T22:35:00Z,R,Final,67,Partly Cloudy,"5 mph, Varies",5.0,
+718305,2602,2023-05-05T22:40:00Z,R,Final,75,Clear,"8 mph, Varies",8.0,
+718300,12,2023-05-05T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+718301,2681,2023-05-05T23:05:00Z,R,Final,59,Partly Cloudy,"6 mph, Out To CF",6.0,0.0
+718302,3289,2023-05-05T23:10:00Z,R,Final,55,Partly Cloudy,"4 mph, Out To LF",4.0,-45.0
+718306,5,2023-05-05T23:10:00Z,R,Final,59,Clear,"8 mph, In From RF",8.0,-135.0
+718298,4705,2023-05-05T23:20:00Z,R,Final,59,Overcast,"5 mph, L To R",5.0,90.0
+718299,7,2023-05-06T00:10:00Z,R,Final,76,Cloudy,"10 mph, R To L",10.0,-90.0
+718292,2889,2023-05-06T00:15:00Z,R,Final,70,Cloudy,"12 mph, R To L",12.0,-90.0
+718294,1,2023-05-06T01:38:00Z,R,Final,65,Partly Cloudy,"9 mph, Out To CF",9.0,0.0
+718296,15,2023-05-06T01:40:00Z,R,Final,79,Partly Cloudy,"3 mph, Calm",3.0,
+718295,2680,2023-05-06T01:40:00Z,R,Final,63,Clear,"9 mph, L To R",9.0,90.0
+718297,680,2023-05-06T02:10:00Z,R,Final,51,Roof Closed,"0 mph, Calm",0.0,
+718293,2395,2023-05-06T02:15:00Z,R,Final,55,Cloudy,"12 mph, Varies",12.0,
+718288,2889,2023-05-06T18:15:00Z,R,Final,73,Overcast,"12 mph, R To L",12.0,-90.0
+718289,17,2023-05-06T18:20:00Z,R,Final,65,Overcast,"10 mph, Out To LF",10.0,-45.0
+718290,3289,2023-05-06T20:10:00Z,R,Final,71,Sunny,"7 mph, In From LF",7.0,135.0
+718291,12,2023-05-06T20:10:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+718285,5,2023-05-06T22:10:00Z,R,Final,62,Cloudy,"13 mph, In From CF",13.0,180.0
+718286,31,2023-05-06T22:35:00Z,R,Final,72,Partly Cloudy,"3 mph, In From LF",3.0,135.0
+718281,2602,2023-05-06T22:40:00Z,R,Final,76,Partly Cloudy,"7 mph, In From RF",7.0,-135.0
+718280,7,2023-05-06T23:10:00Z,R,Final,93,Clear,"18 mph, R To L",18.0,-90.0
+718284,2681,2023-05-06T23:15:00Z,R,Final,72,Partly Cloudy,"7 mph, L To R",7.0,90.0
+718283,4705,2023-05-06T23:15:00Z,R,Final,73,Overcast,"5 mph, L To R",5.0,90.0
+718287,2395,2023-05-06T23:15:00Z,R,Final,59,Cloudy,"16 mph, Out To CF",16.0,0.0
+718282,15,2023-05-07T00:10:00Z,R,Final,85,Clear,"9 mph, L To R",9.0,90.0
+718279,2680,2023-05-07T00:40:00Z,R,Final,63,Clear,"14 mph, L To R",14.0,90.0
+718275,1,2023-05-07T01:07:00Z,R,Final,66,Partly Cloudy,"10 mph, R To L",10.0,-90.0
+718274,680,2023-05-07T01:40:00Z,R,Final,58,Cloudy,"4 mph, Out To CF",4.0,0.0
+718277,4705,2023-05-07T15:35:00Z,R,Final,73,Partly Cloudy,"6 mph, In From RF",6.0,-135.0
+718278,31,2023-05-07T17:35:00Z,R,Final,60,Cloudy,"9 mph, Out To CF",9.0,0.0
+718270,2681,2023-05-07T17:35:00Z,R,Final,76,Partly Cloudy,"9 mph, Out To CF",9.0,0.0
+718276,3289,2023-05-07T17:40:00Z,R,Final,75,Sunny,"4 mph, Out To RF",4.0,45.0
+718273,5,2023-05-07T17:40:00Z,R,Final,68,Cloudy,"9 mph, Out To CF",9.0,0.0
+718271,12,2023-05-07T17:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+718268,7,2023-05-07T18:10:00Z,R,Final,86,Sunny,"15 mph, R To L",15.0,-90.0
+718272,2889,2023-05-07T18:15:00Z,R,Final,87,Cloudy,"8 mph, Out To RF",8.0,45.0
+718269,17,2023-05-07T18:20:00Z,R,Final,77,Sunny,"4 mph, In From RF",4.0,-135.0
+718267,2395,2023-05-07T20:05:00Z,R,Final,60,Partly Cloudy,"7 mph, Out To CF",7.0,0.0
+718264,1,2023-05-07T20:07:00Z,R,Final,70,Partly Cloudy,"8 mph, Out To CF",8.0,0.0
+718263,15,2023-05-07T20:10:00Z,R,Final,75,Roof Closed,"0 mph, None",0.0,
+718265,680,2023-05-07T20:10:00Z,R,Final,51,Partly Cloudy,"0 mph, Calm",0.0,
+718262,2602,2023-05-07T20:10:00Z,R,Final,77,Cloudy,"9 mph, R To L",9.0,-90.0
+718266,2680,2023-05-07T23:10:00Z,R,Final,67,Clear,"11 mph, In From LF",11.0,135.0
+718261,5,2023-05-08T22:10:00Z,R,Final,55,Cloudy,"6 mph, R To L",6.0,-90.0
+718258,31,2023-05-08T22:35:00Z,R,Final,71,Overcast,"6 mph, Out To RF",6.0,45.0
+718259,2,2023-05-08T22:35:00Z,R,Final,81,Partly Cloudy,"8 mph, Out To LF",8.0,-45.0
+718255,3313,2023-05-08T23:05:00Z,R,Final,73,Clear,"9 mph, In From RF",9.0,-135.0
+718256,17,2023-05-08T23:40:00Z,R,Final,48,Cloudy,"13 mph, In From LF",13.0,135.0
+718253,7,2023-05-08T23:40:00Z,R,Final,82,Clear,"9 mph, L To R",9.0,90.0
+718257,32,2023-05-08T23:40:00Z,R,Final,64,Roof Closed,"0 mph, None",0.0,
+718254,1,2023-05-09T01:38:00Z,R,Final,69,Clear,"8 mph, Out To CF",8.0,0.0
+718251,680,2023-05-09T01:40:00Z,R,Final,61,Partly Cloudy,"4 mph, Out To LF",4.0,-45.0
+718249,15,2023-05-09T01:40:00Z,R,Final,89,Clear,"4 mph, L To R",4.0,90.0
+718260,2395,2023-05-09T01:45:00Z,R,Final,57,Partly Cloudy,"16 mph, Out To CF",16.0,0.0
+718248,5,2023-05-09T22:10:00Z,R,Final,60,Clear,"0 mph, Calm",0.0,
+718252,31,2023-05-09T22:35:00Z,R,Final,72,Clear,"12 mph, Out To LF",12.0,-45.0
+718246,2,2023-05-09T22:35:00Z,R,Final,65,Partly Cloudy,"3 mph, In From RF",3.0,-135.0
+718243,2602,2023-05-09T22:40:00Z,R,Final,73,Clear,"10 mph, Varies",10.0,
+718244,2681,2023-05-09T22:40:00Z,R,Final,70,Clear,"3 mph, Out To RF",3.0,45.0
+718247,3313,2023-05-09T23:05:00Z,R,Final,62,Partly Cloudy,"7 mph, R To L",7.0,-90.0
+718245,4705,2023-05-09T23:20:00Z,R,Final,77,Cloudy,"10 mph, R To L",10.0,-90.0
+718240,17,2023-05-09T23:40:00Z,R,Final,59,Partly Cloudy,"6 mph, In From LF",6.0,135.0
+718242,3312,2023-05-09T23:40:00Z,R,Final,66,Overcast,"7 mph, In From CF",7.0,180.0
+718238,7,2023-05-09T23:40:00Z,R,Final,69,Cloudy,"25 mph, R To L",25.0,-90.0
+718241,32,2023-05-09T23:40:00Z,R,Final,67,Roof Closed,"0 mph, None",0.0,
+718237,1,2023-05-10T01:38:00Z,R,Final,63,Partly Cloudy,"9 mph, Out To CF",9.0,0.0
+718239,680,2023-05-10T01:40:00Z,R,Final,61,Clear,"2 mph, Out To RF",2.0,45.0
+718236,15,2023-05-10T01:40:00Z,R,Final,91,Partly Cloudy,"4 mph, In From LF",4.0,135.0
+718250,2395,2023-05-10T01:45:00Z,R,Final,57,Partly Cloudy,"17 mph, Out To CF",17.0,0.0
+718231,31,2023-05-10T16:35:00Z,R,Final,66,Cloudy,"8 mph, In From CF",8.0,180.0
+718232,3313,2023-05-10T16:35:00Z,R,Final,65,Sunny,"5 mph, Out To RF",5.0,45.0
+718234,5,2023-05-10T17:10:00Z,R,Final,62,Clear,"8 mph, In From CF",8.0,180.0
+718228,32,2023-05-10T17:40:00Z,R,Final,71,Partly Cloudy,"7 mph, In From LF",7.0,135.0
+718229,680,2023-05-10T19:40:00Z,R,Final,56,Sunny,"3 mph, L To R",3.0,90.0
+718226,15,2023-05-10T19:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+718230,2395,2023-05-10T19:45:00Z,R,Final,57,Cloudy,"15 mph, Out To CF",15.0,0.0
+718233,2681,2023-05-10T20:05:00Z,R,Final,72,Sunny,"6 mph, Out To CF",6.0,0.0
+718235,1,2023-05-10T20:07:00Z,R,Final,69,Partly Cloudy,"8 mph, Out To LF",8.0,-45.0
+718227,2,2023-05-10T22:35:00Z,R,Final,72,Partly Cloudy,"6 mph, Out To LF",6.0,-45.0
+718225,2602,2023-05-10T22:40:00Z,R,Final,76,Clear,"7 mph, In From LF",7.0,135.0
+718220,4705,2023-05-10T23:20:00Z,R,Final,81,Partly Cloudy,"6 mph, L To R",6.0,90.0
+718221,17,2023-05-10T23:40:00Z,R,Final,65,Clear,"9 mph, In From RF",9.0,-135.0
+718224,3312,2023-05-10T23:40:00Z,R,Final,77,Partly Cloudy,"8 mph, L To R",8.0,90.0
+718222,7,2023-05-10T23:40:00Z,R,Final,81,Partly Cloudy,"7 mph, R To L",7.0,-90.0
+718223,2602,2023-05-11T16:35:00Z,R,Final,76,Partly Cloudy,"6 mph, In From CF",6.0,180.0
+718216,3312,2023-05-11T17:10:00Z,R,Final,71,Partly Cloudy,"7 mph, R To L",7.0,-90.0
+718218,7,2023-05-11T18:10:00Z,R,Final,67,Rain,"11 mph, R To L",11.0,-90.0
+718219,3313,2023-05-11T23:05:00Z,R,Final,78,Clear,"10 mph, R To L",10.0,-90.0
+718215,15,2023-05-12T01:40:00Z,R,Final,88,Clear,"4 mph, Out To RF",4.0,45.0
+718217,10,2023-05-12T01:40:00Z,R,Final,60,Clear,"11 mph, Out To RF",11.0,45.0
+718208,2394,2023-05-12T22:40:00Z,R,Final,75,Overcast,"5 mph, In From LF",5.0,135.0
+718212,4169,2023-05-12T22:40:00Z,R,Final,83,Partly Cloudy,"13 mph, In From LF",13.0,135.0
+718214,3309,2023-05-12T23:05:00Z,R,Final,81,Partly Cloudy,"6 mph, Out To CF",6.0,0.0
+718213,2,2023-05-12T23:05:00Z,R,Final,82,Partly Cloudy,"7 mph, In From LF",7.0,135.0
+718210,3313,2023-05-12T23:05:00Z,R,Final,82,Clear,"9 mph, R To L",9.0,-90.0
+718206,14,2023-05-12T23:07:00Z,R,Final,72,Cloudy,"5 mph, L To R",5.0,90.0
+718205,5,2023-05-12T23:10:00Z,R,Final,70,Overcast,"1 mph, In From RF",1.0,-135.0
+718211,3,2023-05-12T23:10:00Z,R,Final,82,Clear,"4 mph, None",4.0,
+718209,3312,2023-05-13T00:10:00Z,R,Final,69,Overcast,"9 mph, In From CF",9.0,180.0
+718207,4,2023-05-13T00:10:00Z,R,Final,58,Overcast,"7 mph, Out To RF",7.0,45.0
+718204,32,2023-05-13T00:10:00Z,R,Final,70,Roof Closed,"0 mph, None",0.0,
+718202,19,2023-05-13T00:40:00Z,R,Final,59,Overcast,"11 mph, In From CF",11.0,180.0
+718199,15,2023-05-13T01:40:00Z,R,Final,93,Clear,"4 mph, R To L",4.0,-90.0
+718200,10,2023-05-13T01:40:00Z,R,Final,65,Clear,"16 mph, Out To RF",16.0,45.0
+718201,22,2023-05-13T02:10:00Z,R,Final,64,Clear,"6 mph, Out To RF",6.0,45.0
+718197,3313,2023-05-13T17:05:00Z,R,Final,77,Overcast,"4 mph, L To R",4.0,90.0
+718194,2394,2023-05-13T17:10:00Z,R,Final,73,Cloudy,"7 mph, L To R",7.0,90.0
+718198,4169,2023-05-13T17:10:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+718195,3312,2023-05-13T18:10:00Z,R,Final,63,Overcast,"9 mph, In From RF",9.0,-135.0
+718192,14,2023-05-13T19:07:00Z,R,Final,64,Sunny,"7 mph, R To L",7.0,-90.0
+718203,3309,2023-05-13T20:05:00Z,R,Final,67,Cloudy,"5 mph, In From LF",5.0,135.0
+718190,10,2023-05-13T20:07:00Z,R,Final,74,Sunny,"7 mph, Out To RF",7.0,45.0
+718196,3,2023-05-13T20:10:00Z,R,Final,80,Sunny,"6 mph, L To R",6.0,90.0
+718191,5,2023-05-13T22:10:00Z,R,Final,65,Partly Cloudy,"3 mph, In From CF",3.0,180.0
+718193,2,2023-05-13T23:05:00Z,R,Final,67,Overcast,"5 mph, Out To RF",5.0,45.0
+718183,32,2023-05-13T23:10:00Z,R,Final,68,Roof Closed,"0 mph, None",0.0,
+718185,22,2023-05-13T23:15:00Z,R,Final,72,Sunny,"6 mph, L To R",6.0,90.0
+718189,4,2023-05-13T23:15:00Z,R,Final,59,Cloudy,"11 mph, L To R",11.0,90.0
+718184,15,2023-05-14T00:10:00Z,R,Final,78,Roof Closed,"0 mph, None",0.0,
+718188,19,2023-05-14T00:10:00Z,R,Final,57,Overcast,"7 mph, R To L",7.0,-90.0
+718182,5,2023-05-14T15:35:00Z,R,Final,64,Partly Cloudy,"11 mph, In From RF",11.0,-135.0
+718203,3309,2023-05-14T16:35:00Z,R,Final,67,Cloudy,"5 mph, In From LF",5.0,135.0
+718179,2,2023-05-14T17:35:00Z,R,Final,75,Partly Cloudy,"4 mph, L To R",4.0,90.0
+718180,3313,2023-05-14T17:35:00Z,R,Final,68,Sunny,"7 mph, Out To RF",7.0,45.0
+718181,14,2023-05-14T17:37:00Z,R,Final,53,Sunny,"11 mph, R To L",11.0,-90.0
+718173,2394,2023-05-14T17:40:00Z,R,Final,66,Partly Cloudy,"10 mph, L To R",10.0,90.0
+718178,4169,2023-05-14T17:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+718175,3312,2023-05-14T18:10:00Z,R,Final,60,Cloudy,"10 mph, In From LF",10.0,135.0
+718176,4,2023-05-14T18:10:00Z,R,Final,58,Overcast,"12 mph, Out To RF",12.0,45.0
+718177,32,2023-05-14T18:10:00Z,R,Final,65,Roof Closed,"0 mph, None",0.0,
+718174,19,2023-05-14T19:10:00Z,R,Final,55,Cloudy,"8 mph, R To L",8.0,-90.0
+718172,10,2023-05-14T20:07:00Z,R,Final,71,Sunny,"6 mph, Out To RF",6.0,45.0
+718168,22,2023-05-14T20:10:00Z,R,Final,74,Sunny,"3 mph, L To R",3.0,90.0
+718169,15,2023-05-14T20:10:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+718186,3309,2023-05-14T20:35:00Z,R,Final,79,Sunny,"3 mph, In From LF",3.0,135.0
+718187,3,2023-05-14T23:10:00Z,R,Final,66,Clear,"4 mph, L To R",4.0,90.0
+718167,3309,2023-05-15T20:05:00Z,R,Final,76,Sunny,"6 mph, Out To RF",6.0,45.0
+718171,2,2023-05-15T22:35:00Z,R,Final,74,Clear,"7 mph, Out To RF",7.0,45.0
+718164,14,2023-05-15T23:07:00Z,R,Final,72,Clear,"16 mph, L To R",16.0,90.0
+718163,3,2023-05-15T23:10:00Z,R,Final,72,Clear,"12 mph, Out To RF",12.0,45.0
+718166,2889,2023-05-15T23:45:00Z,R,Final,74,Overcast,"8 mph, In From LF",8.0,135.0
+718165,5325,2023-05-16T00:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+718158,2392,2023-05-16T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+718161,19,2023-05-16T00:40:00Z,R,Final,63,Cloudy,"0 mph, Calm",0.0,
+718160,10,2023-05-16T01:40:00Z,R,Final,63,Clear,"13 mph, Out To RF",13.0,45.0
+718162,2680,2023-05-16T01:40:00Z,R,Final,63,Partly Cloudy,"6 mph, L To R",6.0,90.0
+718170,2395,2023-05-16T01:45:00Z,R,Final,60,Clear,"13 mph, Out To CF",13.0,0.0
+718159,22,2023-05-16T02:10:00Z,R,Final,65,Partly Cloudy,"5 mph, Out To CF",5.0,0.0
+718154,2,2023-05-16T22:35:00Z,R,Final,77,Cloudy,"10 mph, In From RF",10.0,-135.0
+718155,2394,2023-05-16T22:40:00Z,R,Final,78,Overcast,"15 mph, Out To LF",15.0,-45.0
+718153,4169,2023-05-16T22:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+718157,14,2023-05-16T23:07:00Z,R,Final,68,Roof Closed,"0 mph, None",0.0,
+718149,3,2023-05-16T23:10:00Z,R,Final,77,Clear,"7 mph, Out To RF",7.0,45.0
+718150,3289,2023-05-16T23:10:00Z,R,Final,78,Partly Cloudy,"5 mph, Out To CF",5.0,0.0
+718151,2889,2023-05-16T23:45:00Z,R,Final,69,Overcast,"8 mph, L To R",8.0,90.0
+718148,5325,2023-05-17T00:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+718152,2392,2023-05-17T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+718147,4,2023-05-17T00:10:00Z,R,Final,61,Partly Cloudy,"15 mph, L To R",15.0,90.0
+718145,19,2023-05-17T00:40:00Z,R,Final,73,Cloudy,"10 mph, In From LF",10.0,135.0
+718146,10,2023-05-17T01:40:00Z,R,Final,70,Clear,"7 mph, Out To RF",7.0,45.0
+718144,2680,2023-05-17T01:40:00Z,R,Final,65,Clear,"9 mph, L To R",9.0,90.0
+718156,2395,2023-05-17T01:45:00Z,R,Final,64,Clear,"15 mph, Out To CF",15.0,0.0
+718141,22,2023-05-17T02:10:00Z,R,Final,63,Clear,"7 mph, L To R",7.0,90.0
+718142,2394,2023-05-17T17:10:00Z,R,Final,53,Sunny,"11 mph, L To R",11.0,90.0
+718138,19,2023-05-17T19:10:00Z,R,Final,77,Partly Cloudy,"0 mph, Calm",0.0,
+718136,22,2023-05-17T19:10:00Z,R,Final,69,Sunny,"6 mph, Out To CF",6.0,0.0
+718139,10,2023-05-17T19:37:00Z,R,Final,68,Sunny,"5 mph, Out To RF",5.0,45.0
+718143,2395,2023-05-17T19:45:00Z,R,Final,60,Sunny,"12 mph, Varies",12.0,
+718140,2680,2023-05-17T20:10:00Z,R,Final,62,Cloudy,"7 mph, L To R",7.0,90.0
+718137,2,2023-05-17T22:35:00Z,R,Final,67,Clear,"13 mph, In From LF",13.0,135.0
+718132,4169,2023-05-17T22:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+718134,14,2023-05-17T23:07:00Z,R,Final,68,Roof Closed,"0 mph, None",0.0,
+718133,3,2023-05-17T23:10:00Z,R,Final,53,Clear,"18 mph, Out To RF",18.0,45.0
+718135,3289,2023-05-17T23:10:00Z,R,Final,60,Clear,"11 mph, In From LF",11.0,135.0
+718131,2889,2023-05-17T23:45:00Z,R,Final,78,Partly Cloudy,"4 mph, In From LF",4.0,135.0
+718126,5325,2023-05-18T00:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+718127,2392,2023-05-18T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+718129,4,2023-05-18T00:10:00Z,R,Final,50,Partly Cloudy,"9 mph, L To R",9.0,90.0
+718128,2,2023-05-18T16:35:00Z,R,Final,67,Sunny,"8 mph, Out To CF",8.0,0.0
+718122,3289,2023-05-18T17:10:00Z,R,Final,58,Sunny,"8 mph, Out To LF",8.0,-45.0
+718130,4169,2023-05-18T17:10:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+718125,4,2023-05-18T18:10:00Z,R,Final,62,Partly Cloudy,"5 mph, In From CF",5.0,180.0
+718121,14,2023-05-18T23:07:00Z,R,Final,68,Roof Closed,"0 mph, None",0.0,
+718124,2889,2023-05-18T23:45:00Z,R,Final,81,Partly Cloudy,"5 mph, Out To LF",5.0,-45.0
+718118,31,2023-05-19T22:35:00Z,R,Final,74,Cloudy,"9 mph, Out To LF",9.0,-45.0
+718120,2602,2023-05-19T22:40:00Z,R,Final,77,Partly Cloudy,"13 mph, Varies",13.0,
+718117,12,2023-05-19T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+718123,3309,2023-05-19T23:05:00Z,R,Final,72,Partly Cloudy,"4 mph, Out To LF",4.0,-45.0
+718116,2681,2023-05-19T23:05:00Z,R,Final,69,Partly Cloudy,"11 mph, In From LF",11.0,135.0
+718115,14,2023-05-19T23:07:00Z,R,Final,68,Roof Closed,"0 mph, None",0.0,
+718119,3289,2023-05-19T23:10:00Z,R,Final,62,Clear,"6 mph, Out To LF",6.0,-45.0
+718110,4705,2023-05-19T23:20:00Z,R,Final,74,Partly Cloudy,"6 mph, L To R",6.0,90.0
+718114,5325,2023-05-20T00:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+718112,2392,2023-05-20T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+718111,4,2023-05-20T00:10:00Z,R,Final,61,Cloudy,"5 mph, Out To RF",5.0,45.0
+718113,2889,2023-05-20T00:15:00Z,R,Final,67,Overcast,"11 mph, Out To RF",11.0,45.0
+718106,1,2023-05-20T01:38:00Z,R,Final,66,Cloudy,"7 mph, Out To RF",7.0,45.0
+718107,2680,2023-05-20T01:40:00Z,R,Final,62,Cloudy,"8 mph, L To R",8.0,90.0
+718105,2395,2023-05-20T02:15:00Z,R,Final,57,Partly Cloudy,"16 mph, Out To CF",16.0,0.0
+718104,4,2023-05-20T18:10:00Z,R,Final,59,Sunny,"10 mph, L To R",10.0,90.0
+718102,14,2023-05-20T19:07:00Z,R,Final,59,Overcast,"11 mph, L To R",11.0,90.0
+718108,3309,2023-05-20T20:05:00Z,R,Final,78,Partly Cloudy,"7 mph, R To L",7.0,-90.0
+718101,31,2023-05-20T20:05:00Z,R,Final,62,Overcast,"7 mph, Varies",7.0,
+718100,5325,2023-05-20T20:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+718097,2681,2023-05-20T20:05:00Z,R,Final,69,Cloudy,"2 mph, Out To CF",2.0,0.0
+718103,2395,2023-05-20T20:05:00Z,R,Final,58,Cloudy,"17 mph, Out To CF",17.0,0.0
+718098,2392,2023-05-20T20:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+718095,2602,2023-05-20T20:10:00Z,R,Final,71,Sunny,"12 mph, Out To CF",12.0,0.0
+718093,12,2023-05-20T20:10:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+718109,2889,2023-05-20T23:15:00Z,R,Final,72,Clear,"9 mph, In From LF",9.0,135.0
+718094,4705,2023-05-20T23:15:00Z,R,Final,75,Cloudy,"6 mph, Out To RF",6.0,45.0
+718096,1,2023-05-21T02:07:00Z,R,Final,67,Partly Cloudy,"10 mph, R To L",10.0,-90.0
+718092,2680,2023-05-21T02:10:00Z,R,Final,63,Overcast,"7 mph, Varies",7.0,
+718085,2602,2023-05-21T15:35:00Z,R,Final,68,Sunny,"3 mph, L To R",3.0,90.0
+718089,3309,2023-05-21T17:35:00Z,R,Final,72,Sunny,"11 mph, In From LF",11.0,135.0
+718091,31,2023-05-21T17:35:00Z,R,Final,71,Sunny,"5 mph, Out To CF",5.0,0.0
+718088,2681,2023-05-21T17:35:00Z,R,Final,70,Partly Cloudy,"11 mph, In From LF",11.0,135.0
+718090,4705,2023-05-21T17:35:00Z,R,Final,77,Cloudy,"5 mph, L To R",5.0,90.0
+718087,14,2023-05-21T17:37:00Z,R,Final,59,Sunny,"7 mph, Out To CF",7.0,0.0
+718099,3289,2023-05-21T17:40:00Z,R,Final,69,Partly Cloudy,"11 mph, L To R",11.0,90.0
+718082,3289,2023-05-21T23:10:00Z,R,Final,70,Partly Cloudy,"6 mph, In From LF",6.0,135.0
+718081,12,2023-05-21T17:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+718086,2392,2023-05-21T18:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+718084,4,2023-05-21T18:10:00Z,R,Final,75,Sunny,"4 mph, L To R",4.0,90.0
+718083,2889,2023-05-21T18:15:00Z,R,Final,75,Sunny,"11 mph, In From RF",11.0,-135.0
+718076,5325,2023-05-21T18:35:00Z,R,Final,73,Partly Cloudy,"3 mph, Out To CF",3.0,0.0
+718078,2395,2023-05-21T20:05:00Z,R,Final,63,Sunny,"10 mph, Out To CF",10.0,0.0
+718080,1,2023-05-21T20:07:00Z,R,Final,73,Partly Cloudy,"6 mph, R To L",6.0,-90.0
+718079,2680,2023-05-21T20:10:00Z,R,Final,68,Partly Cloudy,"8 mph, L To R",8.0,90.0
+718072,5,2023-05-22T22:10:00Z,R,Final,66,Cloudy,"12 mph, In From CF",12.0,180.0
+718075,31,2023-05-22T22:35:00Z,R,Final,77,Partly Cloudy,"2 mph, Out To LF",2.0,-45.0
+718071,2602,2023-05-22T22:40:00Z,R,Final,77,Partly Cloudy,"8 mph, In From LF",8.0,135.0
+718077,12,2023-05-22T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+718073,2681,2023-05-22T22:40:00Z,R,Final,77,Cloudy,"7 mph, R To L",7.0,-90.0
+718074,4705,2023-05-22T23:20:00Z,R,Final,65,Cloudy,"7 mph, L To R",7.0,90.0
+718066,7,2023-05-22T23:40:00Z,R,Final,77,Partly Cloudy,"6 mph, R To L",6.0,-90.0
+718067,3312,2023-05-22T23:40:00Z,R,Final,81,Clear,"9 mph, R To L",9.0,-90.0
+718068,32,2023-05-22T23:40:00Z,R,Final,69,Partly Cloudy,"10 mph, In From CF",10.0,180.0
+718069,19,2023-05-23T00:40:00Z,R,Final,75,Cloudy,"1 mph, Calm",1.0,
+718070,1,2023-05-23T01:38:00Z,R,Final,68,Clear,"4 mph, Out To CF",4.0,0.0
+718062,680,2023-05-23T01:40:00Z,R,Final,61,Cloudy,"6 mph, Out To LF",6.0,-45.0
+718063,5,2023-05-23T22:10:00Z,R,Final,69,Partly Cloudy,"6 mph, In From CF",6.0,180.0
+718065,31,2023-05-23T22:35:00Z,R,Final,77,Partly Cloudy,"8 mph, In From CF",8.0,180.0
+718059,2602,2023-05-23T22:40:00Z,R,Final,80,Partly Cloudy,"9 mph, Varies",9.0,
+718061,12,2023-05-23T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+718060,2681,2023-05-23T22:40:00Z,R,Final,69,Clear,"10 mph, In From RF",10.0,-135.0
+718064,3309,2023-05-23T23:05:00Z,R,Final,70,Partly Cloudy,"2 mph, R To L",2.0,-90.0
+718058,3313,2023-05-23T23:05:00Z,R,Final,63,Clear,"10 mph, R To L",10.0,-90.0
+718057,4705,2023-05-23T23:20:00Z,R,Final,70,Cloudy,"8 mph, L To R",8.0,90.0
+718049,7,2023-05-23T23:40:00Z,R,Final,80,Clear,"6 mph, R To L",6.0,-90.0
+718055,17,2023-05-23T23:40:00Z,R,Final,71,Clear,"8 mph, In From RF",8.0,-135.0
+718054,3312,2023-05-23T23:40:00Z,R,Final,83,Clear,"4 mph, Out To LF",4.0,-45.0
+718056,32,2023-05-23T23:40:00Z,R,Final,73,Clear,"4 mph, In From RF",4.0,-135.0
+718051,19,2023-05-24T00:40:00Z,R,Final,75,Partly Cloudy,"5 mph, R To L",5.0,-90.0
+718053,1,2023-05-24T01:38:00Z,R,Final,62,Overcast,"4 mph, Out To RF",4.0,45.0
+718050,680,2023-05-24T01:40:00Z,R,Final,62,Cloudy,"2 mph, Out To LF",2.0,-45.0
+718045,31,2023-05-24T16:35:00Z,R,Final,70,Sunny,"7 mph, Out To CF",7.0,0.0
+718043,2681,2023-05-24T17:05:00Z,R,Final,77,Sunny,"4 mph, Out To CF",4.0,0.0
+718047,3312,2023-05-24T17:10:00Z,R,Final,70,Cloudy,"11 mph, In From CF",11.0,180.0
+718048,5,2023-05-24T17:10:00Z,R,Final,67,Partly Cloudy,"6 mph, In From CF",6.0,180.0
+718046,32,2023-05-24T17:10:00Z,R,Final,65,Roof Closed,"0 mph, None",0.0,
+718041,2602,2023-05-24T22:40:00Z,R,Final,80,Partly Cloudy,"8 mph, L To R",8.0,90.0
+718044,12,2023-05-24T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+718052,3309,2023-05-24T23:05:00Z,R,Final,79,Clear,"7 mph, Out To CF",7.0,0.0
+718040,3313,2023-05-24T23:05:00Z,R,Final,62,Overcast,"12 mph, In From LF",12.0,135.0
+718042,4705,2023-05-24T23:20:00Z,R,Final,77,Partly Cloudy,"5 mph, Out To RF",5.0,45.0
+718039,7,2023-05-24T23:40:00Z,R,Final,76,Cloudy,"6 mph, R To L",6.0,-90.0
+718038,17,2023-05-24T23:40:00Z,R,Final,51,Clear,"17 mph, In From CF",17.0,180.0
+718036,19,2023-05-25T00:40:00Z,R,Final,67,Partly Cloudy,"3 mph, Out To CF",3.0,0.0
+718034,1,2023-05-25T01:38:00Z,R,Final,64,Cloudy,"8 mph, R To L",8.0,-90.0
+718037,680,2023-05-25T01:40:00Z,R,Final,67,Clear,"9 mph, L To R",9.0,90.0
+718030,2602,2023-05-25T16:35:00Z,R,Final,65,Partly Cloudy,"6 mph, Varies",6.0,
+718032,12,2023-05-25T17:10:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+718033,19,2023-05-25T19:10:00Z,R,Final,73,Partly Cloudy,"3 mph, Out To LF",3.0,-45.0
+718035,3309,2023-05-25T20:05:00Z,R,Final,70,Sunny,"3 mph, In From RF",3.0,-135.0
+718031,2394,2023-05-25T22:40:00Z,R,Final,62,Clear,"8 mph, L To R",8.0,90.0
+718029,3313,2023-05-25T23:05:00Z,R,Final,66,Clear,"10 mph, L To R",10.0,90.0
+718026,4705,2023-05-25T23:20:00Z,R,Final,80,Partly Cloudy,"6 mph, L To R",6.0,90.0
+718024,17,2023-05-25T23:40:00Z,R,Final,52,Clear,"16 mph, In From CF",16.0,180.0
+718028,32,2023-05-25T23:40:00Z,R,Final,65,Roof Closed,"0 mph, None",0.0,
+718025,680,2023-05-26T01:40:00Z,R,Final,76,Clear,"2 mph, Out To RF",2.0,45.0
+718027,17,2023-05-26T18:20:00Z,R,Final,59,Sunny,"10 mph, In From CF",10.0,180.0
+718018,12,2023-05-26T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+718021,2394,2023-05-26T22:40:00Z,R,Final,71,Clear,"9 mph, L To R",9.0,90.0
+718020,2,2023-05-26T23:05:00Z,R,Final,73,Clear,"7 mph, In From RF",7.0,-135.0
+718023,3313,2023-05-26T23:05:00Z,R,Final,72,Clear,"8 mph, Out To RF",8.0,45.0
+718022,5,2023-05-26T23:10:00Z,R,Final,63,Clear,"14 mph, In From CF",14.0,180.0
+718019,4705,2023-05-26T23:20:00Z,R,Final,76,Clear,"7 mph, L To R",7.0,90.0
+718014,7,2023-05-27T00:10:00Z,R,Final,79,Clear,"9 mph, In From RF",9.0,-135.0
+718013,3312,2023-05-27T00:10:00Z,R,Final,79,Clear,"9 mph, R To L",9.0,-90.0
+718017,32,2023-05-27T00:10:00Z,R,Final,67,Roof Closed,"0 mph, None",0.0,
+718016,19,2023-05-27T00:40:00Z,R,Final,63,Partly Cloudy,"9 mph, R To L",9.0,-90.0
+718015,1,2023-05-27T01:38:00Z,R,Final,64,Cloudy,"9 mph, Out To CF",9.0,0.0
+718010,15,2023-05-27T01:40:00Z,R,Final,77,Roof Closed,"0 mph, None",0.0,
+718009,10,2023-05-27T01:40:00Z,R,Final,60,Partly Cloudy,"15 mph, Out To RF",15.0,45.0
+718012,680,2023-05-27T02:10:00Z,R,Final,77,Clear,"5 mph, Out To RF",5.0,45.0
+718006,3313,2023-05-27T17:05:00Z,R,Final,72,Sunny,"6 mph, R To L",6.0,-90.0
+718005,2394,2023-05-27T17:10:00Z,R,Final,72,Partly Cloudy,"6 mph, In From LF",6.0,135.0
+718008,3312,2023-05-27T18:10:00Z,R,Final,79,Sunny,"10 mph, Out To LF",10.0,-45.0
+718001,2,2023-05-27T20:05:00Z,R,Final,78,Partly Cloudy,"9 mph, R To L",9.0,-90.0
+718003,10,2023-05-27T20:07:00Z,R,Final,62,Partly Cloudy,"10 mph, Out To RF",10.0,45.0
+718000,7,2023-05-27T20:10:00Z,R,Final,78,Sunny,"6 mph, R To L",6.0,-90.0
+718004,680,2023-05-27T20:10:00Z,R,Final,60,Partly Cloudy,"2 mph, Out To LF",2.0,-45.0
+718002,12,2023-05-27T20:10:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+717997,4705,2023-05-27T20:10:00Z,R,Final,75,Sunny,"9 mph, L To R",9.0,90.0
+717999,32,2023-05-27T20:10:00Z,R,Final,70,Sunny,"5 mph, L To R",5.0,90.0
+717991,15,2023-05-27T23:15:00Z,R,Final,75,Roof Closed,"0 mph, None",0.0,
+718007,17,2023-05-27T23:15:00Z,R,Final,64,Partly Cloudy,"9 mph, In From LF",9.0,135.0
+717996,5,2023-05-27T23:15:00Z,R,Final,67,Partly Cloudy,"11 mph, R To L",11.0,-90.0
+718011,19,2023-05-28T01:10:00Z,R,Final,68,Cloudy,"9 mph, In From CF",9.0,180.0
+717998,1,2023-05-28T02:07:00Z,R,Final,66,Partly Cloudy,"6 mph, Out To CF",6.0,0.0
+717994,12,2023-05-28T15:35:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+717990,2,2023-05-28T17:35:00Z,R,Final,71,Partly Cloudy,"3 mph, Out To RF",3.0,45.0
+717995,3313,2023-05-28T17:35:00Z,R,Final,76,Sunny,"7 mph, In From RF",7.0,-135.0
+717993,5,2023-05-28T17:40:00Z,R,Final,71,Partly Cloudy,"6 mph, In From RF",6.0,-135.0
+717989,2394,2023-05-28T17:40:00Z,R,Final,78,Sunny,"9 mph, In From LF",9.0,135.0
+717985,7,2023-05-28T18:10:00Z,R,Final,79,Sunny,"7 mph, R To L",7.0,-90.0
+717988,3312,2023-05-28T18:10:00Z,R,Final,78,Partly Cloudy,"8 mph, R To L",8.0,-90.0
+717986,32,2023-05-28T18:10:00Z,R,Final,74,Sunny,"5 mph, In From LF",5.0,135.0
+717987,17,2023-05-28T18:20:00Z,R,Final,69,Sunny,"11 mph, In From RF",11.0,-135.0
+717982,19,2023-05-28T19:10:00Z,R,Final,76,Partly Cloudy,"5 mph, Out To LF",5.0,-45.0
+717980,10,2023-05-28T20:07:00Z,R,Final,59,Overcast,"13 mph, Out To RF",13.0,45.0
+717984,1,2023-05-28T20:07:00Z,R,Final,68,Cloudy,"4 mph, Out To CF",4.0,0.0
+717981,15,2023-05-28T20:10:00Z,R,Final,76,Roof Closed,"0 mph, None",0.0,
+717983,680,2023-05-28T20:10:00Z,R,Final,56,Cloudy,"6 mph, Out To RF",6.0,45.0
+717992,4705,2023-05-28T23:10:00Z,R,Final,77,Partly Cloudy,"11 mph, Out To LF",11.0,-45.0
+717974,2,2023-05-29T17:05:00Z,R,Final,81,Overcast,"3 mph, In From RF",3.0,-135.0
+717979,2394,2023-05-29T17:10:00Z,R,Final,80,Sunny,"6 mph, L To R",6.0,90.0
+717975,2889,2023-05-29T18:15:00Z,R,Final,85,Partly Cloudy,"3 mph, L To R",3.0,90.0
+717976,17,2023-05-29T18:20:00Z,R,Final,71,Sunny,"9 mph, In From LF",9.0,135.0
+717977,15,2023-05-29T20:10:00Z,R,Final,75,Roof Closed,"0 mph, None",0.0,
+717968,2392,2023-05-29T20:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+717978,2395,2023-05-29T21:05:00Z,R,Final,64,Partly Cloudy,"15 mph, Out To CF",15.0,0.0
+717970,10,2023-05-30T00:07:00Z,R,Final,65,Partly Cloudy,"18 mph, Out To RF",18.0,45.0
+717971,4,2023-05-30T00:10:00Z,R,Final,74,Cloudy,"3 mph, In From LF",3.0,135.0
+717973,22,2023-05-30T01:10:00Z,R,Final,66,Partly Cloudy,"6 mph, Out To CF",6.0,0.0
+717969,680,2023-05-30T01:40:00Z,R,Final,68,Clear,"4 mph, In From LF",4.0,135.0
+717964,2394,2023-05-30T22:40:00Z,R,Final,86,Clear,"11 mph, In From CF",11.0,180.0
+717963,4169,2023-05-30T22:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+717967,2,2023-05-30T23:05:00Z,R,Final,73,Partly Cloudy,"9 mph, R To L",9.0,-90.0
+717965,14,2023-05-30T23:07:00Z,R,Final,73,Clear,"14 mph, R To L",14.0,-90.0
+717966,3,2023-05-30T23:10:00Z,R,Final,65,Clear,"3 mph, R To L",3.0,-90.0
+717962,3289,2023-05-30T23:10:00Z,R,Final,65,Clear,"7 mph, In From RF",7.0,-135.0
+717960,2889,2023-05-30T23:45:00Z,R,Final,88,Partly Cloudy,"7 mph, Out To LF",7.0,-45.0
+717961,17,2023-05-31T00:05:00Z,R,Final,71,Partly Cloudy,"4 mph, In From CF",4.0,180.0
+717956,2392,2023-05-31T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+717959,4,2023-05-31T00:10:00Z,R,Final,73,Clear,"9 mph, In From LF",9.0,135.0
+717955,15,2023-05-31T01:40:00Z,R,Final,92,Clear,"7 mph, Out To RF",7.0,45.0
+717958,10,2023-05-31T01:40:00Z,R,Final,60,Partly Cloudy,"12 mph, Out To RF",12.0,45.0
+717952,680,2023-05-31T01:40:00Z,R,Final,60,Clear,"7 mph, L To R",7.0,90.0
+717972,2395,2023-05-31T01:45:00Z,R,Final,60,Clear,"17 mph, Varies",17.0,
+717957,22,2023-05-31T02:10:00Z,R,Final,64,Partly Cloudy,"6 mph, Out To RF",6.0,45.0
+717951,2394,2023-05-31T17:10:00Z,R,Final,85,Sunny,"8 mph, In From CF",8.0,180.0
+717943,4,2023-05-31T18:10:00Z,R,Final,84,Partly Cloudy,"11 mph, Out To RF",11.0,45.0
+717950,17,2023-05-31T18:20:00Z,R,Final,83,Sunny,"8 mph, R To L",8.0,-90.0
+717946,2,2023-05-31T19:05:00Z,R,Final,79,Sunny,"6 mph, Out To LF",6.0,-45.0
+717949,10,2023-05-31T19:37:00Z,R,Final,61,Partly Cloudy,"12 mph, Out To RF",12.0,45.0
+717953,2395,2023-05-31T19:45:00Z,R,Final,60,Cloudy,"14 mph, Varies",14.0,
+717954,22,2023-05-31T20:10:00Z,R,Final,65,Cloudy,"2 mph, Calm",2.0,
+717945,4169,2023-05-31T22:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+717947,14,2023-05-31T23:07:00Z,R,Final,75,Clear,"4 mph, L To R",4.0,90.0
+717948,3,2023-05-31T23:10:00Z,R,Final,79,Clear,"2 mph, In From CF",2.0,180.0
+717944,3289,2023-05-31T23:10:00Z,R,Final,69,Clear,"7 mph, Out To LF",7.0,-45.0
+717938,2392,2023-06-01T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+717940,15,2023-06-01T01:40:00Z,R,Final,87,Partly Cloudy,"7 mph, Out To RF",7.0,45.0
+717939,680,2023-06-01T01:40:00Z,R,Final,60,Cloudy,"8 mph, In From LF",8.0,135.0
+717942,14,2023-06-01T17:07:00Z,R,Final,75,Sunny,"6 mph, Out To RF",6.0,45.0
+717934,3289,2023-06-01T17:10:00Z,R,Final,82,Sunny,"4 mph, Out To LF",4.0,-45.0
+717941,4169,2023-06-01T17:10:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+717933,15,2023-06-01T19:40:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+717932,3,2023-06-01T23:10:00Z,R,Final,85,Clear,"4 mph, Out To LF",4.0,-45.0
+717937,3312,2023-06-01T23:40:00Z,R,Final,85,Partly Cloudy,"10 mph, R To L",10.0,-90.0
+717936,2392,2023-06-02T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+717931,2602,2023-06-02T21:10:00Z,R,Final,92,Clear,"8 mph, In From LF",8.0,135.0
+717927,4169,2023-06-02T22:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+717930,31,2023-06-02T23:05:00Z,R,Final,90,Partly Cloudy,"7 mph, In From CF",7.0,180.0
+717935,3309,2023-06-02T23:05:00Z,R,Final,90,Partly Cloudy,"7 mph, In From RF",7.0,-135.0
+717929,3289,2023-06-02T23:10:00Z,R,Final,73,Partly Cloudy,"2 mph, R To L",2.0,-90.0
+717922,5325,2023-06-03T00:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+717926,2392,2023-06-03T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+717923,7,2023-06-03T00:10:00Z,R,Final,84,Partly Cloudy,"6 mph, R To L",6.0,-90.0
+717924,3312,2023-06-03T00:10:00Z,R,Final,83,Partly Cloudy,"6 mph, In From CF",6.0,180.0
+717925,4,2023-06-03T00:10:00Z,R,Final,76,Clear,"10 mph, L To R",10.0,90.0
+717921,2680,2023-06-03T01:40:00Z,R,Final,66,Partly Cloudy,"9 mph, L To R",9.0,90.0
+717919,15,2023-06-03T01:40:00Z,R,Final,93,Clear,"2 mph, Calm",2.0,
+717917,22,2023-06-03T02:10:00Z,R,Final,67,Clear,"9 mph, Out To RF",9.0,45.0
+717920,2395,2023-06-03T02:15:00Z,R,Final,60,Clear,"15 mph, Varies",15.0,
+717918,3,2023-06-03T17:10:00Z,R,Final,52,Drizzle,"8 mph, L To R",8.0,90.0
+717885,3,2023-06-03T22:10:00Z,R,Final,48,Drizzle,"16 mph, In From LF",16.0,135.0
+717915,4,2023-06-03T18:10:00Z,R,Final,79,Sunny,"12 mph, L To R",12.0,90.0
+717907,31,2023-06-03T20:05:00Z,R,Final,90,Partly Cloudy,"8 mph, L To R",8.0,90.0
+717912,5325,2023-06-03T20:05:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+717914,3309,2023-06-03T20:05:00Z,R,Final,79,Cloudy,"14 mph, In From RF",14.0,-135.0
+717908,2392,2023-06-03T20:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+717909,7,2023-06-03T20:10:00Z,R,Final,89,Partly Cloudy,"6 mph, R To L",6.0,-90.0
+717910,3289,2023-06-03T20:10:00Z,R,Final,65,Cloudy,"5 mph, In From RF",5.0,-135.0
+717911,4169,2023-06-03T20:10:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+717906,2602,2023-06-03T20:10:00Z,R,Final,91,Cloudy,"7 mph, L To R",7.0,90.0
+717913,3312,2023-06-03T23:15:00Z,R,Final,88,Clear,"7 mph, In From CF",7.0,180.0
+717905,22,2023-06-03T23:15:00Z,R,Final,72,Sunny,"8 mph, Out To RF",8.0,45.0
+717916,2395,2023-06-04T02:05:00Z,R,Final,62,Partly Cloudy,"15 mph, Out To CF",15.0,0.0
+717903,2680,2023-06-04T02:10:00Z,R,Final,65,Partly Cloudy,"9 mph, L To R",9.0,90.0
+717901,15,2023-06-04T02:10:00Z,R,Final,76,Roof Closed,"0 mph, None",0.0,
+717898,31,2023-06-04T15:35:00Z,R,Final,73,Partly Cloudy,"9 mph, In From CF",9.0,180.0
+717904,3,2023-06-04T17:35:00Z,R,Final,52,Overcast,"11 mph, In From CF",11.0,180.0
+717902,3309,2023-06-04T17:35:00Z,R,Final,69,Cloudy,"1 mph, Out To RF",1.0,45.0
+717900,3289,2023-06-04T17:40:00Z,R,Final,64,Cloudy,"5 mph, In From LF",5.0,135.0
+717896,4169,2023-06-04T17:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+717897,2602,2023-06-04T17:40:00Z,R,Final,81,Partly Cloudy,"8 mph, R To L",8.0,-90.0
+717899,2392,2023-06-04T18:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+717893,7,2023-06-04T18:10:00Z,R,Final,88,Sunny,"8 mph, In From RF",8.0,-135.0
+717895,3312,2023-06-04T18:10:00Z,R,Final,85,Partly Cloudy,"6 mph, In From CF",6.0,180.0
+717891,4,2023-06-04T18:10:00Z,R,Final,71,Overcast,"5 mph, L To R",5.0,90.0
+717894,5325,2023-06-04T18:35:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+717890,2395,2023-06-04T20:05:00Z,R,Final,62,Sunny,"9 mph, Out To CF",9.0,0.0
+717892,15,2023-06-04T20:10:00Z,R,Final,77,Roof Closed,"0 mph, None",0.0,
+717889,2680,2023-06-04T21:30:00Z,R,Final,66,Sunny,"8 mph, Varies",8.0,
+717888,22,2023-06-04T23:10:00Z,R,Final,72,Partly Cloudy,"6 mph, Out To RF",6.0,45.0
+717928,3,2023-06-05T20:05:00Z,R,Final,58,Overcast,"5 mph, In From LF",5.0,135.0
+717886,2681,2023-06-05T22:40:00Z,R,Final,76,Cloudy,"11 mph, In From LF",11.0,135.0
+717887,4169,2023-06-05T22:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+717884,31,2023-06-05T23:05:00Z,R,Final,73,Clear,"7 mph, Out To CF",7.0,0.0
+717878,14,2023-06-05T23:07:00Z,R,Final,68,Overcast,"3 mph, L To R",3.0,90.0
+717883,2602,2023-06-05T23:10:00Z,R,Final,80,Partly Cloudy,"8 mph, Varies",8.0,
+717879,5325,2023-06-06T00:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+717880,2680,2023-06-06T01:10:00Z,R,Final,63,Partly Cloudy,"8 mph, L To R",8.0,90.0
+717882,12,2023-06-06T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+717875,2681,2023-06-06T22:40:00Z,R,Final,75,Partly Cloudy,"12 mph, L To R",12.0,90.0
+717876,4169,2023-06-06T22:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+717881,3309,2023-06-06T23:05:00Z,R,Final,80,Cloudy,"9 mph, Out To RF",9.0,45.0
+717874,31,2023-06-06T23:05:00Z,R,Final,76,Partly Cloudy,"13 mph, Out To RF",13.0,45.0
+717877,3313,2023-06-06T23:05:00Z,R,Final,68,Cloudy,"10 mph, L To R",10.0,90.0
+717871,14,2023-06-06T23:07:00Z,R,Final,72,Overcast,"19 mph, In From LF",19.0,135.0
+717873,5,2023-06-06T23:10:00Z,R,Final,68,Partly Cloudy,"8 mph, L To R",8.0,90.0
+717870,2602,2023-06-06T23:10:00Z,R,Final,81,Partly Cloudy,"13 mph, In From CF",13.0,180.0
+717872,4705,2023-06-06T23:20:00Z,R,Final,74,Cloudy,"8 mph, R To L",8.0,-90.0
+717867,32,2023-06-06T23:40:00Z,R,Final,71,Roof Closed,"0 mph, None",0.0,
+717868,5325,2023-06-07T00:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+717869,19,2023-06-07T00:40:00Z,R,Final,73,Partly Cloudy,"1 mph, Out To CF",1.0,0.0
+717861,1,2023-06-07T01:38:00Z,R,Final,65,Cloudy,"8 mph, Out To CF",8.0,0.0
+717864,2680,2023-06-07T01:40:00Z,R,Final,65,Partly Cloudy,"11 mph, L To R",11.0,90.0
+717865,31,2023-06-07T16:35:00Z,R,Final,69,Sunny,"4 mph, Out To CF",4.0,0.0
+717863,2680,2023-06-07T20:10:00Z,R,Final,66,Partly Cloudy,"9 mph, L To R",9.0,90.0
+717860,4169,2023-06-07T22:10:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+717859,12,2023-06-07T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+717866,3309,2023-06-07T23:05:00Z,R,Final,77,Partly Cloudy,"2 mph, R To L",2.0,-90.0
+717856,14,2023-06-07T23:07:00Z,R,Final,68,Roof Closed,"0 mph, None",0.0,
+717858,5,2023-06-07T23:10:00Z,R,Final,65,Overcast,"7 mph, In From CF",7.0,180.0
+717853,2602,2023-06-07T23:10:00Z,R,Final,74,Clear,"9 mph, Out To RF",9.0,45.0
+717850,4705,2023-06-07T23:20:00Z,R,Final,86,Clear,"3 mph, Calm",3.0,
+717851,32,2023-06-07T23:40:00Z,R,Final,70,Roof Closed,"16 mph, L To R",16.0,90.0
+717854,5325,2023-06-08T00:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+717852,19,2023-06-08T00:40:00Z,R,Final,68,Partly Cloudy,"3 mph, In From LF",3.0,135.0
+717855,1,2023-06-08T01:38:00Z,R,Final,68,Cloudy,"6 mph, Out To CF",6.0,0.0
+717844,2602,2023-06-08T16:35:00Z,R,Final,71,Sunny,"9 mph, Varies",9.0,
+717845,12,2023-06-08T17:10:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+717849,32,2023-06-08T18:10:00Z,R,Final,70,Sunny,"4 mph, In From RF",4.0,-135.0
+717846,19,2023-06-08T19:10:00Z,R,Final,75,Partly Cloudy,"3 mph, Out To LF",3.0,-45.0
+717848,3313,2023-06-08T20:05:00Z,R,Final,67,Cloudy,"9 mph, Out To RF",9.0,45.0
+717857,3313,2023-06-08T20:10:00Z,R,Final,66,Cloudy,"4 mph, Varies",4.0,
+717862,2681,2023-06-08T22:05:00Z,R,Final,75,Overcast,"7 mph, L To R",7.0,90.0
+717843,14,2023-06-08T23:07:00Z,R,Final,68,Roof Closed,"0 mph, None",0.0,
+717842,5,2023-06-08T23:10:00Z,R,Final,64,Overcast,"0 mph, Calm",0.0,
+717840,4705,2023-06-08T23:20:00Z,R,Final,80,Partly Cloudy,"11 mph, Out To LF",11.0,-45.0
+717838,1,2023-06-09T01:38:00Z,R,Final,71,Clear,"8 mph, Out To RF",8.0,45.0
+717834,2394,2023-06-09T22:40:00Z,R,Final,76,Cloudy,"0 mph, Calm",0.0,
+717827,12,2023-06-09T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+717839,2,2023-06-09T23:05:00Z,R,Final,73,Partly Cloudy,"8 mph, Out To RF",8.0,45.0
+717836,31,2023-06-09T23:05:00Z,R,Final,70,Cloudy,"8 mph, Out To CF",8.0,0.0
+717837,2681,2023-06-09T23:05:00Z,R,Final,73,Cloudy,"11 mph, L To R",11.0,90.0
+717841,3313,2023-06-09T23:05:00Z,R,Final,68,Cloudy,"6 mph, Calm",6.0,
+717835,14,2023-06-09T23:07:00Z,R,Final,70,Cloudy,"19 mph, In From LF",19.0,135.0
+717833,5,2023-06-09T23:10:00Z,R,Final,70,Clear,"8 mph, L To R",8.0,90.0
+717829,4705,2023-06-09T23:20:00Z,R,Final,83,Clear,"7 mph, R To L",7.0,-90.0
+717828,4,2023-06-10T00:10:00Z,R,Final,71,Clear,"8 mph, In From CF",8.0,180.0
+717831,32,2023-06-10T00:10:00Z,R,Final,74,Clear,"10 mph, L To R",10.0,90.0
+717832,2889,2023-06-10T00:15:00Z,R,Final,82,Partly Cloudy,"3 mph, R To L",3.0,-90.0
+717830,19,2023-06-10T00:40:00Z,R,Final,70,Cloudy,"1 mph, R To L",1.0,-90.0
+717824,1,2023-06-10T01:38:00Z,R,Final,67,Cloudy,"8 mph, R To L",8.0,-90.0
+717823,2395,2023-06-10T02:15:00Z,R,Final,60,Partly Cloudy,"16 mph, Out To CF",16.0,0.0
+717821,2394,2023-06-10T17:10:00Z,R,Final,80,Sunny,"7 mph, R To L",7.0,-90.0
+717820,4,2023-06-10T18:10:00Z,R,Final,83,Partly Cloudy,"9 mph, R To L",9.0,-90.0
+717817,2889,2023-06-10T18:15:00Z,R,Final,85,Sunny,"8 mph, In From RF",8.0,-135.0
+717822,14,2023-06-10T19:07:00Z,R,Final,70,Sunny,"11 mph, Out To CF",11.0,0.0
+717819,19,2023-06-10T19:10:00Z,R,Final,73,Partly Cloudy,"2 mph, Out To LF",2.0,-45.0
+717818,2,2023-06-10T20:05:00Z,R,Final,85,Partly Cloudy,"9 mph, Out To RF",9.0,45.0
+717812,31,2023-06-10T20:05:00Z,R,Final,81,Partly Cloudy,"10 mph, Out To LF",10.0,-45.0
+717811,2681,2023-06-10T20:05:00Z,R,Final,82,Partly Cloudy,"10 mph, In From LF",10.0,135.0
+717813,12,2023-06-10T20:10:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+717816,4705,2023-06-10T20:10:00Z,R,Final,86,Partly Cloudy,"5 mph, L To R",5.0,90.0
+717814,32,2023-06-10T20:10:00Z,R,Final,81,Cloudy,"7 mph, L To R",7.0,90.0
+717815,5,2023-06-10T22:10:00Z,R,Final,75,Partly Cloudy,"1 mph, In From CF",1.0,180.0
+717826,2395,2023-06-10T23:35:00Z,R,Final,60,Cloudy,"10 mph, Out To CF",10.0,0.0
+717825,3313,2023-06-10T23:35:00Z,R,Final,75,Clear,"8 mph, L To R",8.0,90.0
+717809,1,2023-06-11T02:07:00Z,R,Final,64,Overcast,"8 mph, R To L",8.0,-90.0
+717804,2394,2023-06-11T15:35:00Z,R,Final,67,Cloudy,"12 mph, Out To RF",12.0,45.0
+717802,5,2023-06-11T16:40:00Z,R,Final,78,Partly Cloudy,"9 mph, In From CF",9.0,180.0
+717808,2,2023-06-11T17:35:00Z,R,Final,87,Cloudy,"6 mph, Out To LF",6.0,-45.0
+717803,31,2023-06-11T17:35:00Z,R,Final,81,Partly Cloudy,"8 mph, Out To LF",8.0,-45.0
+717806,2681,2023-06-11T17:35:00Z,R,Final,86,Sunny,"8 mph, L To R",8.0,90.0
+717807,4705,2023-06-11T17:35:00Z,R,Final,73,Overcast,"6 mph, In From LF",6.0,135.0
+717805,14,2023-06-11T17:37:00Z,R,Final,68,Roof Closed,"0 mph, None",0.0,
+717801,12,2023-06-11T17:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+717795,4,2023-06-11T18:10:00Z,R,Final,55,Overcast,"7 mph, In From RF",7.0,-135.0
+717800,32,2023-06-11T18:10:00Z,R,Final,66,Roof Closed,"0 mph, None",0.0,
+717797,2889,2023-06-11T18:15:00Z,R,Final,65,Overcast,"9 mph, In From LF",9.0,135.0
+717798,19,2023-06-11T19:10:00Z,R,Final,66,Cloudy,"4 mph, Out To LF",4.0,-45.0
+717796,2395,2023-06-11T20:05:00Z,R,Final,61,Partly Cloudy,"9 mph, Out To CF",9.0,0.0
+717799,1,2023-06-11T20:07:00Z,R,Final,69,Cloudy,"10 mph, Out To LF",10.0,-45.0
+717810,3313,2023-06-11T23:10:00Z,R,Final,76,Partly Cloudy,"7 mph, Out To LF",7.0,-45.0
+717790,2394,2023-06-12T22:40:00Z,R,Final,64,Cloudy,"13 mph, R To L",13.0,-90.0
+717794,3,2023-06-12T23:10:00Z,R,Final,73,Partly Cloudy,"11 mph, Varies",11.0,
+717791,2889,2023-06-12T23:45:00Z,R,Final,73,Partly Cloudy,"9 mph, L To R",9.0,90.0
+717792,5325,2023-06-13T00:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+717793,7,2023-06-13T00:10:00Z,R,Final,73,Clear,"5 mph, Varies",5.0,
+717789,10,2023-06-13T01:40:00Z,R,Final,63,Partly Cloudy,"14 mph, Out To RF",14.0,45.0
+717785,15,2023-06-13T01:40:00Z,R,Final,90,Clear,"3 mph, L To R",3.0,90.0
+717786,680,2023-06-13T01:40:00Z,R,Final,76,Clear,"3 mph, Out To RF",3.0,45.0
+717787,2,2023-06-13T23:05:00Z,R,Final,79,Partly Cloudy,"3 mph, Out To RF",3.0,45.0
+717788,3,2023-06-13T23:10:00Z,R,Final,69,Partly Cloudy,"3 mph, In From CF",3.0,180.0
+717779,3289,2023-06-13T23:10:00Z,R,Final,77,Clear,"11 mph, Out To RF",11.0,45.0
+717783,3312,2023-06-13T23:40:00Z,R,Final,84,Partly Cloudy,"10 mph, In From LF",10.0,135.0
+717781,2889,2023-06-13T23:45:00Z,R,Final,80,Clear,"12 mph, Out To RF",12.0,45.0
+717782,17,2023-06-14T00:05:00Z,R,Final,61,Overcast,"18 mph, Out To RF",18.0,45.0
+717780,5325,2023-06-14T00:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+717777,7,2023-06-14T00:10:00Z,R,Final,77,Partly Cloudy,"8 mph, L To R",8.0,90.0
+717778,2392,2023-06-14T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+717772,2680,2023-06-14T01:40:00Z,R,Final,65,Cloudy,"11 mph, L To R",11.0,90.0
+717774,10,2023-06-14T01:40:00Z,R,Final,62,Partly Cloudy,"10 mph, Out To RF",10.0,45.0
+717775,15,2023-06-14T01:40:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+717773,680,2023-06-14T01:40:00Z,R,Final,64,Cloudy,"2 mph, In From CF",2.0,180.0
+717776,22,2023-06-14T02:10:00Z,R,Final,65,Partly Cloudy,"7 mph, L To R",7.0,90.0
+717770,2394,2023-06-14T17:10:00Z,R,Final,66,Partly Cloudy,"9 mph, Out To LF",9.0,-45.0
+717784,2394,2023-06-14T17:15:00Z,R,Final,73,Partly Cloudy,"9 mph, Out To CF",9.0,0.0
+717771,3312,2023-06-14T17:10:00Z,R,Final,83,Overcast,"7 mph, L To R",7.0,90.0
+717767,2889,2023-06-14T17:15:00Z,R,Final,84,Partly Cloudy,"8 mph, Out To CF",8.0,0.0
+717769,2,2023-06-14T23:05:00Z,R,Final,77,Clear,"12 mph, Out To RF",12.0,45.0
+717768,3,2023-06-14T23:10:00Z,R,Final,64,Cloudy,"7 mph, Out To LF",7.0,-45.0
+717766,3289,2023-06-14T23:10:00Z,R,Final,70,Partly Cloudy,"10 mph, Out To RF",10.0,45.0
+717763,17,2023-06-15T00:05:00Z,R,Final,64,Clear,"7 mph, In From RF",7.0,-135.0
+717765,5325,2023-06-15T00:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+717764,7,2023-06-15T00:10:00Z,R,Final,82,Clear,"5 mph, R To L",5.0,-90.0
+717762,2392,2023-06-15T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+717758,2680,2023-06-15T01:40:00Z,R,Final,66,Cloudy,"8 mph, L To R",8.0,90.0
+717761,10,2023-06-15T01:40:00Z,R,Final,62,Partly Cloudy,"15 mph, Out To RF",15.0,45.0
+717757,15,2023-06-15T01:40:00Z,R,Final,78,Roof Closed,"0 mph, None",0.0,
+717759,680,2023-06-15T01:40:00Z,R,Final,63,Cloudy,"0 mph, Calm",0.0,
+717760,22,2023-06-15T02:10:00Z,R,Final,65,Overcast,"5 mph, L To R",5.0,90.0
+717753,2,2023-06-15T17:05:00Z,R,Final,79,Partly Cloudy,"3 mph, R To L",3.0,-90.0
+717756,10,2023-06-15T19:37:00Z,R,Final,68,Partly Cloudy,"8 mph, Varies",8.0,
+717755,15,2023-06-15T19:40:00Z,R,Final,78,Roof Closed,"0 mph, None",0.0,
+717752,3312,2023-06-15T23:10:00Z,R,Final,71,Clear,"10 mph, In From RF",10.0,-135.0
+717754,4705,2023-06-15T23:20:00Z,R,Final,81,Partly Cloudy,"6 mph, R To L",6.0,-90.0
+717747,17,2023-06-16T00:05:00Z,R,Final,55,Partly Cloudy,"14 mph, In From CF",14.0,180.0
+717751,5325,2023-06-16T00:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+717746,2392,2023-06-16T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+717750,2680,2023-06-16T00:40:00Z,R,Final,68,Partly Cloudy,"9 mph, L To R",9.0,90.0
+717748,22,2023-06-16T02:10:00Z,R,Final,65,Partly Cloudy,"6 mph, Out To RF",6.0,45.0
+717744,17,2023-06-16T18:20:00Z,R,Final,57,Cloudy,"12 mph, In From LF",12.0,135.0
+717749,3309,2023-06-16T23:05:00Z,R,Final,79,Cloudy,"3 mph, In From LF",3.0,135.0
+717743,3289,2023-06-16T23:10:00Z,R,Final,66,Cloudy,"5 mph, R To L",5.0,-90.0
+717742,3,2023-06-16T23:10:00Z,R,Final,73,Cloudy,"2 mph, Out To LF",2.0,-45.0
+717745,4705,2023-06-16T23:20:00Z,R,Final,85,Partly Cloudy,"9 mph, R To L",9.0,-90.0
+717741,5325,2023-06-17T00:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+717737,2392,2023-06-17T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+717736,7,2023-06-17T00:10:00Z,R,Final,87,Partly Cloudy,"8 mph, In From RF",8.0,-135.0
+717738,3312,2023-06-17T00:10:00Z,R,Final,77,Clear,"5 mph, In From RF",5.0,-135.0
+717740,32,2023-06-17T00:10:00Z,R,Final,64,Clear,"1 mph, L To R",1.0,90.0
+717739,15,2023-06-17T01:40:00Z,R,Final,78,Roof Closed,"0 mph, None",0.0,
+717732,2680,2023-06-17T01:40:00Z,R,Final,68,Partly Cloudy,"9 mph, L To R",9.0,90.0
+717735,10,2023-06-17T01:40:00Z,R,Final,65,Partly Cloudy,"13 mph, Out To RF",13.0,45.0
+717731,22,2023-06-17T02:10:00Z,R,Final,69,Clear,"7 mph, Out To CF",7.0,0.0
+717733,680,2023-06-17T02:10:00Z,R,Final,58,Roof Closed,"2 mph, Calm",2.0,
+717728,3312,2023-06-17T18:10:00Z,R,Final,81,Cloudy,"10 mph, Out To CF",10.0,0.0
+717729,17,2023-06-17T18:20:00Z,R,Final,69,Sunny,"6 mph, R To L",6.0,-90.0
+717723,5325,2023-06-17T20:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+717734,3309,2023-06-17T20:05:00Z,R,Final,79,Partly Cloudy,"14 mph, L To R",14.0,90.0
+717725,10,2023-06-17T20:07:00Z,R,Final,66,Sunny,"13 mph, Out To RF",13.0,45.0
+717727,2392,2023-06-17T20:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+717726,7,2023-06-17T20:10:00Z,R,Final,86,Partly Cloudy,"10 mph, R To L",10.0,-90.0
+717718,3289,2023-06-17T20:10:00Z,R,Final,78,Partly Cloudy,"14 mph, L To R",14.0,90.0
+717724,4705,2023-06-17T20:10:00Z,R,Final,89,Partly Cloudy,"4 mph, Calm",4.0,
+717722,680,2023-06-17T20:10:00Z,R,Final,53,Roof Closed,"4 mph, Out To CF",4.0,0.0
+717720,32,2023-06-17T20:10:00Z,R,Final,77,Sunny,"7 mph, L To R",7.0,90.0
+717717,2680,2023-06-17T23:15:00Z,R,Final,70,Sunny,"15 mph, L To R",15.0,90.0
+717721,22,2023-06-18T01:10:00Z,R,Final,72,Clear,"6 mph, Out To CF",6.0,0.0
+717719,15,2023-06-18T02:10:00Z,R,Final,78,Roof Closed,"0 mph, None",0.0,
+717708,17,2023-06-18T17:05:00Z,R,Final,76,Partly Cloudy,"4 mph, R To L",4.0,-90.0
+717716,4705,2023-06-18T17:35:00Z,R,Final,84,Partly Cloudy,"5 mph, In From LF",5.0,135.0
+717714,3309,2023-06-18T17:35:00Z,R,Final,81,Sunny,"2 mph, In From RF",2.0,-135.0
+717730,3,2023-06-18T17:35:00Z,R,Final,64,Cloudy,"8 mph, In From LF",8.0,135.0
+717715,3,2023-06-18T23:10:00Z,R,Final,65,Partly Cloudy,"7 mph, In From RF",7.0,-135.0
+717713,3289,2023-06-18T17:40:00Z,R,Final,78,Partly Cloudy,"9 mph, L To R",9.0,90.0
+717707,2392,2023-06-18T18:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+717712,7,2023-06-18T18:10:00Z,R,Final,66,Cloudy,"6 mph, R To L",6.0,-90.0
+717711,3312,2023-06-18T18:10:00Z,R,Final,72,Partly Cloudy,"9 mph, R To L",9.0,-90.0
+717710,32,2023-06-18T18:10:00Z,R,Final,73,Overcast,"8 mph, In From LF",8.0,135.0
+717709,5325,2023-06-18T18:35:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+717705,10,2023-06-18T20:07:00Z,R,Final,68,Sunny,"15 mph, Out To RF",15.0,45.0
+717706,15,2023-06-18T20:10:00Z,R,Final,78,Roof Closed,"0 mph, None",0.0,
+717702,22,2023-06-18T20:10:00Z,R,Final,73,Partly Cloudy,"6 mph, Out To CF",6.0,0.0
+717703,2680,2023-06-18T20:10:00Z,R,Final,68,Partly Cloudy,"8 mph, L To R",8.0,90.0
+717704,680,2023-06-18T20:10:00Z,R,Final,58,Roof Closed,"0 mph, Calm",0.0,
+717699,3309,2023-06-19T20:05:00Z,R,Final,86,Partly Cloudy,"6 mph, R To L",6.0,-90.0
+717692,2394,2023-06-19T22:40:00Z,R,Final,82,Clear,"11 mph, L To R",11.0,90.0
+717700,4169,2023-06-19T22:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+717698,31,2023-06-19T23:05:00Z,R,Final,85,Partly Cloudy,"5 mph, In From LF",5.0,135.0
+717701,2602,2023-06-19T23:10:00Z,R,Final,71,Drizzle,"8 mph, L To R",8.0,90.0
+717693,3312,2023-06-19T23:40:00Z,R,Final,89,Partly Cloudy,"10 mph, R To L",10.0,-90.0
+717694,2392,2023-06-20T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+717695,4,2023-06-20T00:10:00Z,R,Final,77,Clear,"6 mph, L To R",6.0,90.0
+717696,32,2023-06-20T00:10:00Z,R,Final,79,Clear,"1 mph, Calm",1.0,
+717697,2395,2023-06-20T01:45:00Z,R,Final,61,Clear,"21 mph, Out To CF",21.0,0.0
+717681,2394,2023-06-20T22:40:00Z,R,Final,84,Clear,"10 mph, L To R",10.0,90.0
+717687,12,2023-06-20T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+717689,2681,2023-06-20T22:40:00Z,R,Final,75,Partly Cloudy,"12 mph, R To L",12.0,-90.0
+717690,4169,2023-06-20T22:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+717686,31,2023-06-20T23:05:00Z,R,Final,77,Cloudy,"9 mph, In From LF",9.0,135.0
+717691,3309,2023-06-20T23:05:00Z,R,Final,75,Cloudy,"10 mph, In From RF",10.0,-135.0
+717684,3313,2023-06-20T23:05:00Z,R,Final,72,Partly Cloudy,"9 mph, L To R",9.0,90.0
+717685,2602,2023-06-20T23:10:00Z,R,Final,70,Cloudy,"12 mph, L To R",12.0,90.0
+717679,5,2023-06-20T23:10:00Z,R,Final,80,Cloudy,"10 mph, R To L",10.0,-90.0
+717683,3312,2023-06-20T23:40:00Z,R,Final,89,Clear,"12 mph, In From CF",12.0,180.0
+717682,2392,2023-06-21T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+717675,4,2023-06-21T00:10:00Z,R,Final,72,Clear,"14 mph, L To R",14.0,90.0
+717680,32,2023-06-21T00:10:00Z,R,Final,74,Clear,"15 mph, L To R",15.0,90.0
+717688,2395,2023-06-21T01:45:00Z,R,Final,61,Clear,"20 mph, Out To CF",20.0,0.0
+717678,1,2023-06-21T02:07:00Z,R,Final,72,Clear,"7 mph, Out To CF",7.0,0.0
+717677,12,2023-06-21T16:10:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+717676,4169,2023-06-21T16:10:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+717669,2602,2023-06-21T16:35:00Z,R,Final,75,Partly Cloudy,"12 mph, Varies",12.0,
+717671,31,2023-06-21T16:35:00Z,R,Final,77,Sunny,"11 mph, L To R",11.0,90.0
+717668,2394,2023-06-21T17:10:00Z,R,Final,82,Sunny,"7 mph, In From LF",7.0,135.0
+717670,2392,2023-06-21T18:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+717672,32,2023-06-21T18:10:00Z,R,Final,78,Sunny,"10 mph, L To R",10.0,90.0
+717673,3309,2023-06-21T20:05:00Z,R,Final,64,Cloudy,"16 mph, In From RF",16.0,-135.0
+717666,3313,2023-06-21T23:05:00Z,R,Final,69,Partly Cloudy,"14 mph, In From RF",14.0,-135.0
+717663,5,2023-06-21T23:10:00Z,R,Final,76,Cloudy,"12 mph, In From RF",12.0,-135.0
+717665,3312,2023-06-21T23:40:00Z,R,Final,90,Partly Cloudy,"5 mph, Out To LF",5.0,-45.0
+717667,4,2023-06-22T00:10:00Z,R,Final,74,Clear,"13 mph, L To R",13.0,90.0
+717662,1,2023-06-22T01:38:00Z,R,Final,76,Clear,"8 mph, Out To RF",8.0,45.0
+717674,2395,2023-06-22T01:45:00Z,R,Final,59,Clear,"18 mph, Varies",18.0,
+717847,3309,2023-06-22T17:05:00Z,R,Final,65,Overcast,"7 mph, In From CF",7.0,180.0
+717657,2681,2023-06-22T17:05:00Z,R,Final,65,Cloudy,"13 mph, In From RF",13.0,-135.0
+717660,5,2023-06-22T17:10:00Z,R,Final,71,Cloudy,"7 mph, R To L",7.0,-90.0
+717658,3312,2023-06-22T17:10:00Z,R,Final,86,Cloudy,"7 mph, Out To RF",7.0,45.0
+717661,2395,2023-06-22T19:45:00Z,R,Final,61,Partly Cloudy,"11 mph, Out To CF",11.0,0.0
+717659,12,2023-06-22T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+717654,4169,2023-06-22T22:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+717652,3313,2023-06-22T23:05:00Z,R,Final,69,Cloudy,"9 mph, L To R",9.0,90.0
+717649,12,2023-06-23T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+717647,2394,2023-06-23T22:40:00Z,R,Final,68,Cloudy,"6 mph, L To R",6.0,90.0
+717650,2602,2023-06-23T22:40:00Z,R,Final,77,Cloudy,"6 mph, Out To LF",6.0,-45.0
+717653,4169,2023-06-23T22:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+717651,2,2023-06-23T23:05:00Z,R,Final,73,Overcast,"1 mph, Out To LF",1.0,-45.0
+717656,2681,2023-06-23T23:05:00Z,R,Final,72,Overcast,"6 mph, R To L",6.0,-90.0
+717655,3313,2023-06-23T23:05:00Z,R,Final,69,Overcast,"7 mph, R To L",7.0,-90.0
+717646,14,2023-06-23T23:07:00Z,R,Final,68,Roof Closed,"0 mph, None",0.0,
+717648,5,2023-06-23T23:10:00Z,R,Final,68,Cloudy,"5 mph, In From RF",5.0,-135.0
+717645,4,2023-06-24T00:10:00Z,R,Final,75,Clear,"7 mph, L To R",7.0,90.0
+717644,19,2023-06-24T00:40:00Z,R,Final,82,Partly Cloudy,"9 mph, In From LF",9.0,135.0
+717642,2680,2023-06-24T01:40:00Z,R,Final,66,Clear,"11 mph, L To R",11.0,90.0
+717643,22,2023-06-24T02:10:00Z,R,Final,68,Clear,"8 mph, R To L",8.0,-90.0
+717641,2395,2023-06-24T02:15:00Z,R,Final,60,Partly Cloudy,"15 mph, Out To CF",15.0,0.0
+717637,5381,2023-06-24T17:10:00Z,R,Final,81,Cloudy,"5 mph, Varies",5.0,
+717628,2,2023-06-24T20:05:00Z,R,Final,82,Cloudy,"5 mph, In From RF",5.0,-135.0
+717639,2395,2023-06-24T20:05:00Z,R,Final,62,Cloudy,"14 mph, Out To CF",14.0,0.0
+717635,2681,2023-06-24T20:05:00Z,R,Final,78,Partly Cloudy,"7 mph, Out To CF",7.0,0.0
+717636,3313,2023-06-24T20:05:00Z,R,Final,76,Cloudy,"8 mph, Out To LF",8.0,-45.0
+717634,14,2023-06-24T20:07:00Z,R,Final,68,Roof Closed,"0 mph, None",0.0,
+717632,12,2023-06-24T20:10:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+717631,2602,2023-06-24T20:10:00Z,R,Final,86,Partly Cloudy,"9 mph, Out To LF",9.0,-45.0
+717629,4,2023-06-24T20:10:00Z,R,Final,82,Sunny,"10 mph, L To R",10.0,90.0
+717630,4169,2023-06-24T20:10:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+717625,5,2023-06-24T20:10:00Z,R,Final,74,Partly Cloudy,"3 mph, In From CF",3.0,180.0
+717626,22,2023-06-24T23:15:00Z,R,Final,76,Sunny,"6 mph, Out To RF",6.0,45.0
+717633,2394,2023-06-24T23:15:00Z,R,Final,84,Partly Cloudy,"7 mph, L To R",7.0,90.0
+717638,2680,2023-06-25T00:40:00Z,R,Final,68,Clear,"11 mph, L To R",11.0,90.0
+717640,19,2023-06-25T01:10:00Z,R,Final,86,Clear,"8 mph, R To L",8.0,-90.0
+717623,5381,2023-06-25T14:10:00Z,R,Final,87,Sunny,"12 mph, Varies",12.0,
+717621,2394,2023-06-25T16:10:00Z,R,Final,82,Partly Cloudy,"15 mph, In From CF",15.0,180.0
+717627,2,2023-06-25T17:35:00Z,R,Final,85,Sunny,"6 mph, In From RF",6.0,-135.0
+717624,2681,2023-06-25T17:35:00Z,R,Final,88,Partly Cloudy,"5 mph, Out To LF",5.0,-45.0
+717622,3313,2023-06-25T17:35:00Z,R,Final,79,Partly Cloudy,"6 mph, Varies",6.0,
+717617,14,2023-06-25T17:37:00Z,R,Final,77,Sunny,"9 mph, R To L",9.0,-90.0
+717619,12,2023-06-25T17:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+717618,2602,2023-06-25T17:40:00Z,R,Final,79,Cloudy,"11 mph, R To L",11.0,-90.0
+717620,4169,2023-06-25T17:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+717613,5,2023-06-25T17:40:00Z,R,Final,86,Sunny,"10 mph, Out To CF",10.0,0.0
+717614,4,2023-06-25T18:10:00Z,R,Final,86,Overcast,"6 mph, In From RF",6.0,-135.0
+717616,19,2023-06-25T19:10:00Z,R,Final,73,Sunny,"10 mph, In From CF",10.0,180.0
+717612,2395,2023-06-25T20:05:00Z,R,Final,59,Partly Cloudy,"13 mph, Out To CF",13.0,0.0
+717610,2680,2023-06-25T20:10:00Z,R,Final,70,Sunny,"10 mph, L To R",10.0,90.0
+717615,22,2023-06-25T23:10:00Z,R,Final,74,Sunny,"9 mph, Out To CF",9.0,0.0
+717611,2,2023-06-26T23:05:00Z,R,Final,79,Partly Cloudy,"10 mph, Out To RF",10.0,45.0
+717607,3289,2023-06-26T23:10:00Z,R,Final,74,Cloudy,"5 mph, Out To LF",5.0,-45.0
+717609,4705,2023-06-26T23:20:00Z,R,Final,88,Partly Cloudy,"13 mph, R To L",13.0,-90.0
+717606,5325,2023-06-27T00:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+717608,1,2023-06-27T01:38:00Z,R,Final,74,Clear,"8 mph, R To L",8.0,-90.0
+717602,680,2023-06-27T01:40:00Z,R,Final,73,Clear,"0 mph, Calm",0.0,
+717601,2,2023-06-27T23:05:00Z,R,Final,73,Cloudy,"5 mph, Out To LF",5.0,-45.0
+717603,31,2023-06-27T23:05:00Z,R,Final,68,Cloudy,"10 mph, Out To CF",10.0,0.0
+717604,14,2023-06-27T23:07:00Z,R,Final,73,Overcast,"21 mph, In From LF",21.0,135.0
+717605,3,2023-06-27T23:10:00Z,R,Final,76,Cloudy,"4 mph, Out To RF",4.0,45.0
+717597,3289,2023-06-27T23:10:00Z,R,Final,76,Cloudy,"9 mph, Out To LF",9.0,-45.0
+717600,4705,2023-06-27T23:20:00Z,R,Final,86,Partly Cloudy,"8 mph, R To L",8.0,-90.0
+717598,2889,2023-06-27T23:45:00Z,R,Final,87,Partly Cloudy,"6 mph, In From LF",6.0,135.0
+717599,5325,2023-06-28T00:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+717596,17,2023-06-28T00:05:00Z,R,Final,66,Overcast,"8 mph, In From CF",8.0,180.0
+717591,7,2023-06-28T00:10:00Z,R,Final,87,Clear,"8 mph, R To L",8.0,-90.0
+717594,19,2023-06-28T00:40:00Z,R,Final,90,Partly Cloudy,"2 mph, R To L",2.0,-90.0
+717592,1,2023-06-28T01:38:00Z,R,Final,73,Clear,"7 mph, Out To CF",7.0,0.0
+717590,680,2023-06-28T01:40:00Z,R,Final,73,Partly Cloudy,"5 mph, In From CF",5.0,180.0
+717593,15,2023-06-28T01:40:00Z,R,Final,78,Roof Closed,"0 mph, None",0.0,
+717595,10,2023-06-28T01:40:00Z,R,Final,58,Partly Cloudy,"13 mph, Varies",13.0,
+717588,4705,2023-06-28T16:20:00Z,R,Final,85,Sunny,"6 mph, Out To LF",6.0,-45.0
+717587,680,2023-06-28T20:10:00Z,R,Final,72,Sunny,"0 mph, Calm",0.0,
+717589,2,2023-06-28T23:05:00Z,R,Final,79,Partly Cloudy,"5 mph, Out To RF",5.0,45.0
+717585,31,2023-06-28T23:05:00Z,R,Final,73,Overcast,"6 mph, Out To CF",6.0,0.0
+717586,14,2023-06-28T23:07:00Z,R,Final,68,Roof Closed,"0 mph, None",0.0,
+717583,3,2023-06-28T23:10:00Z,R,Final,77,Cloudy,"3 mph, Out To LF",3.0,-45.0
+717581,3289,2023-06-28T23:10:00Z,R,Final,78,Overcast,"6 mph, Out To RF",6.0,45.0
+717582,2889,2023-06-28T23:45:00Z,R,Final,91,Partly Cloudy,"11 mph, In From RF",11.0,-135.0
+717580,5325,2023-06-29T00:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+717584,17,2023-06-29T00:05:00Z,R,Final,74,Overcast,"5 mph, R To L",5.0,-90.0
+717577,7,2023-06-29T00:10:00Z,R,Final,96,Clear,"13 mph, R To L",13.0,-90.0
+717578,19,2023-06-29T00:40:00Z,R,Final,84,Partly Cloudy,"9 mph, In From CF",9.0,180.0
+717576,1,2023-06-29T01:38:00Z,R,Final,71,Clear,"5 mph, R To L",5.0,-90.0
+717575,15,2023-06-29T01:40:00Z,R,Final,78,Roof Closed,"0 mph, None",0.0,
+717579,10,2023-06-29T01:40:00Z,R,Final,59,Partly Cloudy,"14 mph, Out To RF",14.0,45.0
+717571,31,2023-06-29T16:35:00Z,R,Final,78,Overcast,"3 mph, In From CF",3.0,180.0
+717570,5325,2023-06-29T18:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+717573,7,2023-06-29T18:10:00Z,R,Final,87,Sunny,"8 mph, L To R",8.0,90.0
+717574,10,2023-06-29T19:37:00Z,R,Final,69,Sunny,"6 mph, Out To RF",6.0,45.0
+717568,15,2023-06-29T19:40:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+717560,1,2023-06-29T20:07:00Z,R,Final,75,Sunny,"8 mph, Out To LF",8.0,-45.0
+717569,3,2023-06-29T22:10:00Z,R,Final,77,Partly Cloudy,"9 mph, Out To CF",9.0,0.0
+717564,14,2023-06-29T23:07:00Z,R,Final,74,Clear,"7 mph, R To L",7.0,-90.0
+717565,3289,2023-06-29T23:10:00Z,R,Final,77,Partly Cloudy,"8 mph, Out To LF",8.0,-45.0
+717566,2889,2023-06-29T23:15:00Z,R,Final,85,Partly Cloudy,"10 mph, In From RF",10.0,-135.0
+717567,17,2023-06-30T00:05:00Z,R,Final,76,Cloudy,"4 mph, Out To CF",4.0,0.0
+717572,19,2023-06-30T00:40:00Z,R,Final,68,Partly Cloudy,"4 mph, Out To LF",4.0,-45.0
+717559,17,2023-06-30T18:20:00Z,R,Final,86,Cloudy,"6 mph, R To L",6.0,-90.0
+717557,2602,2023-06-30T21:10:00Z,R,Final,89,Partly Cloudy,"6 mph, R To L",6.0,-90.0
+717563,2681,2023-06-30T22:05:00Z,R,Final,85,Overcast,"3 mph, Out To CF",3.0,0.0
+717561,2,2023-06-30T23:05:00Z,R,Final,73,Cloudy,"5 mph, Out To LF",5.0,-45.0
+717562,31,2023-06-30T23:05:00Z,R,Final,83,Partly Cloudy,"8 mph, Out To LF",8.0,-45.0
+717555,14,2023-06-30T23:07:00Z,R,Final,68,Roof Closed,"0 mph, None",0.0,
+717556,3289,2023-06-30T23:10:00Z,R,Final,77,Partly Cloudy,"8 mph, Out To LF",8.0,-45.0
+717558,4705,2023-06-30T23:20:00Z,R,Final,76,Partly Cloudy,"3 mph, In From CF",3.0,180.0
+717554,5325,2023-07-01T00:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+717552,19,2023-07-01T00:10:00Z,R,Final,66,Partly Cloudy,"4 mph, L To R",4.0,90.0
+717553,7,2023-07-01T00:10:00Z,R,Final,97,Cloudy,"6 mph, Out To RF",6.0,45.0
+717549,1,2023-07-01T01:38:00Z,R,Final,76,Clear,"8 mph, Out To CF",8.0,0.0
+717551,10,2023-07-01T01:40:00Z,R,Final,71,Clear,"11 mph, Out To RF",11.0,45.0
+717548,680,2023-07-01T02:10:00Z,R,Final,75,Clear,"4 mph, L To R",4.0,90.0
+717539,2602,2023-07-01T17:40:00Z,R,Final,79,Overcast,"7 mph, Varies",7.0,
+717545,2889,2023-07-01T18:15:00Z,R,Final,90,Partly Cloudy,"9 mph, Out To LF",9.0,-45.0
+717550,2889,2023-07-01T23:15:00Z,R,Final,76,Cloudy,"5 mph, Out To LF",5.0,-45.0
+717547,14,2023-07-01T19:07:00Z,R,Final,80,Overcast,"11 mph, R To L",11.0,-90.0
+717542,5325,2023-07-01T20:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+717541,2,2023-07-01T20:05:00Z,R,Final,81,Overcast,"6 mph, Out To LF",6.0,-45.0
+717543,2681,2023-07-01T20:05:00Z,R,Final,86,Partly Cloudy,"11 mph, Out To CF",11.0,0.0
+717540,31,2023-07-01T20:05:00Z,R,Final,80,Cloudy,"7 mph, R To L",7.0,-90.0
+717538,10,2023-07-01T20:07:00Z,R,Final,81,Sunny,"6 mph, Out To RF",6.0,45.0
+717535,3289,2023-07-01T20:10:00Z,R,Final,80,Sunny,"11 mph, Out To LF",11.0,-45.0
+717536,4705,2023-07-01T20:10:00Z,R,Final,95,Sunny,"7 mph, R To L",7.0,-90.0
+717546,17,2023-07-01T23:15:00Z,R,Final,73,Overcast,"2 mph, In From RF",2.0,-135.0
+717537,7,2023-07-01T23:15:00Z,R,Final,75,Clear,"14 mph, L To R",14.0,90.0
+717534,680,2023-07-01T23:15:00Z,R,Final,76,Sunny,"2 mph, Out To CF",2.0,0.0
+717544,19,2023-07-02T01:10:00Z,R,Final,79,Partly Cloudy,"4 mph, Out To LF",4.0,-45.0
+717533,1,2023-07-02T02:07:00Z,R,Final,69,Clear,"11 mph, Out To LF",11.0,-45.0
+717529,2,2023-07-02T16:05:00Z,R,Final,84,Cloudy,"2 mph, Out To LF",2.0,-45.0
+717528,2681,2023-07-02T17:35:00Z,R,Final,87,Partly Cloudy,"7 mph, Out To CF",7.0,0.0
+717532,4705,2023-07-02T17:35:00Z,R,Final,89,Partly Cloudy,"6 mph, R To L",6.0,-90.0
+717531,31,2023-07-02T17:35:00Z,R,Final,73,Drizzle,"11 mph, R To L",11.0,-90.0
+717530,14,2023-07-02T17:37:00Z,R,Final,68,Roof Closed,"0 mph, None",0.0,
+717526,2602,2023-07-02T17:40:00Z,R,Final,82,Partly Cloudy,"13 mph, R To L",13.0,-90.0
+717527,7,2023-07-02T18:10:00Z,R,Final,82,Partly Cloudy,"9 mph, L To R",9.0,90.0
+717524,2889,2023-07-02T18:15:00Z,R,Final,83,Cloudy,"11 mph, Out To RF",11.0,45.0
+717520,5325,2023-07-02T18:35:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+717523,19,2023-07-02T19:10:00Z,R,Final,86,Partly Cloudy,"3 mph, R To L",3.0,-90.0
+717522,1,2023-07-02T20:07:00Z,R,Final,80,Sunny,"6 mph, Out To RF",6.0,45.0
+717518,10,2023-07-02T20:07:00Z,R,Final,79,Partly Cloudy,"14 mph, Out To RF",14.0,45.0
+717519,680,2023-07-02T20:10:00Z,R,Final,71,Sunny,"4 mph, In From LF",4.0,135.0
+717521,17,2023-07-02T21:05:00Z,R,Final,65,Rain,"13 mph, In From LF",13.0,135.0
+717525,3289,2023-07-02T23:10:00Z,R,Final,75,Cloudy,"3 mph, Out To LF",3.0,-45.0
+717514,5325,2023-07-03T18:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+717511,32,2023-07-03T18:10:00Z,R,Final,83,Sunny,"8 mph, L To R",8.0,90.0
+717517,3309,2023-07-03T22:05:00Z,R,Final,86,Cloudy,"5 mph, Out To CF",5.0,0.0
+717515,4169,2023-07-03T22:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+717513,3313,2023-07-03T23:05:00Z,R,Final,84,Partly Cloudy,"7 mph, Out To LF",7.0,-45.0
+717512,5,2023-07-03T23:10:00Z,R,Final,78,Clear,"2 mph, In From CF",2.0,180.0
+717510,3312,2023-07-04T00:10:00Z,R,Final,92,Partly Cloudy,"10 mph, Out To RF",10.0,45.0
+717505,2680,2023-07-04T01:40:00Z,R,Final,68,Clear,"10 mph, L To R",10.0,90.0
+717516,2395,2023-07-04T01:45:00Z,R,Final,60,Clear,"16 mph, Varies",16.0,
+717506,22,2023-07-04T02:10:00Z,R,Final,70,Clear,"6 mph, L To R",6.0,90.0
+717507,3309,2023-07-04T15:05:00Z,R,Final,83,Partly Cloudy,"3 mph, L To R",3.0,90.0
+717508,3313,2023-07-04T17:05:00Z,R,Final,75,Partly Cloudy,"4 mph, R To L",4.0,-90.0
+717502,4169,2023-07-04T17:10:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+717501,3,2023-07-04T17:35:00Z,R,Final,73,Overcast,"2 mph, In From CF",2.0,180.0
+717500,3312,2023-07-04T18:10:00Z,R,Final,79,Overcast,"9 mph, Out To CF",9.0,0.0
+717504,2392,2023-07-04T20:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+717498,15,2023-07-04T20:10:00Z,R,Final,78,Roof Closed,"0 mph, None",0.0,
+717499,12,2023-07-04T20:10:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+717503,32,2023-07-04T20:10:00Z,R,Final,86,Partly Cloudy,"7 mph, L To R",7.0,90.0
+717509,2395,2023-07-04T20:35:00Z,R,Final,69,Sunny,"11 mph, Out To CF",11.0,0.0
+717494,2394,2023-07-04T22:40:00Z,R,Final,86,Clear,"10 mph, Out To RF",10.0,45.0
+717497,2680,2023-07-04T22:40:00Z,R,Final,71,Sunny,"10 mph, L To R",10.0,90.0
+717495,5,2023-07-04T23:10:00Z,R,Final,82,Clear,"6 mph, L To R",6.0,90.0
+717496,4,2023-07-05T00:10:00Z,R,Final,84,Partly Cloudy,"3 mph, In From CF",3.0,180.0
+717492,22,2023-07-05T01:10:00Z,R,Final,73,Clear,"7 mph, L To R",7.0,90.0
+717489,2392,2023-07-05T18:10:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+717485,2394,2023-07-05T22:40:00Z,R,Final,89,Clear,"11 mph, R To L",11.0,-90.0
+717491,12,2023-07-05T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+717488,4169,2023-07-05T22:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+717493,3309,2023-07-05T23:05:00Z,R,Final,86,Partly Cloudy,"1 mph, Out To LF",1.0,-45.0
+717487,3313,2023-07-05T23:05:00Z,R,Final,86,Partly Cloudy,"10 mph, R To L",10.0,-90.0
+717484,3,2023-07-05T23:10:00Z,R,Final,80,Partly Cloudy,"6 mph, R To L",6.0,-90.0
+717486,5,2023-07-05T23:10:00Z,R,Final,84,Clear,"1 mph, In From RF",1.0,-135.0
+717482,3312,2023-07-05T23:40:00Z,R,Final,75,Partly Cloudy,"6 mph, L To R",6.0,90.0
+717483,32,2023-07-06T00:10:00Z,R,Final,81,Roof Closed,"0 mph, None",0.0,
+717478,2680,2023-07-06T00:40:00Z,R,Final,68,Clear,"10 mph, L To R",10.0,90.0
+717490,2395,2023-07-06T01:05:00Z,R,Final,62,Partly Cloudy,"12 mph, Varies",12.0,
+717477,15,2023-07-06T01:40:00Z,R,Final,78,Roof Closed,"0 mph, None",0.0,
+717479,22,2023-07-06T02:10:00Z,R,Final,69,Clear,"7 mph, Out To CF",7.0,0.0
+717481,3309,2023-07-06T17:05:00Z,R,Final,88,Cloudy,"4 mph, Out To LF",4.0,-45.0
+717476,2394,2023-07-06T17:10:00Z,R,Final,80,Cloudy,"8 mph, Out To LF",8.0,-45.0
+717474,32,2023-07-06T18:10:00Z,R,Final,76,Partly Cloudy,"7 mph, L To R",7.0,90.0
+717468,4,2023-07-06T21:10:00Z,R,Final,73,Partly Cloudy,"12 mph, L To R",12.0,90.0
+717480,4,2023-07-06T21:15:00Z,R,Final,71,Partly Cloudy,"6 mph, L To R",6.0,90.0
+717472,12,2023-07-06T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+717473,4169,2023-07-06T22:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+717475,3313,2023-07-06T23:05:00Z,R,Final,85,Clear,"9 mph, R To L",9.0,-90.0
+717469,5,2023-07-06T23:10:00Z,R,Final,77,Overcast,"3 mph, L To R",3.0,90.0
+717471,3,2023-07-06T23:10:00Z,R,Final,88,Partly Cloudy,"3 mph, Out To LF",3.0,-45.0
+717467,2392,2023-07-07T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+717470,15,2023-07-07T01:40:00Z,R,Final,78,Roof Closed,"0 mph, None",0.0,
+717462,22,2023-07-07T02:10:00Z,R,Final,69,Clear,"7 mph, L To R",7.0,90.0
+717457,2394,2023-07-07T22:40:00Z,R,Final,79,Partly Cloudy,"8 mph, In From CF",8.0,180.0
+717460,12,2023-07-07T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+717466,4169,2023-07-07T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+717465,3309,2023-07-07T23:05:00Z,R,Final,85,Clear,"3 mph, Out To LF",3.0,-45.0
+717464,3313,2023-07-07T23:05:00Z,R,Final,80,Cloudy,"8 mph, In From RF",8.0,-135.0
+717463,5,2023-07-07T23:10:00Z,R,Final,75,Clear,"2 mph, In From RF",2.0,-135.0
+717461,3,2023-07-07T23:10:00Z,R,Final,82,Partly Cloudy,"9 mph, Out To LF",9.0,-45.0
+717453,2392,2023-07-08T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+717458,3312,2023-07-08T00:10:00Z,R,Final,73,Partly Cloudy,"5 mph, Out To LF",5.0,-45.0
+717455,4,2023-07-08T00:10:00Z,R,Final,72,Cloudy,"9 mph, In From LF",9.0,135.0
+717459,32,2023-07-08T00:10:00Z,R,Final,77,Roof Closed,"0 mph, None",0.0,
+717452,15,2023-07-08T01:40:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+717454,2680,2023-07-08T01:40:00Z,R,Final,67,Partly Cloudy,"8 mph, Varies",8.0,
+717456,22,2023-07-08T02:10:00Z,R,Final,69,Clear,"7 mph, Out To CF",7.0,0.0
+717448,2395,2023-07-08T02:15:00Z,R,Final,60,Clear,"18 mph, Out To CF",18.0,0.0
+717447,3313,2023-07-08T17:05:00Z,R,Final,83,Cloudy,"7 mph, R To L",7.0,-90.0
+717442,2394,2023-07-08T17:10:00Z,R,Final,69,Overcast,"9 mph, R To L",9.0,-90.0
+717446,3312,2023-07-08T18:10:00Z,R,Final,76,Partly Cloudy,"9 mph, Out To RF",9.0,45.0
+717445,4,2023-07-08T18:10:00Z,R,Final,65,Cloudy,"9 mph, Out To RF",9.0,45.0
+717451,2395,2023-07-08T20:05:00Z,R,Final,62,Partly Cloudy,"20 mph, Out To CF",20.0,0.0
+717450,3309,2023-07-08T20:05:00Z,R,Final,87,Cloudy,"7 mph, R To L",7.0,-90.0
+717443,5,2023-07-08T20:10:00Z,R,Final,72,Cloudy,"8 mph, L To R",8.0,90.0
+717449,3,2023-07-08T20:10:00Z,R,Final,78,Sunny,"11 mph, In From RF",11.0,-135.0
+717439,15,2023-07-08T20:10:00Z,R,Final,76,Roof Closed,"0 mph, None",0.0,
+717438,4169,2023-07-08T20:10:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+717444,32,2023-07-08T20:10:00Z,R,Final,75,Partly Cloudy,"9 mph, L To R",9.0,90.0
+717440,2392,2023-07-08T23:15:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+717441,12,2023-07-08T23:15:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+717437,22,2023-07-09T01:10:00Z,R,Final,73,Clear,"7 mph, Out To CF",7.0,0.0
+717436,2680,2023-07-09T02:10:00Z,R,Final,65,Partly Cloudy,"8 mph, L To R",8.0,90.0
+717432,3309,2023-07-09T16:05:00Z,R,Final,83,Cloudy,"5 mph, L To R",5.0,90.0
+717435,3,2023-07-09T17:35:00Z,R,Final,80,Cloudy,"12 mph, In From RF",12.0,-135.0
+717433,3313,2023-07-09T17:35:00Z,R,Final,79,Cloudy,"10 mph, Out To LF",10.0,-45.0
+717434,5,2023-07-09T17:40:00Z,R,Final,73,Partly Cloudy,"12 mph, L To R",12.0,90.0
+717431,2394,2023-07-09T17:40:00Z,R,Final,74,Cloudy,"8 mph, R To L",8.0,-90.0
+717429,12,2023-07-09T17:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+717426,4169,2023-07-09T17:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+717430,2392,2023-07-09T18:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+717428,3312,2023-07-09T18:10:00Z,R,Final,80,Sunny,"13 mph, Out To LF",13.0,-45.0
+717424,4,2023-07-09T18:10:00Z,R,Final,80,Partly Cloudy,"3 mph, Out To RF",3.0,45.0
+717427,32,2023-07-09T18:10:00Z,R,Final,75,Partly Cloudy,"9 mph, In From LF",9.0,135.0
+717422,2395,2023-07-09T20:05:00Z,R,Final,60,Cloudy,"17 mph, Out To CF",17.0,0.0
+717425,15,2023-07-09T20:10:00Z,R,Final,77,Roof Closed,"0 mph, None",0.0,
+717423,2680,2023-07-09T20:10:00Z,R,Final,70,Sunny,"6 mph, L To R",6.0,90.0
+717418,2681,2023-07-14T22:05:00Z,R,Final,87,Partly Cloudy,"8 mph, Out To RF",8.0,45.0
+717416,31,2023-07-14T23:05:00Z,R,Final,85,Partly Cloudy,"6 mph, Out To LF",6.0,-45.0
+717407,2889,2023-07-14T23:05:00Z,R,Final,91,Partly Cloudy,"8 mph, In From RF",8.0,-135.0
+717417,2,2023-07-14T23:05:00Z,R,Final,81,Partly Cloudy,"6 mph, Out To LF",6.0,-45.0
+717420,14,2023-07-14T23:07:00Z,R,Final,73,Cloudy,"9 mph, R To L",9.0,-90.0
+717413,3289,2023-07-14T23:10:00Z,R,Final,82,Cloudy,"9 mph, Out To LF",9.0,-45.0
+717412,2602,2023-07-14T23:10:00Z,R,Final,91,Partly Cloudy,"8 mph, Varies",8.0,
+717414,4705,2023-07-14T23:20:00Z,R,Final,86,Partly Cloudy,"3 mph, Calm",3.0,
+717419,17,2023-07-15T00:05:00Z,R,Final,86,Cloudy,"7 mph, Out To RF",7.0,45.0
+717415,5325,2023-07-15T00:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+717410,19,2023-07-15T00:40:00Z,R,Final,82,Partly Cloudy,"8 mph, R To L",8.0,-90.0
+717405,1,2023-07-15T01:38:00Z,R,Final,85,Clear,"8 mph, Out To CF",8.0,0.0
+717409,10,2023-07-15T01:40:00Z,R,Final,71,Clear,"12 mph, Out To RF",12.0,45.0
+717406,680,2023-07-15T02:10:00Z,R,Final,80,Clear,"5 mph, L To R",5.0,90.0
+717408,2681,2023-07-15T17:05:00Z,R,Final,90,Sunny,"6 mph, Out To CF",6.0,0.0
+717397,2681,2023-07-15T23:05:00Z,R,Final,86,Partly Cloudy,"11 mph, Out To CF",11.0,0.0
+717411,7,2023-07-15T18:10:00Z,R,Final,86,Sunny,"8 mph, L To R",8.0,90.0
+717393,7,2023-07-15T23:10:00Z,R,Final,88,Partly Cloudy,"9 mph, L To R",9.0,90.0
+717407,2889,2023-07-15T18:15:00Z,R,Final,91,Partly Cloudy,"8 mph, In From RF",8.0,-135.0
+717403,17,2023-07-15T18:20:00Z,R,Final,83,Partly Cloudy,"8 mph, Out To RF",8.0,45.0
+717404,14,2023-07-15T19:07:00Z,R,Final,68,Roof Closed,"0 mph, None",0.0,
+717402,5325,2023-07-15T20:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+717398,31,2023-07-15T23:05:00Z,R,Final,86,Overcast,"7 mph, Out To LF",7.0,-45.0
+717401,2,2023-07-15T23:05:00Z,R,Final,90,Cloudy,"9 mph, Out To LF",9.0,-45.0
+717399,10,2023-07-15T23:07:00Z,R,Final,80,Sunny,"10 mph, Out To RF",10.0,45.0
+717392,2602,2023-07-15T23:10:00Z,R,Final,75,Cloudy,"8 mph, R To L",8.0,-90.0
+717400,3289,2023-07-15T23:15:00Z,R,Final,79,Drizzle,"3 mph, Out To LF",3.0,-45.0
+717396,2889,2023-07-15T23:15:00Z,R,Final,77,Partly Cloudy,"8 mph, Out To RF",8.0,45.0
+717395,4705,2023-07-15T23:15:00Z,R,Final,86,Partly Cloudy,"16 mph, R To L",16.0,-90.0
+717394,19,2023-07-16T00:10:00Z,R,Final,85,Partly Cloudy,"7 mph, In From CF",7.0,180.0
+717389,1,2023-07-16T01:07:00Z,R,Final,77,Clear,"9 mph, Out To RF",9.0,45.0
+717390,680,2023-07-16T01:40:00Z,R,Final,84,Clear,"1 mph, L To R",1.0,90.0
+717388,31,2023-07-16T16:05:00Z,R,Final,79,Partly Cloudy,"9 mph, Out To LF",9.0,-45.0
+717387,2681,2023-07-16T17:35:00Z,R,Final,77,Cloudy,"3 mph, Calm",3.0,
+717391,4705,2023-07-16T17:35:00Z,R,Final,88,Partly Cloudy,"9 mph, R To L",9.0,-90.0
+717384,2,2023-07-16T17:35:00Z,R,Final,81,Cloudy,"2 mph, Out To RF",2.0,45.0
+717386,14,2023-07-16T17:37:00Z,R,Final,73,Partly Cloudy,"7 mph, Out To LF",7.0,-45.0
+717383,2602,2023-07-16T17:40:00Z,R,Final,83,Overcast,"10 mph, Varies",10.0,
+717382,7,2023-07-16T18:10:00Z,R,Final,70,Partly Cloudy,"5 mph, R To L",5.0,-90.0
+717380,2889,2023-07-16T18:15:00Z,R,Final,89,Sunny,"8 mph, Out To RF",8.0,45.0
+717376,17,2023-07-16T18:20:00Z,R,Final,81,Partly Cloudy,"4 mph, L To R",4.0,90.0
+717377,5325,2023-07-16T18:35:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+717378,19,2023-07-16T19:10:00Z,R,Final,86,Sunny,"5 mph, In From CF",5.0,180.0
+717379,10,2023-07-16T20:07:00Z,R,Final,79,Partly Cloudy,"8 mph, Varies",8.0,
+717373,680,2023-07-16T20:10:00Z,R,Final,76,Sunny,"5 mph, L To R",5.0,90.0
+717385,3289,2023-07-16T21:10:00Z,R,Final,79,Cloudy,"7 mph, Out To LF",7.0,-45.0
+717381,1,2023-07-16T23:10:00Z,R,Final,83,Sunny,"8 mph, Out To CF",8.0,0.0
+717372,2,2023-07-17T23:05:00Z,R,Final,89,Clear,"8 mph, Out To CF",8.0,0.0
+717371,31,2023-07-17T23:05:00Z,R,Final,67,Drizzle,"9 mph, R To L",9.0,-90.0
+717375,2602,2023-07-17T23:10:00Z,R,Final,85,Partly Cloudy,"10 mph, Out To CF",10.0,0.0
+717374,2889,2023-07-17T23:45:00Z,R,Final,80,Cloudy,"7 mph, Out To RF",7.0,45.0
+717370,17,2023-07-18T00:05:00Z,R,Final,72,Clear,"6 mph, In From RF",6.0,-135.0
+717367,5325,2023-07-18T00:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+717368,7,2023-07-18T00:10:00Z,R,Final,84,Partly Cloudy,"10 mph, In From RF",10.0,-135.0
+717369,1,2023-07-18T01:38:00Z,R,Final,79,Clear,"9 mph, Out To CF",9.0,0.0
+717366,10,2023-07-18T01:40:00Z,R,Final,67,Clear,"8 mph, Out To RF",8.0,45.0
+717365,680,2023-07-18T01:40:00Z,R,Final,70,Partly Cloudy,"8 mph, In From LF",8.0,135.0
+717375,2602,2023-07-18T21:40:00Z,R,Final,85,Partly Cloudy,"10 mph, Out To CF",10.0,0.0
+717363,2681,2023-07-18T22:40:00Z,R,Final,89,Cloudy,"12 mph, L To R",12.0,90.0
+717361,2,2023-07-18T23:05:00Z,R,Final,87,Clear,"8 mph, L To R",8.0,90.0
+717364,31,2023-07-18T23:05:00Z,R,Final,80,Partly Cloudy,"8 mph, Out To LF",8.0,-45.0
+717362,14,2023-07-18T23:07:00Z,R,Final,73,Partly Cloudy,"5 mph, Out To LF",5.0,-45.0
+717359,3289,2023-07-18T23:10:00Z,R,Final,80,Clear,"7 mph, Out To LF",7.0,-45.0
+717358,4705,2023-07-18T23:20:00Z,R,Final,90,Clear,"8 mph, In From RF",8.0,-135.0
+717357,2889,2023-07-18T23:45:00Z,R,Final,81,Clear,"3 mph, R To L",3.0,-90.0
+717353,17,2023-07-19T00:05:00Z,R,Final,73,Clear,"9 mph, In From RF",9.0,-135.0
+717354,5325,2023-07-19T00:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+717356,7,2023-07-19T00:10:00Z,R,Final,76,Partly Cloudy,"8 mph, R To L",8.0,-90.0
+717355,19,2023-07-19T00:40:00Z,R,Final,88,Partly Cloudy,"9 mph, Out To LF",9.0,-45.0
+717352,1,2023-07-19T01:38:00Z,R,Final,82,Clear,"9 mph, R To L",9.0,-90.0
+717349,10,2023-07-19T01:40:00Z,R,Final,63,Clear,"15 mph, Out To RF",15.0,45.0
+717350,680,2023-07-19T01:40:00Z,R,Final,77,Clear,"10 mph, L To R",10.0,90.0
+717360,2602,2023-07-18T23:10:00Z,R,Final,78,Cloudy,"7 mph, R To L",7.0,-90.0
+717348,31,2023-07-19T16:35:00Z,R,Final,75,Cloudy,"4 mph, Out To LF",4.0,-45.0
+717343,2,2023-07-19T17:05:00Z,R,Final,85,Partly Cloudy,"3 mph, Out To CF",3.0,0.0
+717346,5325,2023-07-19T18:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+717351,2889,2023-07-19T18:15:00Z,R,Final,85,Cloudy,"5 mph, R To L",5.0,-90.0
+717345,19,2023-07-19T19:10:00Z,R,Final,90,Cloudy,"8 mph, In From CF",8.0,180.0
+717344,10,2023-07-19T19:37:00Z,R,Final,69,Sunny,"9 mph, Out To RF",9.0,45.0
+717347,2681,2023-07-19T22:40:00Z,R,Final,82,Cloudy,"3 mph, Out To CF",3.0,0.0
+717338,14,2023-07-19T23:07:00Z,R,Final,68,Roof Closed,"0 mph, None",0.0,
+717339,1,2023-07-19T23:07:00Z,R,Final,89,Partly Cloudy,"10 mph, Out To CF",10.0,0.0
+717342,2602,2023-07-19T23:10:00Z,R,Final,82,Partly Cloudy,"5 mph, R To L",5.0,-90.0
+717341,3289,2023-07-19T23:10:00Z,R,Final,79,Partly Cloudy,"4 mph, Out To LF",4.0,-45.0
+717340,4705,2023-07-19T23:20:00Z,R,Final,85,Partly Cloudy,"7 mph, Out To LF",7.0,-45.0
+717336,17,2023-07-20T00:05:00Z,R,Final,77,Partly Cloudy,"8 mph, R To L",8.0,-90.0
+717333,7,2023-07-20T00:10:00Z,R,Final,83,Overcast,"8 mph, In From RF",8.0,-135.0
+717335,680,2023-07-20T01:40:00Z,R,Final,83,Clear,"9 mph, L To R",9.0,90.0
+717337,4705,2023-07-20T16:20:00Z,R,Final,90,Partly Cloudy,"10 mph, R To L",10.0,-90.0
+717334,2602,2023-07-20T16:35:00Z,R,Final,85,Cloudy,"7 mph, Varies",7.0,
+717329,2681,2023-07-20T16:35:00Z,R,Final,84,Partly Cloudy,"4 mph, Out To LF",4.0,-45.0
+717331,14,2023-07-20T17:07:00Z,R,Final,75,Sunny,"8 mph, Out To RF",8.0,45.0
+717330,3289,2023-07-20T17:10:00Z,R,Final,85,Sunny,"3 mph, L To R",3.0,90.0
+717332,7,2023-07-20T18:10:00Z,R,Final,86,Sunny,"11 mph, L To R",11.0,90.0
+717327,680,2023-07-20T19:40:00Z,R,Final,76,Sunny,"1 mph, Calm",1.0,
+717328,12,2023-07-20T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+717322,17,2023-07-21T00:05:00Z,R,Final,80,Partly Cloudy,"13 mph, L To R",13.0,90.0
+717323,10,2023-07-21T01:40:00Z,R,Final,71,Clear,"7 mph, Out To RF",7.0,45.0
+717325,17,2023-07-21T18:20:00Z,R,Final,74,Sunny,"8 mph, In From LF",8.0,135.0
+717317,2394,2023-07-21T22:40:00Z,R,Final,80,Partly Cloudy,"8 mph, L To R",8.0,90.0
+717320,12,2023-07-21T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+717319,4169,2023-07-21T22:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+717326,3309,2023-07-21T23:05:00Z,R,Final,87,Partly Cloudy,"6 mph, In From LF",6.0,135.0
+717318,3313,2023-07-21T23:05:00Z,R,Final,84,Partly Cloudy,"12 mph, Out To RF",12.0,45.0
+717321,2602,2023-07-21T23:10:00Z,R,Final,82,Cloudy,"8 mph, Out To CF",8.0,0.0
+717324,3,2023-07-21T23:10:00Z,R,Final,75,Cloudy,"2 mph, Out To LF",2.0,-45.0
+717315,5,2023-07-21T23:10:00Z,R,Final,75,Clear,"1 mph, Out To RF",1.0,45.0
+717316,5325,2023-07-22T00:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+717314,3312,2023-07-22T00:10:00Z,R,Final,82,Partly Cloudy,"7 mph, Out To LF",7.0,-45.0
+717313,32,2023-07-22T00:10:00Z,R,Final,79,Clear,"6 mph, L To R",6.0,90.0
+717312,1,2023-07-22T01:38:00Z,R,Final,79,Partly Cloudy,"6 mph, Out To CF",6.0,0.0
+717310,10,2023-07-22T01:40:00Z,R,Final,71,Clear,"11 mph, Out To RF",11.0,45.0
+717311,680,2023-07-22T02:10:00Z,R,Final,79,Clear,"5 mph, Calm",5.0,
+717304,3313,2023-07-22T17:05:00Z,R,Final,79,Sunny,"5 mph, L To R",5.0,90.0
+717306,4169,2023-07-22T17:10:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+717324,3,2023-07-22T18:10:00Z,R,Final,75,Cloudy,"2 mph, Out To LF",2.0,-45.0
+717308,17,2023-07-22T18:20:00Z,R,Final,82,Partly Cloudy,"9 mph, Out To LF",9.0,-45.0
+717305,5325,2023-07-22T20:05:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+717303,2602,2023-07-22T20:10:00Z,R,Final,83,Partly Cloudy,"7 mph, In From LF",7.0,135.0
+717300,12,2023-07-22T20:10:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+717301,680,2023-07-22T20:10:00Z,R,Final,74,Sunny,"4 mph, Out To CF",4.0,0.0
+717299,2394,2023-07-22T22:10:00Z,R,Final,80,Partly Cloudy,"8 mph, L To R",8.0,90.0
+717307,3309,2023-07-22T23:05:00Z,R,Final,84,Partly Cloudy,"4 mph, In From CF",4.0,180.0
+717309,3,2023-07-22T23:10:00Z,R,Final,74,Partly Cloudy,"1 mph, L To R",1.0,90.0
+717302,5,2023-07-22T23:10:00Z,R,Final,78,Clear,"1 mph, In From RF",1.0,-135.0
+717293,3312,2023-07-22T23:15:00Z,R,Final,77,Cloudy,"6 mph, Out To CF",6.0,0.0
+717296,32,2023-07-22T23:15:00Z,R,Final,78,Roof Closed,"0 mph, None",0.0,
+717295,10,2023-07-23T01:07:00Z,R,Final,75,Partly Cloudy,"9 mph, Out To RF",9.0,45.0
+717297,1,2023-07-23T01:07:00Z,R,Final,79,Partly Cloudy,"9 mph, Out To CF",9.0,0.0
+717288,2394,2023-07-23T16:05:00Z,R,Final,80,Sunny,"3 mph, Out To LF",3.0,-45.0
+717290,3309,2023-07-23T17:35:00Z,R,Final,87,Partly Cloudy,"4 mph, Out To LF",4.0,-45.0
+717294,3313,2023-07-23T17:35:00Z,R,Final,84,Sunny,"6 mph, In From CF",6.0,180.0
+717289,2602,2023-07-23T17:40:00Z,R,Final,83,Partly Cloudy,"8 mph, R To L",8.0,-90.0
+717291,12,2023-07-23T17:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+717283,5,2023-07-23T17:40:00Z,R,Final,82,Partly Cloudy,"5 mph, Out To RF",5.0,45.0
+717292,4169,2023-07-23T17:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+717285,3312,2023-07-23T18:10:00Z,R,Final,82,Overcast,"6 mph, L To R",6.0,90.0
+717287,32,2023-07-23T18:10:00Z,R,Final,80,Partly Cloudy,"5 mph, In From RF",5.0,-135.0
+717286,17,2023-07-23T18:20:00Z,R,Final,78,Sunny,"3 mph, In From RF",3.0,-135.0
+717284,5325,2023-07-23T18:35:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+717279,10,2023-07-23T20:07:00Z,R,Final,72,Partly Cloudy,"11 mph, Out To RF",11.0,45.0
+717278,1,2023-07-23T20:07:00Z,R,Final,81,Overcast,"5 mph, Out To CF",5.0,0.0
+717281,680,2023-07-23T20:10:00Z,R,Final,77,Sunny,"4 mph, Out To RF",4.0,45.0
+717298,3,2023-07-23T23:10:00Z,R,Final,75,Clear,"2 mph, Out To RF",2.0,45.0
+718558,2394,2023-07-24T17:10:00Z,R,Final,81,Sunny,"5 mph, R To L",5.0,-90.0
+717280,2681,2023-07-24T22:40:00Z,R,Final,85,Partly Cloudy,"11 mph, Out To CF",11.0,0.0
+717282,3309,2023-07-24T23:05:00Z,R,Final,85,Partly Cloudy,"6 mph, Out To CF",6.0,0.0
+717277,5,2023-07-24T23:10:00Z,R,Final,79,Clear,"5 mph, L To R",5.0,90.0
+717275,3312,2023-07-24T23:40:00Z,R,Final,83,Partly Cloudy,"4 mph, Out To LF",4.0,-45.0
+717274,2392,2023-07-25T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+717273,32,2023-07-25T00:10:00Z,R,Final,78,Overcast,"3 mph, L To R",3.0,90.0
+717276,2680,2023-07-25T01:40:00Z,R,Final,72,Clear,"8 mph, L To R",8.0,90.0
+717268,15,2023-07-25T01:40:00Z,R,Final,78,Roof Closed,"0 mph, None",0.0,
+717271,22,2023-07-25T02:10:00Z,R,Final,78,Clear,"5 mph, L To R",5.0,90.0
+717265,2394,2023-07-25T22:40:00Z,R,Final,85,Overcast,"7 mph, R To L",7.0,-90.0
+717267,2681,2023-07-25T22:40:00Z,R,Final,72,Partly Cloudy,"4 mph, Calm",4.0,
+717270,12,2023-07-25T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+717269,3309,2023-07-25T23:05:00Z,R,Final,82,Partly Cloudy,"6 mph, Out To RF",6.0,45.0
+717266,3313,2023-07-25T23:05:00Z,R,Final,70,Cloudy,"2 mph, Out To CF",2.0,0.0
+717260,5,2023-07-25T23:10:00Z,R,Final,80,Overcast,"0 mph, Calm",0.0,
+717261,3,2023-07-25T23:10:00Z,R,Final,69,Cloudy,"2 mph, Out To LF",2.0,-45.0
+717264,3312,2023-07-25T23:40:00Z,R,Final,90,Cloudy,"9 mph, Out To LF",9.0,-45.0
+717255,2392,2023-07-26T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+717263,4,2023-07-26T00:10:00Z,R,Final,86,Clear,"9 mph, Varies",9.0,
+717262,32,2023-07-26T00:10:00Z,R,Final,85,Clear,"10 mph, L To R",10.0,90.0
+717258,2680,2023-07-26T01:40:00Z,R,Final,75,Clear,"6 mph, L To R",6.0,90.0
+717259,15,2023-07-26T01:40:00Z,R,Final,78,Roof Closed,"0 mph, None",0.0,
+717272,2395,2023-07-26T01:45:00Z,R,Final,67,Partly Cloudy,"15 mph, Out To CF",15.0,0.0
+717256,22,2023-07-26T02:10:00Z,R,Final,83,Clear,"7 mph, L To R",7.0,90.0
+717257,3309,2023-07-26T16:05:00Z,R,Final,86,Sunny,"3 mph, Out To CF",3.0,0.0
+717252,12,2023-07-26T16:10:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+717249,5,2023-07-26T17:10:00Z,R,Final,86,Sunny,"6 mph, In From CF",6.0,180.0
+717250,3312,2023-07-26T17:10:00Z,R,Final,83,Partly Cloudy,"6 mph, Out To LF",6.0,-45.0
+717254,32,2023-07-26T18:10:00Z,R,Final,80,Roof Closed,"0 mph, None",0.0,
+717244,15,2023-07-26T19:40:00Z,R,Final,78,Roof Closed,"0 mph, None",0.0,
+717246,2680,2023-07-26T20:10:00Z,R,Final,81,Sunny,"8 mph, L To R",8.0,90.0
+717253,22,2023-07-26T20:10:00Z,R,Final,92,Sunny,"6 mph, L To R",6.0,90.0
+717245,2681,2023-07-26T22:05:00Z,R,Final,89,Clear,"7 mph, Out To RF",7.0,45.0
+717248,3313,2023-07-26T23:05:00Z,R,Final,82,Clear,"10 mph, R To L",10.0,-90.0
+717242,3,2023-07-26T23:10:00Z,R,Final,85,Partly Cloudy,"9 mph, Out To CF",9.0,0.0
+717239,2392,2023-07-27T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+717240,4,2023-07-27T00:10:00Z,R,Final,88,Partly Cloudy,"11 mph, Out To LF",11.0,-45.0
+717251,2395,2023-07-27T01:45:00Z,R,Final,61,Cloudy,"16 mph, Out To CF",16.0,0.0
+717243,2394,2023-07-27T17:10:00Z,R,Final,78,Overcast,"5 mph, Out To LF",5.0,-45.0
+717247,2394,2023-07-27T17:15:00Z,R,Final,84,Clear,"3 mph, In From LF",3.0,135.0
+717241,3289,2023-07-27T23:10:00Z,R,Final,90,Clear,"6 mph, Out To RF",6.0,45.0
+717238,2889,2023-07-27T23:45:00Z,R,Final,99,Clear,"8 mph, Out To LF",8.0,-45.0
+717233,4,2023-07-28T00:10:00Z,R,Final,86,Partly Cloudy,"7 mph, In From LF",7.0,135.0
+717236,4169,2023-07-28T22:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+717234,31,2023-07-28T23:05:00Z,R,Final,90,Cloudy,"7 mph, Out To CF",7.0,0.0
+717237,2,2023-07-28T23:05:00Z,R,Final,84,Overcast,"5 mph, Varies",5.0,
+717235,14,2023-07-28T23:07:00Z,R,Final,82,Cloudy,"11 mph, Out To CF",11.0,0.0
+717230,3289,2023-07-28T23:10:00Z,R,Final,87,Partly Cloudy,"7 mph, Out To LF",7.0,-45.0
+717228,4,2023-07-28T23:10:00Z,R,Final,86,Cloudy,"8 mph, In From LF",8.0,135.0
+717231,4705,2023-07-28T23:20:00Z,R,Final,80,Partly Cloudy,"4 mph, L To R",4.0,90.0
+717229,2392,2023-07-29T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+717232,7,2023-07-29T00:10:00Z,R,Final,97,Clear,"11 mph, R To L",11.0,-90.0
+717226,2889,2023-07-29T00:15:00Z,R,Final,96,Clear,"11 mph, Out To RF",11.0,45.0
+717227,19,2023-07-29T00:40:00Z,R,Final,83,Partly Cloudy,"6 mph, In From LF",6.0,135.0
+717223,15,2023-07-29T01:40:00Z,R,Final,78,Roof Closed,"0 mph, None",0.0,
+717224,2680,2023-07-29T01:40:00Z,R,Final,73,Clear,"5 mph, L To R",5.0,90.0
+717225,22,2023-07-29T02:10:00Z,R,Final,79,Clear,"7 mph, L To R",7.0,90.0
+717220,2395,2023-07-29T02:15:00Z,R,Final,62,Clear,"16 mph, Out To CF",16.0,0.0
+717222,14,2023-07-29T19:07:00Z,R,Final,68,Roof Closed,"0 mph, None",0.0,
+717218,4169,2023-07-29T20:10:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+717216,31,2023-07-29T23:05:00Z,R,Final,79,Cloudy,"10 mph, Out To LF",10.0,-45.0
+717215,3289,2023-07-29T23:10:00Z,R,Final,79,Partly Cloudy,"8 mph, Out To RF",8.0,45.0
+717207,7,2023-07-29T23:10:00Z,R,Final,85,Cloudy,"7 mph, L To R",7.0,90.0
+717217,4,2023-07-29T23:10:00Z,R,Final,77,Clear,"10 mph, L To R",10.0,90.0
+717221,2395,2023-07-29T23:15:00Z,R,Final,65,Sunny,"17 mph, Varies",17.0,
+717213,2889,2023-07-29T23:15:00Z,R,Final,78,Rain,"12 mph, Out To RF",12.0,45.0
+717214,2392,2023-07-29T23:15:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+717219,2,2023-07-29T23:15:00Z,R,Final,82,Partly Cloudy,"9 mph, Out To LF",9.0,-45.0
+717211,4705,2023-07-29T23:20:00Z,R,Final,89,Partly Cloudy,"4 mph, Out To LF",4.0,-45.0
+717212,19,2023-07-30T00:10:00Z,R,Final,87,Cloudy,"3 mph, L To R",3.0,90.0
+717210,15,2023-07-30T00:10:00Z,R,Final,78,Roof Closed,"0 mph, None",0.0,
+717209,2680,2023-07-30T00:40:00Z,R,Final,74,Clear,"7 mph, L To R",7.0,90.0
+717205,22,2023-07-30T01:10:00Z,R,Final,82,Clear,"7 mph, Out To CF",7.0,0.0
+717201,14,2023-07-30T16:05:00Z,R,Final,69,Sunny,"9 mph, Out To RF",9.0,45.0
+717208,31,2023-07-30T17:35:00Z,R,Final,70,Cloudy,"2 mph, Out To LF",2.0,-45.0
+717206,4705,2023-07-30T17:35:00Z,R,Final,87,Partly Cloudy,"7 mph, R To L",7.0,-90.0
+717203,3289,2023-07-30T17:40:00Z,R,Final,77,Sunny,"9 mph, L To R",9.0,90.0
+717202,4169,2023-07-30T17:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+717196,2392,2023-07-30T18:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+717198,7,2023-07-30T18:10:00Z,R,Final,87,Sunny,"5 mph, R To L",5.0,-90.0
+717204,4,2023-07-30T18:10:00Z,R,Final,79,Sunny,"5 mph, Out To RF",5.0,45.0
+717195,2889,2023-07-30T18:15:00Z,R,Final,86,Partly Cloudy,"4 mph, In From LF",4.0,135.0
+717199,19,2023-07-30T19:10:00Z,R,Final,93,Partly Cloudy,"6 mph, In From CF",6.0,180.0
+717197,2395,2023-07-30T20:05:00Z,R,Final,65,Partly Cloudy,"9 mph, Varies",9.0,
+717194,22,2023-07-30T20:10:00Z,R,Final,82,Sunny,"4 mph, Out To CF",4.0,0.0
+717193,15,2023-07-30T20:10:00Z,R,Final,78,Roof Closed,"0 mph, None",0.0,
+717191,2680,2023-07-30T20:10:00Z,R,Final,77,Partly Cloudy,"4 mph, L To R",4.0,90.0
+717200,2,2023-07-30T23:10:00Z,R,Final,83,Clear,"0 mph, Calm",0.0,
+717189,4169,2023-07-31T22:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+717185,3313,2023-07-31T23:05:00Z,R,Final,80,Partly Cloudy,"11 mph, Varies",11.0,
+717192,3309,2023-07-31T23:05:00Z,R,Final,84,Clear,"4 mph, In From CF",4.0,180.0
+717186,14,2023-07-31T23:07:00Z,R,Final,76,Clear,"9 mph, In From LF",9.0,135.0
+717187,4705,2023-07-31T23:20:00Z,R,Final,89,Clear,"3 mph, Calm",3.0,
+717188,17,2023-08-01T00:05:00Z,R,Final,74,Clear,"3 mph, In From RF",3.0,-135.0
+717184,2392,2023-08-01T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+717179,19,2023-08-01T00:40:00Z,R,Final,70,Rain,"2 mph, R To L",2.0,-90.0
+717181,680,2023-08-01T01:40:00Z,R,Final,74,Clear,"8 mph, In From LF",8.0,135.0
+717190,2395,2023-08-01T01:45:00Z,R,Final,62,Partly Cloudy,"16 mph, Out To CF",16.0,0.0
+717182,4169,2023-08-01T22:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+717178,31,2023-08-01T23:05:00Z,R,Final,75,Cloudy,"6 mph, Out To CF",6.0,0.0
+717175,3313,2023-08-01T23:05:00Z,R,Final,78,Partly Cloudy,"8 mph, L To R",8.0,90.0
+717183,3309,2023-08-01T23:05:00Z,R,Final,79,Cloudy,"4 mph, R To L",4.0,-90.0
+717177,14,2023-08-01T23:07:00Z,R,Final,68,Roof Closed,"0 mph, None",0.0,
+717176,4705,2023-08-01T23:20:00Z,R,Final,89,Partly Cloudy,"8 mph, Out To CF",8.0,0.0
+717174,2889,2023-08-01T23:45:00Z,R,Final,84,Partly Cloudy,"9 mph, R To L",9.0,-90.0
+717173,17,2023-08-02T00:05:00Z,R,Final,84,Partly Cloudy,"8 mph, Out To LF",8.0,-45.0
+717168,5325,2023-08-02T00:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+717172,2392,2023-08-02T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+717170,7,2023-08-02T00:10:00Z,R,Final,93,Partly Cloudy,"8 mph, R To L",8.0,-90.0
+717169,19,2023-08-02T00:40:00Z,R,Final,70,Drizzle,"8 mph, In From LF",8.0,135.0
+717167,680,2023-08-02T01:40:00Z,R,Final,77,Clear,"10 mph, L To R",10.0,90.0
+717180,2395,2023-08-02T01:45:00Z,R,Final,60,Overcast,"16 mph, Out To CF",16.0,0.0
+717171,22,2023-08-02T02:10:00Z,R,Final,78,Clear,"6 mph, L To R",6.0,90.0
+717165,4705,2023-08-02T16:20:00Z,R,Final,84,Partly Cloudy,"8 mph, L To R",8.0,90.0
+717166,31,2023-08-02T16:35:00Z,R,Final,73,Partly Cloudy,"3 mph, In From RF",3.0,-135.0
+717162,3309,2023-08-02T17:05:00Z,R,Final,81,Partly Cloudy,"2 mph, In From RF",2.0,-135.0
+717163,2392,2023-08-02T18:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+717158,19,2023-08-02T19:10:00Z,R,Final,84,Partly Cloudy,"1 mph, R To L",1.0,-90.0
+717161,680,2023-08-02T20:10:00Z,R,Final,77,Sunny,"5 mph, In From LF",5.0,135.0
+717159,4169,2023-08-02T22:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+717160,3313,2023-08-02T23:05:00Z,R,Final,78,Partly Cloudy,"6 mph, R To L",6.0,-90.0
+717157,14,2023-08-02T23:07:00Z,R,Final,74,Cloudy,"9 mph, Out To RF",9.0,45.0
+717155,2889,2023-08-02T23:45:00Z,R,Final,81,Overcast,"8 mph, R To L",8.0,-90.0
+717153,17,2023-08-03T00:05:00Z,R,Final,81,Partly Cloudy,"8 mph, R To L",8.0,-90.0
+717152,5325,2023-08-03T00:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+717156,7,2023-08-03T00:10:00Z,R,Final,83,Cloudy,"9 mph, In From RF",9.0,-135.0
+717164,2395,2023-08-03T01:45:00Z,R,Final,61,Partly Cloudy,"17 mph, Out To CF",17.0,0.0
+717154,22,2023-08-03T02:10:00Z,R,Final,78,Clear,"2 mph, Calm",2.0,
+717147,4169,2023-08-03T16:10:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+717149,5325,2023-08-03T18:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+717148,7,2023-08-03T18:10:00Z,R,Final,81,Cloudy,"3 mph, R To L",3.0,-90.0
+717150,14,2023-08-03T19:07:00Z,R,Final,82,Sunny,"12 mph, Out To CF",12.0,0.0
+717151,2395,2023-08-03T19:45:00Z,R,Final,62,Overcast,"15 mph, Out To CF",15.0,0.0
+717142,3313,2023-08-03T23:15:00Z,R,Final,74,Clear,"13 mph, Out To LF",13.0,-45.0
+717143,32,2023-08-03T23:15:00Z,R,Final,88,Clear,"5 mph, R To L",5.0,-90.0
+717145,2889,2023-08-03T23:45:00Z,R,Final,83,Cloudy,"5 mph, In From RF",5.0,-135.0
+717146,17,2023-08-04T00:05:00Z,R,Final,83,Partly Cloudy,"7 mph, In From CF",7.0,180.0
+717144,1,2023-08-04T01:38:00Z,R,Final,79,Clear,"9 mph, R To L",9.0,-90.0
+717137,22,2023-08-04T02:10:00Z,R,Final,75,Clear,"7 mph, L To R",7.0,90.0
+717141,17,2023-08-04T18:20:00Z,R,Final,82,Partly Cloudy,"12 mph, In From CF",12.0,180.0
+717139,2602,2023-08-04T22:40:00Z,R,Final,89,Clear,"6 mph, Out To RF",6.0,45.0
+717135,2394,2023-08-04T22:40:00Z,R,Final,81,Partly Cloudy,"8 mph, Out To CF",8.0,0.0
+717134,2,2023-08-04T23:05:00Z,R,Final,80,Cloudy,"6 mph, Out To LF",6.0,-45.0
+717140,2681,2023-08-04T23:05:00Z,R,Final,76,Cloudy,"7 mph, Out To CF",7.0,0.0
+717138,3313,2023-08-04T23:05:00Z,R,Final,74,Cloudy,"10 mph, R To L",10.0,-90.0
+717136,3,2023-08-04T23:10:00Z,R,Final,77,Overcast,"3 mph, Out To CF",3.0,0.0
+717132,5,2023-08-04T23:10:00Z,R,Final,78,Clear,"3 mph, In From LF",3.0,135.0
+717133,5325,2023-08-05T00:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+717128,3312,2023-08-05T00:10:00Z,R,Final,83,Overcast,"6 mph, In From CF",6.0,180.0
+717131,32,2023-08-05T00:10:00Z,R,Final,75,Partly Cloudy,"10 mph, L To R",10.0,90.0
+717127,2889,2023-08-05T00:15:00Z,R,Final,83,Cloudy,"6 mph, In From RF",6.0,-135.0
+717130,1,2023-08-05T01:38:00Z,R,Final,82,Clear,"8 mph, Out To CF",8.0,0.0
+717129,2680,2023-08-05T01:40:00Z,R,Final,72,Clear,"8 mph, L To R",8.0,90.0
+717126,3313,2023-08-05T17:05:00Z,R,Final,80,Sunny,"6 mph, Calm",6.0,
+717122,2394,2023-08-05T17:10:00Z,R,Final,77,Sunny,"6 mph, L To R",6.0,90.0
+717121,17,2023-08-05T18:20:00Z,R,Final,73,Rain,"11 mph, In From RF",11.0,-135.0
+717124,5325,2023-08-05T20:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+717120,2602,2023-08-05T20:10:00Z,R,Final,87,Cloudy,"8 mph, In From CF",8.0,180.0
+717125,3,2023-08-05T20:10:00Z,R,Final,80,Partly Cloudy,"7 mph, R To L",7.0,-90.0
+717123,2681,2023-08-05T22:05:00Z,R,Final,86,Cloudy,"7 mph, In From LF",7.0,135.0
+717114,2,2023-08-05T23:05:00Z,R,Final,85,Cloudy,"3 mph, Out To RF",3.0,45.0
+717117,10,2023-08-05T23:07:00Z,R,Final,75,Sunny,"14 mph, Varies",14.0,
+717118,3312,2023-08-05T23:10:00Z,R,Final,84,Partly Cloudy,"9 mph, R To L",9.0,-90.0
+717115,5,2023-08-05T23:10:00Z,R,Final,77,Cloudy,"6 mph, In From RF",6.0,-135.0
+717116,32,2023-08-05T23:10:00Z,R,Final,75,Partly Cloudy,"5 mph, L To R",5.0,90.0
+717119,2889,2023-08-05T23:15:00Z,R,Final,84,Partly Cloudy,"11 mph, L To R",11.0,90.0
+717112,2680,2023-08-06T00:40:00Z,R,Final,74,Clear,"8 mph, L To R",8.0,90.0
+717109,1,2023-08-06T01:07:00Z,R,Final,84,Clear,"8 mph, R To L",8.0,-90.0
+717108,5,2023-08-06T16:05:00Z,R,Final,81,Partly Cloudy,"3 mph, R To L",3.0,-90.0
+717107,2,2023-08-06T17:35:00Z,R,Final,88,Cloudy,"4 mph, R To L",4.0,-90.0
+717111,3,2023-08-06T17:35:00Z,R,Final,80,Sunny,"3 mph, Out To RF",3.0,45.0
+717113,2681,2023-08-06T17:35:00Z,R,Final,87,Partly Cloudy,"6 mph, Out To CF",6.0,0.0
+717110,3313,2023-08-06T17:35:00Z,R,Final,81,Partly Cloudy,"7 mph, R To L",7.0,-90.0
+717104,2602,2023-08-06T17:40:00Z,R,Final,84,Partly Cloudy,"15 mph, Varies",15.0,
+717103,2394,2023-08-06T17:40:00Z,R,Final,74,Cloudy,"12 mph, L To R",12.0,90.0
+717106,3312,2023-08-06T18:10:00Z,R,Final,74,Overcast,"8 mph, R To L",8.0,-90.0
+717105,32,2023-08-06T18:10:00Z,R,Final,74,Cloudy,"13 mph, L To R",13.0,90.0
+717099,2889,2023-08-06T18:15:00Z,R,Final,83,Partly Cloudy,"8 mph, Out To LF",8.0,-45.0
+717098,17,2023-08-06T18:20:00Z,R,Final,68,Cloudy,"5 mph, In From LF",5.0,135.0
+717102,5325,2023-08-06T18:35:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+717101,1,2023-08-06T20:07:00Z,R,Final,90,Sunny,"11 mph, Out To CF",11.0,0.0
+717100,10,2023-08-06T20:07:00Z,R,Final,81,Sunny,"8 mph, Out To RF",8.0,45.0
+717093,2680,2023-08-06T23:10:00Z,R,Final,74,Sunny,"8 mph, L To R",8.0,90.0
+717094,2680,2023-08-07T20:10:00Z,R,Final,76,Sunny,"8 mph, L To R",8.0,90.0
+717091,2394,2023-08-07T22:40:00Z,R,Final,72,Overcast,"13 mph, Out To CF",13.0,0.0
+717097,2602,2023-08-07T22:40:00Z,R,Final,75,Cloudy,"11 mph, R To L",11.0,-90.0
+717095,31,2023-08-07T23:05:00Z,R,Final,74,Cloudy,"10 mph, R To L",10.0,-90.0
+717089,3,2023-08-07T23:10:00Z,R,Final,69,Cloudy,"3 mph, R To L",3.0,-90.0
+717092,3289,2023-08-07T23:10:00Z,R,Final,78,Cloudy,"15 mph, Out To LF",15.0,-45.0
+717087,5,2023-08-07T23:10:00Z,R,Final,70,Cloudy,"9 mph, In From LF",9.0,135.0
+717088,4,2023-08-08T00:10:00Z,R,Final,74,Partly Cloudy,"7 mph, L To R",7.0,90.0
+717086,32,2023-08-08T00:10:00Z,R,Final,74,Partly Cloudy,"2 mph, L To R",2.0,90.0
+717090,1,2023-08-08T01:38:00Z,R,Final,78,Clear,"10 mph, Out To LF",10.0,-45.0
+717081,10,2023-08-08T01:40:00Z,R,Final,70,Clear,"11 mph, Out To RF",11.0,45.0
+717082,2681,2023-08-08T20:05:00Z,R,Final,79,Cloudy,"15 mph, L To R",15.0,90.0
+717096,2681,2023-08-08T20:10:00Z,R,Final,81,Partly Cloudy,"14 mph, L To R",14.0,90.0
+717085,12,2023-08-08T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+717076,2394,2023-08-08T22:40:00Z,R,Final,82,Clear,"11 mph, R To L",11.0,-90.0
+717083,2602,2023-08-08T22:40:00Z,R,Final,81,Clear,"9 mph, Out To LF",9.0,-45.0
+717084,2,2023-08-08T23:05:00Z,R,Final,81,Clear,"11 mph, Out To RF",11.0,45.0
+717079,31,2023-08-08T23:05:00Z,R,Final,81,Partly Cloudy,"12 mph, Out To LF",12.0,-45.0
+717077,3,2023-08-08T23:10:00Z,R,Final,78,Partly Cloudy,"9 mph, Out To CF",9.0,0.0
+717080,3289,2023-08-08T23:10:00Z,R,Final,77,Partly Cloudy,"14 mph, Out To RF",14.0,45.0
+717074,5,2023-08-08T23:10:00Z,R,Final,78,Clear,"12 mph, L To R",12.0,90.0
+717075,4,2023-08-09T00:10:00Z,R,Final,78,Partly Cloudy,"8 mph, Out To LF",8.0,-45.0
+717078,32,2023-08-09T00:10:00Z,R,Final,82,Partly Cloudy,"7 mph, L To R",7.0,90.0
+717068,1,2023-08-09T01:38:00Z,R,Final,77,Partly Cloudy,"9 mph, R To L",9.0,-90.0
+717073,15,2023-08-09T01:40:00Z,R,Final,76,Roof Closed,"0 mph, None",0.0,
+717072,680,2023-08-09T01:40:00Z,R,Final,78,Clear,"4 mph, L To R",4.0,90.0
+717069,10,2023-08-09T01:40:00Z,R,Final,66,Clear,"13 mph, Varies",13.0,
+717070,2602,2023-08-09T16:35:00Z,R,Final,81,Partly Cloudy,"8 mph, Varies",8.0,
+717065,32,2023-08-09T18:10:00Z,R,Final,82,Overcast,"10 mph, In From RF",10.0,-135.0
+717063,10,2023-08-09T19:37:00Z,R,Final,71,Sunny,"7 mph, Out To RF",7.0,45.0
+717064,12,2023-08-09T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+717061,2394,2023-08-09T22:40:00Z,R,Final,81,Cloudy,"12 mph, R To L",12.0,-90.0
+717066,2681,2023-08-09T22:40:00Z,R,Final,86,Partly Cloudy,"11 mph, Out To RF",11.0,45.0
+717067,2,2023-08-09T23:05:00Z,R,Final,85,Clear,"2 mph, Out To RF",2.0,45.0
+717058,31,2023-08-09T23:05:00Z,R,Final,81,Partly Cloudy,"10 mph, Out To LF",10.0,-45.0
+717059,3,2023-08-09T23:10:00Z,R,Final,79,Clear,"3 mph, Varies",3.0,
+717062,3289,2023-08-09T23:10:00Z,R,Final,84,Partly Cloudy,"10 mph, Out To RF",10.0,45.0
+717060,5,2023-08-09T23:10:00Z,R,Final,80,Partly Cloudy,"4 mph, L To R",4.0,90.0
+717054,4,2023-08-10T00:10:00Z,R,Final,76,Cloudy,"8 mph, R To L",8.0,-90.0
+717071,1,2023-08-10T01:38:00Z,R,Final,74,Cloudy,"6 mph, L To R",6.0,90.0
+717057,15,2023-08-10T01:40:00Z,R,Final,78,Roof Closed,"0 mph, None",0.0,
+717055,680,2023-08-10T01:40:00Z,R,Final,75,Partly Cloudy,"5 mph, Out To RF",5.0,45.0
+717053,2,2023-08-10T16:35:00Z,R,Final,79,Overcast,"4 mph, Out To LF",4.0,-45.0
+717056,31,2023-08-10T16:35:00Z,R,Final,73,Overcast,"6 mph, Out To CF",6.0,0.0
+717052,5,2023-08-10T17:10:00Z,R,Final,75,Sunny,"9 mph, In From LF",9.0,135.0
+717050,2394,2023-08-10T17:10:00Z,R,Final,80,Sunny,"10 mph, Out To CF",10.0,0.0
+717048,12,2023-08-10T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+717049,2681,2023-08-10T22:40:00Z,R,Final,74,Cloudy,"6 mph, Out To RF",6.0,45.0
+717051,3,2023-08-10T23:10:00Z,R,Final,77,Overcast,"3 mph, Out To CF",3.0,0.0
+717045,22,2023-08-11T02:10:00Z,R,Final,74,Partly Cloudy,"7 mph, L To R",7.0,90.0
+717038,12,2023-08-11T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+717047,4169,2023-08-11T22:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+717043,3309,2023-08-11T23:05:00Z,R,Final,82,Partly Cloudy,"1 mph, Out To RF",1.0,45.0
+717046,31,2023-08-11T23:05:00Z,R,Final,83,Cloudy,"7 mph, Out To LF",7.0,-45.0
+717044,2681,2023-08-11T23:05:00Z,R,Final,84,Partly Cloudy,"10 mph, Out To RF",10.0,45.0
+717041,14,2023-08-11T23:07:00Z,R,Final,73,Clear,"11 mph, Out To CF",11.0,0.0
+717042,3,2023-08-11T23:10:00Z,R,Final,80,Clear,"15 mph, Out To RF",15.0,45.0
+717040,3289,2023-08-11T23:10:00Z,R,Final,82,Clear,"6 mph, Out To RF",6.0,45.0
+717037,2392,2023-08-12T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+717039,7,2023-08-12T00:10:00Z,R,Final,93,Partly Cloudy,"8 mph, R To L",8.0,-90.0
+717036,4,2023-08-12T00:10:00Z,R,Final,83,Partly Cloudy,"12 mph, Out To LF",12.0,-45.0
+717035,15,2023-08-12T01:40:00Z,R,Final,78,Roof Closed,"0 mph, None",0.0,
+717032,22,2023-08-12T02:10:00Z,R,Final,73,Clear,"4 mph, Out To RF",4.0,45.0
+717034,680,2023-08-12T02:10:00Z,R,Final,75,Clear,"6 mph, In From LF",6.0,135.0
+717031,2395,2023-08-12T02:15:00Z,R,Final,64,Partly Cloudy,"15 mph, Varies",15.0,
+718371,3289,2023-08-12T17:10:00Z,R,Final,83,Partly Cloudy,"9 mph, Out To LF",9.0,-45.0
+717021,3289,2023-08-12T23:15:00Z,R,Final,79,Cloudy,"9 mph, Out To LF",9.0,-45.0
+717026,14,2023-08-12T19:07:00Z,R,Final,77,Partly Cloudy,"15 mph, Out To CF",15.0,0.0
+717033,3,2023-08-12T20:10:00Z,R,Final,80,Partly Cloudy,"4 mph, R To L",4.0,-90.0
+717024,12,2023-08-12T20:10:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+717025,4169,2023-08-12T20:10:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+717028,2681,2023-08-12T22:05:00Z,R,Final,84,Partly Cloudy,"8 mph, Out To RF",8.0,45.0
+717030,3309,2023-08-12T23:05:00Z,R,Final,87,Cloudy,"7 mph, Out To LF",7.0,-45.0
+717019,7,2023-08-12T23:10:00Z,R,Final,90,Partly Cloudy,"5 mph, In From RF",5.0,-135.0
+717022,2392,2023-08-12T23:15:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+717023,4,2023-08-12T23:15:00Z,R,Final,81,Clear,"6 mph, L To R",6.0,90.0
+717020,15,2023-08-13T00:10:00Z,R,Final,78,Roof Closed,"0 mph, None",0.0,
+717029,2395,2023-08-13T01:05:00Z,R,Final,67,Clear,"16 mph, Out To CF",16.0,0.0
+717017,22,2023-08-13T01:10:00Z,R,Final,77,Clear,"6 mph, L To R",6.0,90.0
+717018,680,2023-08-13T01:40:00Z,R,Final,78,Clear,"10 mph, L To R",10.0,90.0
+717014,3,2023-08-13T16:05:00Z,R,Final,82,Partly Cloudy,"4 mph, Out To CF",4.0,0.0
+717016,3309,2023-08-13T17:35:00Z,R,Final,88,Partly Cloudy,"7 mph, In From LF",7.0,135.0
+717015,31,2023-08-13T17:35:00Z,R,Final,79,Partly Cloudy,"9 mph, Out To LF",9.0,-45.0
+717027,31,2023-08-13T22:05:00Z,R,Final,82,Partly Cloudy,"8 mph, R To L",8.0,-90.0
+717009,2681,2023-08-13T17:35:00Z,R,Final,86,Partly Cloudy,"13 mph, L To R",13.0,90.0
+717012,14,2023-08-13T17:37:00Z,R,Final,75,Partly Cloudy,"15 mph, None",15.0,
+717010,12,2023-08-13T17:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+717011,4169,2023-08-13T17:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+717004,2392,2023-08-13T18:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+717006,4,2023-08-13T18:10:00Z,R,Final,75,Cloudy,"5 mph, L To R",5.0,90.0
+717008,2395,2023-08-13T20:05:00Z,R,Final,72,Sunny,"7 mph, Varies",7.0,
+717007,22,2023-08-13T20:10:00Z,R,Final,83,Sunny,"6 mph, L To R",6.0,90.0
+717003,15,2023-08-13T20:10:00Z,R,Final,78,Roof Closed,"0 mph, None",0.0,
+717005,680,2023-08-13T20:10:00Z,R,Final,82,Sunny,"11 mph, L To R",11.0,90.0
+717013,3289,2023-08-13T23:10:00Z,R,Final,85,Partly Cloudy,"9 mph, Out To RF",9.0,45.0
+717000,4169,2023-08-14T22:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+717002,3289,2023-08-14T23:10:00Z,R,Final,81,Cloudy,"9 mph, Out To LF",9.0,-45.0
+717001,4705,2023-08-14T23:20:00Z,R,Final,91,Partly Cloudy,"6 mph, R To L",6.0,-90.0
+716995,2889,2023-08-14T23:45:00Z,R,Final,79,Cloudy,"13 mph, Out To RF",13.0,45.0
+716997,5325,2023-08-15T00:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+716994,7,2023-08-15T00:10:00Z,R,Final,76,Clear,"15 mph, L To R",15.0,90.0
+716998,19,2023-08-15T00:40:00Z,R,Final,79,Clear,"5 mph, In From CF",5.0,180.0
+716996,2680,2023-08-15T01:40:00Z,R,Final,69,Partly Cloudy,"8 mph, L To R",8.0,90.0
+716999,2395,2023-08-15T01:45:00Z,R,Final,68,Partly Cloudy,"14 mph, Varies",14.0,
+716992,2602,2023-08-15T22:40:00Z,R,Final,72,Partly Cloudy,"12 mph, Varies",12.0,
+716991,4169,2023-08-15T22:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+716993,3309,2023-08-15T23:05:00Z,R,Final,81,Partly Cloudy,"0 mph, Calm",0.0,
+716990,14,2023-08-15T23:07:00Z,R,Final,68,Roof Closed,"0 mph, None",0.0,
+716988,3289,2023-08-15T23:10:00Z,R,Final,78,Partly Cloudy,"6 mph, R To L",6.0,-90.0
+716987,4705,2023-08-15T23:20:00Z,R,Final,80,Overcast,"5 mph, R To L",5.0,-90.0
+716983,3312,2023-08-15T23:40:00Z,R,Final,78,Partly Cloudy,"10 mph, Out To CF",10.0,0.0
+716984,2889,2023-08-15T23:45:00Z,R,Final,74,Cloudy,"8 mph, Out To RF",8.0,45.0
+716985,5325,2023-08-16T00:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+716986,17,2023-08-16T00:05:00Z,R,Final,71,Clear,"3 mph, In From LF",3.0,135.0
+716981,7,2023-08-16T00:10:00Z,R,Final,76,Partly Cloudy,"4 mph, Varies",4.0,
+716978,19,2023-08-16T00:40:00Z,R,Final,90,Clear,"2 mph, Out To LF",2.0,-45.0
+716980,2680,2023-08-16T01:40:00Z,R,Final,73,Partly Cloudy,"9 mph, L To R",9.0,90.0
+716989,2395,2023-08-16T01:45:00Z,R,Final,67,Partly Cloudy,"14 mph, Out To CF",14.0,0.0
+716979,22,2023-08-16T02:10:00Z,R,Final,77,Clear,"4 mph, Out To LF",4.0,-45.0
+716974,3289,2023-08-16T17:10:00Z,R,Final,78,Partly Cloudy,"3 mph, R To L",3.0,-90.0
+716976,3312,2023-08-16T17:10:00Z,R,Final,81,Sunny,"15 mph, R To L",15.0,-90.0
+716977,19,2023-08-16T19:10:00Z,R,Final,95,Partly Cloudy,"5 mph, In From CF",5.0,180.0
+716975,2395,2023-08-16T19:45:00Z,R,Final,71,Partly Cloudy,"8 mph, Out To CF",8.0,0.0
+716973,2602,2023-08-16T22:40:00Z,R,Final,79,Overcast,"5 mph, In From LF",5.0,135.0
+716972,4169,2023-08-16T22:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+716969,2889,2023-08-16T22:45:00Z,R,Final,83,Clear,"6 mph, Out To LF",6.0,-45.0
+716982,3309,2023-08-16T23:05:00Z,R,Final,83,Cloudy,"3 mph, In From CF",3.0,180.0
+716967,14,2023-08-16T23:07:00Z,R,Final,79,Partly Cloudy,"9 mph, Out To CF",9.0,0.0
+716970,4705,2023-08-16T23:20:00Z,R,Final,82,Partly Cloudy,"7 mph, Out To LF",7.0,-45.0
+716971,5325,2023-08-17T00:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+716968,17,2023-08-17T00:05:00Z,R,Final,75,Clear,"5 mph, Out To RF",5.0,45.0
+716963,7,2023-08-17T00:10:00Z,R,Final,82,Clear,"14 mph, R To L",14.0,-90.0
+716965,2680,2023-08-17T00:40:00Z,R,Final,76,Clear,"10 mph, L To R",10.0,90.0
+716962,22,2023-08-17T02:10:00Z,R,Final,78,Clear,"7 mph, L To R",7.0,90.0
+716964,7,2023-08-17T18:10:00Z,R,Final,82,Sunny,"10 mph, L To R",10.0,90.0
+716966,3309,2023-08-17T20:05:00Z,R,Final,90,Partly Cloudy,"4 mph, Out To LF",4.0,-45.0
+716958,2889,2023-08-17T23:15:00Z,R,Final,84,Partly Cloudy,"12 mph, Out To RF",12.0,45.0
+716957,2680,2023-08-18T01:40:00Z,R,Final,71,Clear,"10 mph, L To R",10.0,90.0
+716961,22,2023-08-18T02:10:00Z,R,Final,74,Clear,"7 mph, L To R",7.0,90.0
+716955,17,2023-08-18T18:20:00Z,R,Final,73,Sunny,"5 mph, R To L",5.0,-90.0
+716956,5,2023-08-18T20:10:00Z,R,Final,72,Partly Cloudy,"19 mph, L To R",19.0,90.0
+716959,5,2023-08-18T20:15:00Z,R,Final,71,Partly Cloudy,"13 mph, L To R",13.0,90.0
+716954,2602,2023-08-18T22:40:00Z,R,Final,77,Partly Cloudy,"6 mph, Out To CF",6.0,0.0
+716960,3309,2023-08-18T23:05:00Z,R,Final,84,Clear,"9 mph, In From LF",9.0,135.0
+716953,3313,2023-08-18T23:05:00Z,R,Final,78,Partly Cloudy,"15 mph, Out To RF",15.0,45.0
+716949,4705,2023-08-18T23:20:00Z,R,Final,83,Partly Cloudy,"8 mph, Out To CF",8.0,0.0
+716950,5325,2023-08-19T00:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+716948,2392,2023-08-19T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+716951,3312,2023-08-19T00:10:00Z,R,Final,78,Clear,"11 mph, R To L",11.0,-90.0
+716952,2889,2023-08-19T00:15:00Z,R,Final,79,Clear,"4 mph, Out To LF",4.0,-45.0
+716947,19,2023-08-19T00:40:00Z,R,Final,84,Overcast,"2 mph, L To R",2.0,90.0
+716945,1,2023-08-19T01:38:00Z,R,Final,81,Clear,"7 mph, R To L",7.0,-90.0
+716944,10,2023-08-19T01:40:00Z,R,Final,68,Partly Cloudy,"12 mph, Out To RF",12.0,45.0
+716942,2680,2023-08-19T01:40:00Z,R,Final,72,Clear,"7 mph, L To R",7.0,90.0
+716946,22,2023-08-19T02:10:00Z,R,Final,76,Clear,"6 mph, L To R",6.0,90.0
+716943,3313,2023-08-19T17:05:00Z,R,Final,73,Partly Cloudy,"11 mph, Varies",11.0,
+716937,17,2023-08-19T18:20:00Z,R,Final,80,Partly Cloudy,"13 mph, Out To LF",13.0,-45.0
+716909,22,2023-08-19T19:00:00Z,R,Final,79,Partly Cloudy,"4 mph, L To R",4.0,90.0
+716926,22,2023-08-20T01:10:00Z,R,Final,77,Cloudy,"7 mph, L To R",7.0,90.0
+716919,2680,2023-08-19T19:10:00Z,R,Final,71,Overcast,"7 mph, L To R",7.0,90.0
+716931,2680,2023-08-20T00:40:00Z,R,Final,72,Overcast,"7 mph, L To R",7.0,90.0
+716941,3309,2023-08-19T20:05:00Z,R,Final,80,Sunny,"5 mph, R To L",5.0,-90.0
+716938,5325,2023-08-19T20:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+716915,1,2023-08-19T20:07:00Z,R,Final,78,Cloudy,"14 mph, Out To CF",14.0,0.0
+716925,1,2023-08-20T01:07:00Z,R,Final,76,Cloudy,"8 mph, Out To CF",8.0,0.0
+716935,2602,2023-08-19T22:40:00Z,R,Final,83,Clear,"6 mph, Varies",6.0,
+716939,5,2023-08-19T23:10:00Z,R,Final,74,Clear,"1 mph, In From RF",1.0,-135.0
+716932,2392,2023-08-19T23:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+716936,3312,2023-08-19T23:10:00Z,R,Final,90,Clear,"8 mph, Out To CF",8.0,0.0
+716940,2889,2023-08-19T23:15:00Z,R,Final,87,Clear,"11 mph, R To L",11.0,-90.0
+716934,4705,2023-08-19T23:20:00Z,R,Final,87,Clear,"5 mph, L To R",5.0,90.0
+716933,19,2023-08-20T00:10:00Z,R,Final,91,Overcast,"5 mph, Out To LF",5.0,-45.0
+716930,10,2023-08-20T01:07:00Z,R,Final,70,Partly Cloudy,"15 mph, Out To RF",15.0,45.0
+716920,2392,2023-08-20T17:05:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+716927,4705,2023-08-20T17:35:00Z,R,Final,89,Sunny,"8 mph, Out To RF",8.0,45.0
+716928,3313,2023-08-20T17:35:00Z,R,Final,82,Sunny,"9 mph, Out To LF",9.0,-45.0
+716922,5,2023-08-20T17:40:00Z,R,Final,83,Sunny,"8 mph, L To R",8.0,90.0
+716924,2602,2023-08-20T17:40:00Z,R,Final,89,Sunny,"6 mph, In From RF",6.0,-135.0
+716923,3312,2023-08-20T18:10:00Z,R,Final,76,Overcast,"8 mph, L To R",8.0,90.0
+716921,2889,2023-08-20T18:15:00Z,R,Final,95,Partly Cloudy,"5 mph, Out To LF",5.0,-45.0
+716917,17,2023-08-20T18:20:00Z,R,Final,85,Sunny,"7 mph, In From RF",7.0,-135.0
+716918,5325,2023-08-20T18:35:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+716916,19,2023-08-20T19:10:00Z,R,Final,86,Partly Cloudy,"8 mph, Out To CF",8.0,0.0
+716914,10,2023-08-20T20:07:00Z,R,Final,78,Partly Cloudy,"7 mph, Out To RF",7.0,45.0
+716929,2735,2023-08-20T23:10:00Z,R,Final,79,Clear,"4 mph, Out To LF",4.0,-45.0
+716913,2394,2023-08-21T22:40:00Z,R,Final,78,Cloudy,"10 mph, In From LF",10.0,135.0
+716911,2681,2023-08-21T22:40:00Z,R,Final,88,Partly Cloudy,"9 mph, In From CF",9.0,180.0
+716912,31,2023-08-21T23:05:00Z,R,Final,86,Partly Cloudy,"7 mph, Calm",7.0,
+716910,4705,2023-08-21T23:20:00Z,R,Final,92,Partly Cloudy,"6 mph, Out To CF",6.0,0.0
+716908,2392,2023-08-22T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+716905,4,2023-08-22T00:10:00Z,R,Final,73,Partly Cloudy,"4 mph, L To R",4.0,90.0
+716904,10,2023-08-22T01:40:00Z,R,Final,72,Cloudy,"8 mph, Out To RF",8.0,45.0
+716906,15,2023-08-22T01:40:00Z,R,Final,77,Roof Closed,"0 mph, None",0.0,
+716907,2680,2023-08-22T01:40:00Z,R,Final,72,Overcast,"6 mph, L To R",6.0,90.0
+716896,2394,2023-08-22T22:40:00Z,R,Final,73,Clear,"6 mph, L To R",6.0,90.0
+716898,12,2023-08-22T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+716899,2681,2023-08-22T22:40:00Z,R,Final,79,Clear,"11 mph, In From CF",11.0,180.0
+716901,31,2023-08-22T23:05:00Z,R,Final,76,Partly Cloudy,"7 mph, In From LF",7.0,135.0
+716902,2,2023-08-22T23:05:00Z,R,Final,81,Partly Cloudy,"9 mph, In From LF",9.0,135.0
+716900,3313,2023-08-22T23:05:00Z,R,Final,77,Partly Cloudy,"7 mph, Out To RF",7.0,45.0
+716897,5,2023-08-22T23:10:00Z,R,Final,72,Clear,"17 mph, R To L",17.0,-90.0
+716891,4705,2023-08-22T23:20:00Z,R,Final,92,Partly Cloudy,"6 mph, Out To CF",6.0,0.0
+716895,2392,2023-08-23T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+716893,4,2023-08-23T00:10:00Z,R,Final,82,Clear,"9 mph, In From CF",9.0,180.0
+716894,32,2023-08-23T00:10:00Z,R,Final,76,Clear,"10 mph, In From RF",10.0,-135.0
+716892,1,2023-08-23T01:38:00Z,R,Final,81,Clear,"9 mph, R To L",9.0,-90.0
+716888,10,2023-08-23T01:40:00Z,R,Final,72,Clear,"11 mph, Out To RF",11.0,45.0
+716889,15,2023-08-23T01:40:00Z,R,Final,76,Roof Closed,"0 mph, None",0.0,
+716887,2680,2023-08-23T01:40:00Z,R,Final,73,Clear,"9 mph, L To R",9.0,90.0
+716886,31,2023-08-23T16:35:00Z,R,Final,76,Cloudy,"6 mph, Out To RF",6.0,45.0
+716885,2394,2023-08-23T17:10:00Z,R,Final,69,Cloudy,"8 mph, R To L",8.0,-90.0
+716881,4,2023-08-23T18:10:00Z,R,Final,95,Sunny,"16 mph, R To L",16.0,-90.0
+716882,32,2023-08-23T18:10:00Z,R,Final,97,Sunny,"14 mph, In From RF",14.0,-135.0
+716884,10,2023-08-23T19:37:00Z,R,Final,82,Sunny,"8 mph, Out To RF",8.0,45.0
+716879,2681,2023-08-23T20:05:00Z,R,Final,82,Partly Cloudy,"4 mph, Out To RF",4.0,45.0
+716890,1,2023-08-23T20:07:00Z,R,Final,85,Sunny,"8 mph, Out To CF",8.0,0.0
+716903,1,2023-08-24T01:38:00Z,R,Final,76,Clear,"7 mph, Out To CF",7.0,0.0
+716883,2680,2023-08-23T20:10:00Z,R,Final,74,Sunny,"9 mph, L To R",9.0,90.0
+716880,12,2023-08-23T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+716874,2,2023-08-23T23:05:00Z,R,Final,79,Cloudy,"6 mph, R To L",6.0,-90.0
+716877,3313,2023-08-23T23:05:00Z,R,Final,73,Clear,"9 mph, In From RF",9.0,-135.0
+716875,5,2023-08-23T23:10:00Z,R,Final,72,Overcast,"5 mph, Out To CF",5.0,0.0
+716876,4705,2023-08-23T23:20:00Z,R,Final,91,Partly Cloudy,"4 mph, L To R",4.0,90.0
+716878,2392,2023-08-24T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+716875,5,2023-08-24T16:10:00Z,R,Final,72,Overcast,"5 mph, Out To CF",5.0,0.0
+716872,3313,2023-08-24T17:05:00Z,R,Final,74,Cloudy,"9 mph, R To L",9.0,-90.0
+716869,12,2023-08-24T17:10:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+716873,2392,2023-08-24T18:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+716871,5,2023-08-24T20:20:00Z,R,Final,78,Partly Cloudy,"7 mph, Out To RF",7.0,45.0
+716870,31,2023-08-24T23:05:00Z,R,Final,84,Cloudy,"5 mph, Varies",5.0,
+716865,2,2023-08-24T23:05:00Z,R,Final,79,Cloudy,"8 mph, Out To LF",8.0,-45.0
+716867,3312,2023-08-24T23:10:00Z,R,Final,84,Partly Cloudy,"10 mph, In From LF",10.0,135.0
+716864,4,2023-08-25T00:10:00Z,R,Final,91,Clear,"13 mph, Out To LF",13.0,-45.0
+716868,15,2023-08-25T01:40:00Z,R,Final,77,Roof Closed,"0 mph, None",0.0,
+716858,2394,2023-08-25T22:40:00Z,R,Final,76,Cloudy,"6 mph, Out To CF",6.0,0.0
+716863,4169,2023-08-25T22:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+716854,12,2023-08-25T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+716859,2,2023-08-25T23:05:00Z,R,Final,85,Partly Cloudy,"6 mph, Out To LF",6.0,-45.0
+716862,31,2023-08-25T23:05:00Z,R,Final,80,Partly Cloudy,"9 mph, Out To LF",9.0,-45.0
+716861,2681,2023-08-25T23:05:00Z,R,Final,85,Partly Cloudy,"4 mph, L To R",4.0,90.0
+716860,14,2023-08-25T23:07:00Z,R,Final,77,Cloudy,"9 mph, In From CF",9.0,180.0
+716866,3,2023-08-25T23:10:00Z,R,Final,70,Cloudy,"13 mph, Out To LF",13.0,-45.0
+716855,3289,2023-08-25T23:10:00Z,R,Final,76,Partly Cloudy,"6 mph, Out To LF",6.0,-45.0
+716856,4,2023-08-25T23:10:00Z,R,Final,77,Partly Cloudy,"3 mph, In From LF",3.0,135.0
+716850,3312,2023-08-26T00:10:00Z,R,Final,84,Partly Cloudy,"11 mph, Out To RF",11.0,45.0
+716857,32,2023-08-26T00:10:00Z,R,Final,75,Partly Cloudy,"2 mph, L To R",2.0,90.0
+716851,15,2023-08-26T01:40:00Z,R,Final,78,Roof Closed,"0 mph, None",0.0,
+716853,680,2023-08-26T02:10:00Z,R,Final,74,Clear,"10 mph, In From LF",10.0,135.0
+716852,2395,2023-08-26T02:15:00Z,R,Final,64,Clear,"16 mph, Varies",16.0,
+716846,14,2023-08-26T19:07:00Z,R,Final,68,Roof Closed,"0 mph, None",0.0,
+716848,2395,2023-08-26T20:05:00Z,R,Final,64,Partly Cloudy,"8 mph, Out To CF",8.0,0.0
+716849,3,2023-08-26T20:10:00Z,R,Final,83,Partly Cloudy,"2 mph, In From CF",2.0,180.0
+716832,680,2023-08-26T20:10:00Z,R,Final,79,Partly Cloudy,"10 mph, L To R",10.0,90.0
+716844,4169,2023-08-26T20:10:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+716845,12,2023-08-26T20:10:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+716843,2394,2023-08-26T22:10:00Z,R,Final,75,Clear,"10 mph, L To R",10.0,90.0
+716837,2,2023-08-26T23:05:00Z,R,Final,90,Partly Cloudy,"4 mph, In From RF",4.0,-135.0
+716840,3289,2023-08-26T23:10:00Z,R,Final,82,Clear,"2 mph, Out To LF",2.0,-45.0
+716841,4,2023-08-26T23:10:00Z,R,Final,72,Cloudy,"17 mph, Out To RF",17.0,45.0
+716838,32,2023-08-26T23:10:00Z,R,Final,67,Roof Closed,"0 mph, None",0.0,
+716842,31,2023-08-26T23:15:00Z,R,Final,79,Cloudy,"6 mph, Out To CF",6.0,0.0
+716839,3312,2023-08-26T23:15:00Z,R,Final,72,Overcast,"10 mph, In From LF",10.0,135.0
+716847,2681,2023-08-26T23:15:00Z,R,Final,85,Partly Cloudy,"8 mph, In From CF",8.0,180.0
+716833,15,2023-08-27T00:10:00Z,R,Final,79,Roof Closed,"0 mph, None",0.0,
+716829,3289,2023-08-27T16:05:00Z,R,Final,79,Sunny,"7 mph, In From LF",7.0,135.0
+716836,2,2023-08-27T17:35:00Z,R,Final,90,Partly Cloudy,"6 mph, R To L",6.0,-90.0
+716831,3,2023-08-27T17:35:00Z,R,Final,74,Partly Cloudy,"3 mph, In From CF",3.0,180.0
+716834,31,2023-08-27T17:35:00Z,R,Final,73,Partly Cloudy,"3 mph, L To R",3.0,90.0
+716835,2681,2023-08-27T17:35:00Z,R,Final,86,Sunny,"7 mph, Out To LF",7.0,-45.0
+716825,14,2023-08-27T17:37:00Z,R,Final,68,Sunny,"8 mph, R To L",8.0,-90.0
+716830,2394,2023-08-27T17:40:00Z,R,Final,71,Sunny,"10 mph, L To R",10.0,90.0
+716827,4169,2023-08-27T17:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+716828,12,2023-08-27T17:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+716824,3312,2023-08-27T18:10:00Z,R,Final,71,Partly Cloudy,"5 mph, Out To LF",5.0,-45.0
+716826,4,2023-08-27T18:10:00Z,R,Final,71,Sunny,"5 mph, L To R",5.0,90.0
+716822,32,2023-08-27T18:10:00Z,R,Final,71,Sunny,"10 mph, In From LF",10.0,135.0
+716821,15,2023-08-27T20:10:00Z,R,Final,78,Roof Closed,"0 mph, None",0.0,
+716820,680,2023-08-27T20:10:00Z,R,Final,77,Sunny,"4 mph, Out To RF",4.0,45.0
+716819,2395,2023-08-27T23:10:00Z,R,Final,70,Sunny,"17 mph, Varies",17.0,
+716817,2681,2023-08-28T22:40:00Z,R,Final,77,Partly Cloudy,"9 mph, R To L",9.0,-90.0
+716808,2394,2023-08-28T22:40:00Z,R,Final,74,Clear,"6 mph, In From LF",6.0,135.0
+716815,2,2023-08-28T23:05:00Z,R,Final,79,Cloudy,"11 mph, Out To LF",11.0,-45.0
+716816,14,2023-08-28T23:07:00Z,R,Final,68,Clear,"3 mph, Out To RF",3.0,45.0
+716814,3,2023-08-28T23:10:00Z,R,Final,70,Cloudy,"3 mph, Out To LF",3.0,-45.0
+716818,3289,2023-08-28T23:10:00Z,R,Final,73,Cloudy,"7 mph, R To L",7.0,-90.0
+716813,3312,2023-08-28T23:40:00Z,R,Final,83,Partly Cloudy,"8 mph, Out To LF",8.0,-45.0
+716809,2889,2023-08-28T23:45:00Z,R,Final,79,Clear,"7 mph, L To R",7.0,90.0
+716810,17,2023-08-29T00:05:00Z,R,Final,73,Clear,"8 mph, R To L",8.0,-90.0
+716811,7,2023-08-29T00:10:00Z,R,Final,83,Clear,"5 mph, L To R",5.0,90.0
+716812,19,2023-08-29T00:40:00Z,R,Final,79,Partly Cloudy,"3 mph, R To L",3.0,-90.0
+716804,680,2023-08-29T01:40:00Z,R,Final,67,Cloudy,"5 mph, Out To CF",5.0,0.0
+716823,2395,2023-08-29T01:45:00Z,R,Final,67,Clear,"17 mph, Out To CF",17.0,0.0
+716805,22,2023-08-29T02:10:00Z,R,Final,83,Clear,"6 mph, L To R",6.0,90.0
+716806,2681,2023-08-29T22:40:00Z,R,Final,78,Cloudy,"5 mph, Out To LF",5.0,-45.0
+716807,4169,2023-08-29T22:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+716795,2394,2023-08-29T22:40:00Z,R,Final,74,Cloudy,"9 mph, In From CF",9.0,180.0
+716800,2,2023-08-29T23:05:00Z,R,Final,79,Overcast,"2 mph, R To L",2.0,-90.0
+716801,14,2023-08-29T23:07:00Z,R,Final,71,Clear,"8 mph, R To L",8.0,-90.0
+716802,3,2023-08-29T23:10:00Z,R,Final,69,Cloudy,"2 mph, In From RF",2.0,-135.0
+716799,3289,2023-08-29T23:10:00Z,R,Final,76,Cloudy,"6 mph, R To L",6.0,-90.0
+716796,3312,2023-08-29T23:40:00Z,R,Final,80,Clear,"8 mph, L To R",8.0,90.0
+716797,2889,2023-08-29T23:45:00Z,R,Final,85,Clear,"6 mph, L To R",6.0,90.0
+716798,17,2023-08-30T00:05:00Z,R,Final,70,Cloudy,"17 mph, In From LF",17.0,135.0
+716793,7,2023-08-30T00:10:00Z,R,Final,85,Clear,"16 mph, L To R",16.0,90.0
+716791,19,2023-08-30T00:40:00Z,R,Final,82,Clear,"2 mph, Out To LF",2.0,-45.0
+716790,680,2023-08-30T01:40:00Z,R,Final,60,Roof Closed,"2 mph, In From RF",2.0,-135.0
+716803,2395,2023-08-30T01:45:00Z,R,Final,74,Clear,"15 mph, Varies",15.0,
+716792,22,2023-08-30T02:10:00Z,R,Final,83,Clear,"4 mph, L To R",4.0,90.0
+716787,2681,2023-08-30T17:05:00Z,R,Final,83,Partly Cloudy,"6 mph, In From LF",6.0,135.0
+716786,2,2023-08-30T17:05:00Z,R,Final,82,Sunny,"11 mph, In From LF",11.0,135.0
+716784,3312,2023-08-30T17:10:00Z,R,Final,74,Partly Cloudy,"7 mph, In From CF",7.0,180.0
+716782,2889,2023-08-30T18:15:00Z,R,Final,79,Partly Cloudy,"12 mph, In From CF",12.0,180.0
+716779,17,2023-08-30T18:20:00Z,R,Final,67,Partly Cloudy,"16 mph, L To R",16.0,90.0
+716785,14,2023-08-30T19:07:00Z,R,Final,67,Partly Cloudy,"12 mph, In From CF",12.0,180.0
+716789,2395,2023-08-30T19:45:00Z,R,Final,73,Sunny,"6 mph, Out To CF",6.0,0.0
+716794,3,2023-08-30T20:10:00Z,R,Final,78,Cloudy,"2 mph, Out To RF",2.0,45.0
+716788,680,2023-08-30T20:10:00Z,R,Final,69,Cloudy,"5 mph, Out To LF",5.0,-45.0
+716783,3289,2023-08-30T22:40:00Z,R,Final,81,Partly Cloudy,"11 mph, L To R",11.0,90.0
+716778,4169,2023-08-30T22:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+716781,2394,2023-08-30T22:40:00Z,R,Final,64,Clear,"8 mph, L To R",8.0,90.0
+716780,7,2023-08-31T00:10:00Z,R,Final,83,Clear,"9 mph, R To L",9.0,-90.0
+716773,19,2023-08-31T00:40:00Z,R,Final,91,Clear,"3 mph, Out To LF",3.0,-45.0
+716774,22,2023-08-31T02:10:00Z,R,Final,82,Clear,"5 mph, L To R",5.0,90.0
+716775,2394,2023-08-31T17:10:00Z,R,Final,68,Sunny,"6 mph, In From LF",6.0,135.0
+716776,3309,2023-08-31T23:05:00Z,R,Final,78,Clear,"8 mph, In From RF",8.0,-135.0
+716777,2680,2023-09-01T01:40:00Z,R,Final,71,Partly Cloudy,"6 mph, L To R",6.0,90.0
+716768,22,2023-09-01T02:10:00Z,R,Final,78,Clear,"4 mph, Out To RF",4.0,45.0
+718700,2602,2023-09-01T17:10:00Z,R,Final,80,Sunny,"3 mph, Varies",3.0,
+716770,2602,2023-09-01T22:40:00Z,R,Final,84,Clear,"6 mph, Varies",6.0,
+716771,3309,2023-09-01T23:05:00Z,R,Final,75,Clear,"3 mph, Out To LF",3.0,-45.0
+716769,3289,2023-09-01T23:10:00Z,R,Final,72,Clear,"6 mph, Out To LF",6.0,-45.0
+716767,5,2023-09-01T23:10:00Z,R,Final,73,Clear,"15 mph, In From RF",15.0,-135.0
+716772,5325,2023-09-02T00:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+716764,7,2023-09-02T00:10:00Z,R,Final,87,Clear,"7 mph, R To L",7.0,-90.0
+716762,4,2023-09-02T00:10:00Z,R,Final,77,Clear,"8 mph, In From RF",8.0,-135.0
+716763,2392,2023-09-02T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+716765,32,2023-09-02T00:10:00Z,R,Final,77,Clear,"5 mph, In From RF",5.0,-135.0
+716766,2889,2023-09-02T00:15:00Z,R,Final,80,Clear,"7 mph, In From LF",7.0,135.0
+716759,19,2023-09-02T00:40:00Z,R,Final,95,Clear,"9 mph, Out To CF",9.0,0.0
+716756,15,2023-09-02T01:40:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+716758,10,2023-09-02T01:40:00Z,R,Final,65,Cloudy,"14 mph, Out To RF",14.0,45.0
+716761,2680,2023-09-02T01:40:00Z,R,Final,72,Partly Cloudy,"10 mph, L To R",10.0,90.0
+716757,22,2023-09-02T02:10:00Z,R,Final,73,Cloudy,"7 mph, L To R",7.0,90.0
+716760,3309,2023-09-02T20:05:00Z,R,Final,84,Sunny,"6 mph, Out To LF",6.0,-45.0
+716755,10,2023-09-02T20:07:00Z,R,Final,72,Cloudy,"9 mph, Out To RF",9.0,45.0
+716754,5,2023-09-02T22:10:00Z,R,Final,79,Partly Cloudy,"0 mph, Calm",0.0,
+716753,2602,2023-09-02T22:40:00Z,R,Final,87,Clear,"7 mph, Out To LF",7.0,-45.0
+716750,7,2023-09-02T23:10:00Z,R,Final,94,Clear,"8 mph, R To L",8.0,-90.0
+716751,3289,2023-09-02T23:10:00Z,R,Final,71,Partly Cloudy,"10 mph, Out To LF",10.0,-45.0
+716749,4,2023-09-02T23:10:00Z,R,Final,86,Partly Cloudy,"11 mph, Out To LF",11.0,-45.0
+716746,2392,2023-09-02T23:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+716744,2889,2023-09-02T23:15:00Z,R,Final,87,Clear,"10 mph, R To L",10.0,-90.0
+716752,5325,2023-09-02T23:15:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+716745,32,2023-09-02T23:15:00Z,R,Final,85,Cloudy,"15 mph, In From RF",15.0,-135.0
+716747,15,2023-09-03T00:10:00Z,R,Final,78,Roof Closed,"0 mph, None",0.0,
+716748,19,2023-09-03T00:10:00Z,R,Final,95,Cloudy,"9 mph, In From LF",9.0,135.0
+716743,2680,2023-09-03T00:40:00Z,R,Final,76,Clear,"6 mph, L To R",6.0,90.0
+716741,22,2023-09-03T01:10:00Z,R,Final,76,Cloudy,"4 mph, L To R",4.0,90.0
+716738,2602,2023-09-03T16:10:00Z,R,Final,84,Sunny,"8 mph, R To L",8.0,-90.0
+716736,32,2023-09-03T17:05:00Z,R,Final,89,Sunny,"7 mph, R To L",7.0,-90.0
+716740,3309,2023-09-03T17:35:00Z,R,Final,91,Sunny,"6 mph, L To R",6.0,90.0
+716742,3289,2023-09-03T17:40:00Z,R,Final,87,Sunny,"3 mph, Out To RF",3.0,45.0
+716739,7,2023-09-03T18:10:00Z,R,Final,92,Sunny,"11 mph, L To R",11.0,90.0
+716734,4,2023-09-03T18:10:00Z,R,Final,90,Sunny,"6 mph, R To L",6.0,-90.0
+716733,2889,2023-09-03T18:15:00Z,R,Final,89,Partly Cloudy,"7 mph, In From RF",7.0,-135.0
+716737,5325,2023-09-03T18:35:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+716730,19,2023-09-03T19:10:00Z,R,Final,86,Partly Cloudy,"7 mph, Out To LF",7.0,-45.0
+716731,10,2023-09-03T20:07:00Z,R,Final,71,Partly Cloudy,"9 mph, Out To RF",9.0,45.0
+716732,15,2023-09-03T20:10:00Z,R,Final,78,Roof Closed,"0 mph, None",0.0,
+716728,2680,2023-09-03T20:10:00Z,R,Final,75,Partly Cloudy,"8 mph, L To R",8.0,90.0
+716729,5,2023-09-03T20:10:00Z,R,Final,84,Partly Cloudy,"1 mph, Out To RF",1.0,45.0
+716725,22,2023-09-03T20:10:00Z,R,Final,76,Partly Cloudy,"7 mph, L To R",7.0,90.0
+716735,2392,2023-09-03T23:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+716681,7,2023-09-04T18:10:00Z,R,Final,91,Sunny,"16 mph, R To L",16.0,-90.0
+716723,17,2023-09-04T18:20:00Z,R,Final,89,Partly Cloudy,"4 mph, Out To CF",4.0,0.0
+716724,5325,2023-09-04T20:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+716726,10,2023-09-04T20:07:00Z,R,Final,69,Sunny,"9 mph, Out To RF",9.0,45.0
+716721,15,2023-09-04T20:10:00Z,R,Final,78,Roof Closed,"0 mph, None",0.0,
+716727,2602,2023-09-04T20:10:00Z,R,Final,92,Partly Cloudy,"7 mph, In From RF",7.0,-135.0
+716722,12,2023-09-04T20:10:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+716719,5,2023-09-04T22:10:00Z,R,Final,84,Partly Cloudy,"1 mph, L To R",1.0,90.0
+716718,31,2023-09-04T22:35:00Z,R,Final,86,Partly Cloudy,"10 mph, Out To CF",10.0,0.0
+716720,2680,2023-09-04T22:40:00Z,R,Final,74,Partly Cloudy,"12 mph, L To R",12.0,90.0
+716713,1,2023-09-05T01:38:00Z,R,Final,74,Clear,"8 mph, Out To CF",8.0,0.0
+716717,5,2023-09-05T22:10:00Z,R,Final,86,Clear,"3 mph, In From CF",3.0,180.0
+716714,31,2023-09-05T22:35:00Z,R,Final,90,Partly Cloudy,"5 mph, Out To CF",5.0,0.0
+716712,2602,2023-09-05T22:40:00Z,R,Final,89,Partly Cloudy,"10 mph, Varies",10.0,
+716716,12,2023-09-05T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+716710,4169,2023-09-05T22:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+716715,3309,2023-09-05T23:05:00Z,R,Final,92,Partly Cloudy,"2 mph, L To R",2.0,90.0
+716711,3313,2023-09-05T23:05:00Z,R,Final,87,Partly Cloudy,"6 mph, L To R",6.0,90.0
+716709,4705,2023-09-05T23:20:00Z,R,Final,84,Partly Cloudy,"4 mph, R To L",4.0,-90.0
+716708,17,2023-09-05T23:40:00Z,R,Final,84,Partly Cloudy,"14 mph, Out To LF",14.0,-45.0
+716704,7,2023-09-05T23:40:00Z,R,Final,92,Clear,"12 mph, L To R",12.0,90.0
+716705,5325,2023-09-06T00:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+716706,1,2023-09-06T01:38:00Z,R,Final,71,Cloudy,"7 mph, R To L",7.0,-90.0
+716702,15,2023-09-06T01:40:00Z,R,Final,78,Roof Closed,"0 mph, None",0.0,
+716707,10,2023-09-06T01:40:00Z,R,Final,68,Clear,"13 mph, Out To RF",13.0,45.0
+716703,2680,2023-09-06T01:40:00Z,R,Final,71,Cloudy,"7 mph, L To R",7.0,90.0
+716697,31,2023-09-06T16:35:00Z,R,Final,87,Sunny,"5 mph, Out To LF",5.0,-45.0
+716700,5,2023-09-06T17:10:00Z,R,Final,87,Partly Cloudy,"12 mph, Out To CF",12.0,0.0
+716699,17,2023-09-06T18:20:00Z,R,Final,80,Sunny,"15 mph, Out To CF",15.0,0.0
+716698,10,2023-09-06T19:37:00Z,R,Final,70,Sunny,"8 mph, Out To RF",8.0,45.0
+716692,15,2023-09-06T19:40:00Z,R,Final,75,Roof Closed,"0 mph, None",0.0,
+716691,2680,2023-09-06T20:10:00Z,R,Final,74,Sunny,"9 mph, L To R",9.0,90.0
+716693,2602,2023-09-06T22:40:00Z,R,Final,83,Partly Cloudy,"10 mph, R To L",10.0,-90.0
+716696,12,2023-09-06T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+716695,4169,2023-09-06T22:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+716701,3309,2023-09-06T23:05:00Z,R,Final,97,Clear,"1 mph, In From RF",1.0,-135.0
+716694,3313,2023-09-06T23:05:00Z,R,Final,90,Clear,"6 mph, Out To RF",6.0,45.0
+716689,4705,2023-09-06T23:20:00Z,R,Final,83,Partly Cloudy,"5 mph, Out To LF",5.0,-45.0
+716688,7,2023-09-06T23:40:00Z,R,Final,79,Clear,"10 mph, R To L",10.0,-90.0
+716687,5325,2023-09-07T00:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+716690,1,2023-09-07T01:38:00Z,R,Final,77,Clear,"8 mph, R To L",8.0,-90.0
+716683,12,2023-09-07T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+716682,4169,2023-09-07T22:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+716686,3313,2023-09-07T23:05:00Z,R,Final,90,Partly Cloudy,"10 mph, R To L",10.0,-90.0
+716680,4705,2023-09-07T23:20:00Z,R,Final,84,Clear,"10 mph, R To L",10.0,-90.0
+716685,17,2023-09-07T23:40:00Z,R,Final,66,Cloudy,"10 mph, In From LF",10.0,135.0
+716684,1,2023-09-08T01:38:00Z,R,Final,79,Clear,"6 mph, Out To CF",6.0,0.0
+716678,17,2023-09-08T18:20:00Z,R,Final,66,Overcast,"12 mph, In From LF",12.0,135.0
+716677,2602,2023-09-08T22:40:00Z,R,Final,77,Cloudy,"6 mph, Out To RF",6.0,45.0
+716671,12,2023-09-08T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+716675,2394,2023-09-08T22:40:00Z,R,Final,67,Overcast,"5 mph, Out To RF",5.0,45.0
+716676,3309,2023-09-08T23:05:00Z,R,Final,89,Partly Cloudy,"14 mph, In From LF",14.0,135.0
+716679,2681,2023-09-08T23:05:00Z,R,Final,80,Cloudy,"11 mph, Out To LF",11.0,-45.0
+716670,3313,2023-09-08T23:05:00Z,R,Final,75,Partly Cloudy,"5 mph, Calm",5.0,
+716673,14,2023-09-08T23:07:00Z,R,Final,68,Cloudy,"15 mph, In From CF",15.0,180.0
+716672,3,2023-09-08T23:10:00Z,R,Final,82,Cloudy,"9 mph, Out To LF",9.0,-45.0
+716674,4705,2023-09-08T23:20:00Z,R,Final,83,Partly Cloudy,"4 mph, Out To LF",4.0,-45.0
+716665,5325,2023-09-09T00:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+716669,2392,2023-09-09T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+716666,3312,2023-09-09T00:10:00Z,R,Final,75,Clear,"3 mph, Out To LF",3.0,-45.0
+716667,1,2023-09-09T01:38:00Z,R,Final,86,Partly Cloudy,"8 mph, R To L",8.0,-90.0
+716668,2395,2023-09-09T02:15:00Z,R,Final,63,Clear,"14 mph, Varies",14.0,
+716659,3313,2023-09-09T18:05:00Z,R,Final,76,Cloudy,"6 mph, R To L",6.0,-90.0
+716654,3312,2023-09-09T18:10:00Z,R,Final,74,Overcast,"6 mph, Out To LF",6.0,-45.0
+716660,17,2023-09-09T18:20:00Z,R,Final,70,Partly Cloudy,"4 mph, L To R",4.0,90.0
+716661,14,2023-09-09T19:07:00Z,R,Final,68,Cloudy,"12 mph, R To L",12.0,-90.0
+716662,3309,2023-09-09T20:05:00Z,R,Final,72,Cloudy,"0 mph, Calm",0.0,
+716656,12,2023-09-09T20:05:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+716664,3,2023-09-09T20:10:00Z,R,Final,72,Cloudy,"2 mph, Out To LF",2.0,-45.0
+716653,2681,2023-09-09T22:05:00Z,R,Final,73,Partly Cloudy,"5 mph, R To L",5.0,-90.0
+716658,2394,2023-09-09T22:10:00Z,R,Final,67,Cloudy,"6 mph, L To R",6.0,90.0
+716655,2602,2023-09-09T22:40:00Z,R,Final,76,Partly Cloudy,"8 mph, L To R",8.0,90.0
+716657,5325,2023-09-09T23:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+716649,2392,2023-09-09T23:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+716651,4705,2023-09-09T23:20:00Z,R,Final,80,Partly Cloudy,"4 mph, Calm",4.0,
+716663,2395,2023-09-10T01:05:00Z,R,Final,67,Partly Cloudy,"14 mph, Out To CF",14.0,0.0
+716650,1,2023-09-10T01:07:00Z,R,Final,87,Partly Cloudy,"8 mph, Out To LF",8.0,-45.0
+716643,2681,2023-09-10T17:05:00Z,R,Final,74,Partly Cloudy,"3 mph, R To L",3.0,-90.0
+716645,12,2023-09-10T17:10:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+716648,2394,2023-09-10T17:10:00Z,R,Final,71,Overcast,"5 mph, Out To RF",5.0,45.0
+716652,3,2023-09-10T17:35:00Z,R,Final,73,Rain,"3 mph, In From RF",3.0,-135.0
+716647,3309,2023-09-10T17:35:00Z,R,Final,80,Cloudy,"1 mph, Out To LF",1.0,-45.0
+716644,4705,2023-09-10T17:35:00Z,R,Final,83,Partly Cloudy,"3 mph, L To R",3.0,90.0
+716646,3313,2023-09-10T17:35:00Z,R,Final,70,Cloudy,"6 mph, Varies",6.0,
+716641,14,2023-09-10T17:37:00Z,R,Final,70,Partly Cloudy,"12 mph, R To L",12.0,-90.0
+716642,2602,2023-09-10T17:40:00Z,R,Final,76,Partly Cloudy,"4 mph, Varies",4.0,
+716640,2392,2023-09-10T18:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+716639,3312,2023-09-10T18:10:00Z,R,Final,69,Cloudy,"9 mph, L To R",9.0,90.0
+716638,17,2023-09-10T18:20:00Z,R,Final,75,Sunny,"6 mph, In From RF",6.0,-135.0
+716637,5325,2023-09-10T18:35:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+716633,1,2023-09-10T20:07:00Z,R,Final,88,Partly Cloudy,"4 mph, R To L",4.0,-90.0
+716634,2395,2023-09-11T00:10:00Z,R,Final,67,Clear,"15 mph, Out To CF",15.0,0.0
+717664,2681,2023-09-11T17:05:00Z,R,Final,78,Sunny,"4 mph, Out To CF",4.0,0.0
+716590,2681,2023-09-11T22:40:00Z,R,Final,76,Cloudy,"8 mph, L To R",8.0,90.0
+716635,31,2023-09-11T22:35:00Z,R,Final,77,Clear,"3 mph, Out To CF",3.0,0.0
+716636,2,2023-09-11T22:35:00Z,R,Final,85,Cloudy,"4 mph, In From LF",4.0,135.0
+716630,14,2023-09-11T23:07:00Z,R,Final,72,Clear,"7 mph, Out To LF",7.0,-45.0
+716627,3289,2023-09-11T23:10:00Z,R,Final,73,Partly Cloudy,"3 mph, In From LF",3.0,135.0
+716629,3312,2023-09-11T23:40:00Z,R,Final,72,Partly Cloudy,"6 mph, Out To LF",6.0,-45.0
+716626,32,2023-09-11T23:40:00Z,R,Final,70,Roof Closed,"0 mph, None",0.0,
+716624,2392,2023-09-12T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+716625,19,2023-09-12T00:40:00Z,R,Final,66,Partly Cloudy,"0 mph, Calm",0.0,
+716623,680,2023-09-12T01:40:00Z,R,Final,69,Clear,"4 mph, L To R",4.0,90.0
+716632,2395,2023-09-12T01:45:00Z,R,Final,65,Clear,"12 mph, Varies",12.0,
+716622,22,2023-09-12T02:10:00Z,R,Final,76,Partly Cloudy,"4 mph, L To R",4.0,90.0
+716628,3,2023-09-12T17:35:00Z,R,Final,74,Cloudy,"4 mph, Varies",4.0,
+716612,3,2023-09-12T23:10:00Z,R,Final,74,Partly Cloudy,"6 mph, L To R",6.0,90.0
+716611,4,2023-09-12T20:40:00Z,R,Final,69,Partly Cloudy,"9 mph, Out To RF",9.0,45.0
+716631,4,2023-09-12T20:45:00Z,R,Final,65,Partly Cloudy,"8 mph, L To R",8.0,90.0
+716620,31,2023-09-12T22:35:00Z,R,Final,66,Cloudy,"4 mph, Calm",4.0,
+716621,2,2023-09-12T22:35:00Z,R,Final,86,Partly Cloudy,"5 mph, Out To LF",5.0,-45.0
+716617,2394,2023-09-12T22:40:00Z,R,Final,69,Partly Cloudy,"9 mph, Out To LF",9.0,-45.0
+716618,2681,2023-09-12T22:40:00Z,R,Final,83,Partly Cloudy,"4 mph, Out To CF",4.0,0.0
+716616,14,2023-09-12T23:07:00Z,R,Final,68,Roof Closed,"0 mph, None",0.0,
+716615,3289,2023-09-12T23:10:00Z,R,Final,78,Partly Cloudy,"6 mph, Out To LF",6.0,-45.0
+716613,3312,2023-09-12T23:40:00Z,R,Final,63,Partly Cloudy,"9 mph, L To R",9.0,90.0
+716610,32,2023-09-12T23:40:00Z,R,Final,68,Roof Closed,"0 mph, None",0.0,
+716614,2392,2023-09-13T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+716609,19,2023-09-13T00:40:00Z,R,Final,75,Clear,"4 mph, R To L",4.0,-90.0
+716606,680,2023-09-13T01:40:00Z,R,Final,63,Roof Closed,"0 mph, Calm",0.0,
+716619,2395,2023-09-13T01:45:00Z,R,Final,64,Clear,"15 mph, Varies",15.0,
+716608,22,2023-09-13T02:10:00Z,R,Final,73,Clear,"5 mph, L To R",5.0,90.0
+716607,3312,2023-09-13T17:10:00Z,R,Final,60,Sunny,"4 mph, In From LF",4.0,135.0
+716599,19,2023-09-13T19:10:00Z,R,Final,76,Partly Cloudy,"4 mph, Out To LF",4.0,-45.0
+716605,2395,2023-09-13T19:45:00Z,R,Final,66,Sunny,"7 mph, Out To CF",7.0,0.0
+716602,680,2023-09-13T20:10:00Z,R,Final,70,Partly Cloudy,"6 mph, L To R",6.0,90.0
+716600,31,2023-09-13T22:35:00Z,R,Final,70,Partly Cloudy,"8 mph, Out To RF",8.0,45.0
+716604,2,2023-09-13T22:35:00Z,R,Final,81,Partly Cloudy,"6 mph, In From LF",6.0,135.0
+716601,2394,2023-09-13T22:40:00Z,R,Final,64,Partly Cloudy,"7 mph, Out To CF",7.0,0.0
+716603,2681,2023-09-13T22:40:00Z,R,Final,81,Partly Cloudy,"7 mph, Out To RF",7.0,45.0
+716594,14,2023-09-13T23:07:00Z,R,Final,65,Partly Cloudy,"19 mph, In From LF",19.0,135.0
+716595,3289,2023-09-13T23:10:00Z,R,Final,77,Partly Cloudy,"3 mph, L To R",3.0,90.0
+716596,2392,2023-09-13T23:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+716598,4,2023-09-13T23:40:00Z,R,Final,64,Clear,"9 mph, L To R",9.0,90.0
+716592,32,2023-09-13T23:40:00Z,R,Final,70,Roof Closed,"0 mph, None",0.0,
+716589,22,2023-09-14T02:10:00Z,R,Final,71,Clear,"7 mph, L To R",7.0,90.0
+716591,31,2023-09-14T16:35:00Z,R,Final,67,Partly Cloudy,"6 mph, Calm",6.0,
+716584,2394,2023-09-14T17:10:00Z,R,Final,67,Sunny,"2 mph, R To L",2.0,-90.0
+716597,3,2023-09-14T17:35:00Z,R,Final,75,Sunny,"8 mph, L To R",8.0,90.0
+716593,3,2023-09-14T23:15:00Z,R,Final,70,Clear,"1 mph, Out To RF",1.0,45.0
+716585,32,2023-09-14T18:10:00Z,R,Final,70,Partly Cloudy,"4 mph, In From LF",4.0,135.0
+716588,3289,2023-09-14T20:10:00Z,R,Final,78,Sunny,"9 mph, In From LF",9.0,135.0
+716587,14,2023-09-14T23:07:00Z,R,Final,65,Clear,"8 mph, Out To CF",8.0,0.0
+716586,2,2023-09-14T23:15:00Z,R,Final,73,Clear,"9 mph, In From LF",9.0,135.0
+716580,4,2023-09-14T23:40:00Z,R,Final,67,Clear,"8 mph, In From LF",8.0,135.0
+716579,31,2023-09-15T22:35:00Z,R,Final,70,Clear,"5 mph, In From LF",5.0,135.0
+716582,4169,2023-09-15T22:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+716583,2,2023-09-15T23:05:00Z,R,Final,73,Clear,"8 mph, In From LF",8.0,135.0
+716576,14,2023-09-15T23:07:00Z,R,Final,64,Clear,"2 mph, Out To CF",2.0,0.0
+716574,3289,2023-09-15T23:10:00Z,R,Final,67,Partly Cloudy,"11 mph, In From LF",11.0,135.0
+716575,5,2023-09-15T23:10:00Z,R,Final,67,Clear,"6 mph, In From RF",6.0,-135.0
+716573,4,2023-09-15T23:40:00Z,R,Final,72,Clear,"4 mph, L To R",4.0,90.0
+716577,7,2023-09-16T00:10:00Z,R,Final,79,Cloudy,"3 mph, R To L",3.0,-90.0
+716578,32,2023-09-16T00:10:00Z,R,Final,68,Clear,"5 mph, In From RF",5.0,-135.0
+716572,2889,2023-09-16T00:15:00Z,R,Final,73,Clear,"5 mph, In From RF",5.0,-135.0
+716571,19,2023-09-16T00:40:00Z,R,Final,63,Partly Cloudy,"2 mph, Out To CF",2.0,0.0
+716570,1,2023-09-16T01:38:00Z,R,Final,73,Clear,"7 mph, Out To LF",7.0,-45.0
+716567,15,2023-09-16T01:40:00Z,R,Final,78,Roof Closed,"0 mph, None",0.0,
+716569,10,2023-09-16T01:40:00Z,R,Final,65,Partly Cloudy,"12 mph, Out To RF",12.0,45.0
+716568,680,2023-09-16T02:10:00Z,R,Final,77,Clear,"5 mph, Varies",5.0,
+716581,19,2023-09-16T18:10:00Z,R,Final,68,Sunny,"2 mph, Out To CF",2.0,0.0
+716550,19,2023-09-17T00:10:00Z,R,Final,72,Clear,"3 mph, R To L",3.0,-90.0
+716566,14,2023-09-16T19:07:00Z,R,Final,72,Partly Cloudy,"6 mph, Out To LF",6.0,-45.0
+716564,10,2023-09-16T20:07:00Z,R,Final,68,Overcast,"9 mph, Out To RF",9.0,45.0
+716565,4169,2023-09-16T20:10:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+716562,5,2023-09-16T22:10:00Z,R,Final,69,Partly Cloudy,"6 mph, In From RF",6.0,-135.0
+716563,31,2023-09-16T22:35:00Z,R,Final,71,Clear,"5 mph, Calm",5.0,
+716561,2,2023-09-16T23:05:00Z,R,Final,79,Clear,"4 mph, L To R",4.0,90.0
+716560,7,2023-09-16T23:10:00Z,R,Final,71,Cloudy,"4 mph, Varies",4.0,
+716555,3289,2023-09-16T23:10:00Z,R,Final,72,Clear,"8 mph, L To R",8.0,90.0
+716556,4,2023-09-16T23:10:00Z,R,Final,67,Overcast,"4 mph, R To L",4.0,-90.0
+716559,32,2023-09-16T23:10:00Z,R,Final,74,Roof Closed,"8 mph, In From RF",8.0,-135.0
+716557,2889,2023-09-16T23:15:00Z,R,Final,75,Cloudy,"3 mph, Out To RF",3.0,45.0
+716558,15,2023-09-17T00:10:00Z,R,Final,79,Roof Closed,"0 mph, None",0.0,
+716554,1,2023-09-17T01:07:00Z,R,Final,69,Overcast,"5 mph, R To L",5.0,-90.0
+716552,680,2023-09-17T01:40:00Z,R,Final,72,Clear,"6 mph, L To R",6.0,90.0
+716553,2,2023-09-17T17:35:00Z,R,Final,72,Overcast,"5 mph, Out To LF",5.0,-45.0
+716551,31,2023-09-17T17:35:00Z,R,Final,62,Rain,"4 mph, In From RF",4.0,-135.0
+716548,14,2023-09-17T17:37:00Z,R,Final,68,Sunny,"11 mph, Out To CF",11.0,0.0
+716545,3289,2023-09-17T17:40:00Z,R,Final,77,Sunny,"5 mph, Out To CF",5.0,0.0
+716549,5,2023-09-17T17:40:00Z,R,Final,71,Sunny,"2 mph, In From RF",2.0,-135.0
+716546,4169,2023-09-17T17:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+716547,7,2023-09-17T18:10:00Z,R,Final,73,Sunny,"8 mph, L To R",8.0,90.0
+716542,4,2023-09-17T18:10:00Z,R,Final,64,Cloudy,"4 mph, Out To RF",4.0,45.0
+716543,32,2023-09-17T18:10:00Z,R,Final,67,Partly Cloudy,"16 mph, In From LF",16.0,135.0
+716541,2889,2023-09-17T18:15:00Z,R,Final,74,Cloudy,"9 mph, Out To CF",9.0,0.0
+716540,19,2023-09-17T19:10:00Z,R,Final,75,Sunny,"3 mph, Out To LF",3.0,-45.0
+716544,1,2023-09-17T20:07:00Z,R,Final,74,Cloudy,"5 mph, Out To CF",5.0,0.0
+716538,10,2023-09-17T20:07:00Z,R,Final,70,Partly Cloudy,"11 mph, Out To RF",11.0,45.0
+716537,680,2023-09-17T20:10:00Z,R,Final,64,Partly Cloudy,"5 mph, Out To CF",5.0,0.0
+716536,15,2023-09-17T23:10:00Z,R,Final,78,Roof Closed,"0 mph, None",0.0,
+716529,7,2023-09-18T18:10:00Z,R,Final,80,Sunny,"10 mph, L To R",10.0,90.0
+716534,2602,2023-09-18T22:40:00Z,R,Final,72,Partly Cloudy,"10 mph, Out To CF",10.0,0.0
+716535,4169,2023-09-18T22:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+716539,3309,2023-09-18T23:05:00Z,R,Final,74,Clear,"13 mph, In From LF",13.0,135.0
+716532,4705,2023-09-18T23:20:00Z,R,Final,73,Partly Cloudy,"6 mph, Out To CF",6.0,0.0
+716531,2889,2023-09-18T23:45:00Z,R,Final,75,Clear,"5 mph, In From RF",5.0,-135.0
+716533,5325,2023-09-19T00:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+716530,2392,2023-09-19T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+716526,2680,2023-09-19T01:40:00Z,R,Final,70,Clear,"9 mph, L To R",9.0,90.0
+716527,10,2023-09-19T01:40:00Z,R,Final,67,Clear,"13 mph, Varies",13.0,
+716528,22,2023-09-19T02:10:00Z,R,Final,69,Partly Cloudy,"6 mph, Out To RF",6.0,45.0
+716524,12,2023-09-19T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+716522,2602,2023-09-19T22:40:00Z,R,Final,75,Clear,"6 mph, In From CF",6.0,180.0
+716523,4169,2023-09-19T22:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+716525,3309,2023-09-19T23:05:00Z,R,Final,74,Clear,"6 mph, In From LF",6.0,135.0
+716520,3313,2023-09-19T23:05:00Z,R,Final,70,Clear,"10 mph, Out To CF",10.0,0.0
+716521,4705,2023-09-19T23:20:00Z,R,Final,76,Partly Cloudy,"8 mph, L To R",8.0,90.0
+716517,7,2023-09-19T23:40:00Z,R,Final,76,Partly Cloudy,"10 mph, R To L",10.0,-90.0
+716518,17,2023-09-19T23:40:00Z,R,Final,64,Overcast,"10 mph, R To L",10.0,-90.0
+716515,2889,2023-09-19T23:45:00Z,R,Final,81,Partly Cloudy,"14 mph, R To L",14.0,-90.0
+716519,5325,2023-09-20T00:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+716514,2392,2023-09-20T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+716516,2680,2023-09-20T01:40:00Z,R,Final,69,Partly Cloudy,"6 mph, L To R",6.0,90.0
+716512,10,2023-09-20T01:40:00Z,R,Final,66,Partly Cloudy,"11 mph, Out To RF",11.0,45.0
+716511,15,2023-09-20T01:40:00Z,R,Final,95,Clear,"3 mph, Out To RF",3.0,45.0
+716510,22,2023-09-20T02:10:00Z,R,Final,68,Clear,"5 mph, L To R",5.0,90.0
+716509,4705,2023-09-20T16:20:00Z,R,Final,75,Partly Cloudy,"6 mph, In From LF",6.0,135.0
+716506,2602,2023-09-20T16:35:00Z,R,Final,78,Sunny,"6 mph, In From CF",6.0,180.0
+716513,3309,2023-09-20T17:05:00Z,R,Final,75,Partly Cloudy,"5 mph, Out To RF",5.0,45.0
+716507,5325,2023-09-20T18:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+716508,2392,2023-09-20T18:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+716505,7,2023-09-20T18:10:00Z,R,Final,79,Sunny,"7 mph, R To L",7.0,-90.0
+716504,10,2023-09-20T19:37:00Z,R,Final,69,Sunny,"5 mph, Out To RF",5.0,45.0
+716499,15,2023-09-20T19:40:00Z,R,Final,78,Roof Closed,"0 mph, None",0.0,
+716500,2680,2023-09-20T20:10:00Z,R,Final,72,Partly Cloudy,"7 mph, L To R",7.0,90.0
+716501,12,2023-09-20T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+716503,4169,2023-09-20T22:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+716502,3313,2023-09-20T23:05:00Z,R,Final,72,Clear,"8 mph, L To R",8.0,90.0
+716497,17,2023-09-20T23:40:00Z,R,Final,75,Cloudy,"5 mph, Out To LF",5.0,-45.0
+716495,2889,2023-09-20T23:45:00Z,R,Final,70,Cloudy,"3 mph, In From LF",3.0,135.0
+716494,22,2023-09-21T02:10:00Z,R,Final,68,Partly Cloudy,"6 mph, L To R",6.0,90.0
+716498,12,2023-09-21T17:10:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+716491,2889,2023-09-21T17:15:00Z,R,Final,77,Partly Cloudy,"7 mph, In From RF",7.0,-135.0
+716496,3309,2023-09-21T23:05:00Z,R,Final,75,Partly Cloudy,"0 mph, Calm",0.0,
+716492,3313,2023-09-21T23:05:00Z,R,Final,68,Clear,"7 mph, Out To RF",7.0,45.0
+716489,5,2023-09-21T23:15:00Z,R,Final,73,Clear,"15 mph, In From RF",15.0,-135.0
+716490,2681,2023-09-21T23:15:00Z,R,Final,69,Partly Cloudy,"7 mph, In From CF",7.0,180.0
+716493,17,2023-09-21T23:40:00Z,R,Final,69,Cloudy,"4 mph, In From CF",4.0,180.0
+716488,10,2023-09-22T01:40:00Z,R,Final,64,Clear,"12 mph, Out To RF",12.0,45.0
+716484,22,2023-09-22T02:10:00Z,R,Final,67,Partly Cloudy,"6 mph, Out To RF",6.0,45.0
+716486,17,2023-09-22T18:20:00Z,R,Final,74,Partly Cloudy,"6 mph, In From RF",6.0,-135.0
+716487,2602,2023-09-22T22:40:00Z,R,Final,80,Partly Cloudy,"8 mph, Varies",8.0,
+716479,12,2023-09-22T22:40:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+716482,4169,2023-09-22T22:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+716481,2681,2023-09-22T23:05:00Z,R,Final,66,Partly Cloudy,"14 mph, In From RF",14.0,-135.0
+716485,3309,2023-09-22T23:05:00Z,R,Final,68,Cloudy,"19 mph, In From RF",19.0,-135.0
+716480,3313,2023-09-22T23:05:00Z,R,Final,66,Cloudy,"10 mph, In From CF",10.0,180.0
+716483,5,2023-09-22T23:10:00Z,R,Final,72,Clear,"9 mph, Out To LF",9.0,-45.0
+716478,3,2023-09-22T23:10:00Z,R,Final,62,Cloudy,"8 mph, Varies",8.0,
+716477,5325,2023-09-23T00:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+716473,2392,2023-09-23T00:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+716475,3312,2023-09-23T00:10:00Z,R,Final,72,Cloudy,"7 mph, In From LF",7.0,135.0
+716472,10,2023-09-23T01:40:00Z,R,Final,63,Clear,"12 mph, Varies",12.0,
+716476,2680,2023-09-23T01:40:00Z,R,Final,67,Cloudy,"7 mph, L To R",7.0,90.0
+716474,22,2023-09-23T02:10:00Z,R,Final,67,Overcast,"4 mph, Out To CF",4.0,0.0
+716465,3312,2023-09-23T18:10:00Z,R,Final,71,Cloudy,"12 mph, In From LF",12.0,135.0
+716469,17,2023-09-23T18:20:00Z,R,Final,74,Sunny,"9 mph, R To L",9.0,-90.0
+716466,2681,2023-09-23T20:05:00Z,R,Final,61,Cloudy,"19 mph, In From RF",19.0,-135.0
+716470,10,2023-09-23T20:07:00Z,R,Final,67,Partly Cloudy,"7 mph, Out To RF",7.0,45.0
+716463,12,2023-09-23T20:10:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+716468,3,2023-09-23T20:10:00Z,R,Final,61,Drizzle,"4 mph, In From CF",4.0,180.0
+716460,4169,2023-09-23T20:10:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+716464,5,2023-09-23T22:10:00Z,R,Final,70,Clear,"19 mph, In From CF",19.0,180.0
+716462,2602,2023-09-23T22:40:00Z,R,Final,75,Clear,"8 mph, L To R",8.0,90.0
+716461,5325,2023-09-23T23:05:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+716455,2392,2023-09-23T23:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+716457,2680,2023-09-24T00:40:00Z,R,Final,70,Clear,"9 mph, L To R",9.0,90.0
+716456,22,2023-09-24T01:10:00Z,R,Final,72,Clear,"6 mph, L To R",6.0,90.0
+716452,12,2023-09-24T17:10:00Z,R,Final,72,Dome,"0 mph, None",0.0,
+716459,3309,2023-09-24T17:35:00Z,R,Final,67,Rain,"1 mph, Out To LF",1.0,-45.0
+716467,3309,2023-09-24T22:35:00Z,R,Final,67,Cloudy,"0 mph, Calm",0.0,
+716453,3,2023-09-24T17:35:00Z,R,Completed Early,63,Drizzle,"12 mph, L To R",12.0,90.0
+716458,3313,2023-09-24T17:35:00Z,R,Final,64,Rain,"14 mph, Out To RF",14.0,45.0
+716450,5,2023-09-24T17:40:00Z,R,Final,68,Overcast,"6 mph, R To L",6.0,-90.0
+716451,2602,2023-09-24T17:40:00Z,R,Final,77,Sunny,"8 mph, L To R",8.0,90.0
+716447,4169,2023-09-24T17:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+716448,2392,2023-09-24T18:10:00Z,R,Final,73,Roof Closed,"0 mph, None",0.0,
+716445,3312,2023-09-24T18:10:00Z,R,Final,69,Partly Cloudy,"9 mph, In From RF",9.0,-135.0
+716449,17,2023-09-24T18:20:00Z,R,Final,73,Sunny,"7 mph, Out To LF",7.0,-45.0
+716446,5325,2023-09-24T18:35:00Z,R,Final,74,Roof Closed,"0 mph, None",0.0,
+716442,10,2023-09-24T20:07:00Z,R,Final,69,Sunny,"8 mph, Out To RF",8.0,45.0
+716444,2680,2023-09-24T20:10:00Z,R,Final,72,Sunny,"13 mph, L To R",13.0,90.0
+716454,2681,2023-09-24T22:05:00Z,R,Final,66,Cloudy,"11 mph, Out To CF",11.0,0.0
+716439,22,2023-09-24T23:10:00Z,R,Final,77,Sunny,"7 mph, L To R",7.0,90.0
+716471,3313,2023-09-25T17:05:00Z,R,Final,59,Drizzle,"17 mph, Out To RF",17.0,45.0
+716440,1,2023-09-26T01:38:00Z,R,Final,73,Clear,"6 mph, R To L",6.0,-90.0
+716436,680,2023-09-26T01:40:00Z,R,Final,58,Roof Closed,"0 mph, Calm",0.0,
+716441,2395,2023-09-26T01:45:00Z,R,Final,68,Clear,"14 mph, Varies",14.0,
+716438,19,2023-09-26T19:10:00Z,R,Final,72,Sunny,"3 mph, R To L",3.0,-90.0
+716424,19,2023-09-27T00:40:00Z,R,Final,78,Clear,"4 mph, R To L",4.0,-90.0
+716435,5,2023-09-26T22:10:00Z,R,Final,68,Cloudy,"6 mph, R To L",6.0,-90.0
+716434,2,2023-09-26T22:35:00Z,R,Final,61,Overcast,"14 mph, In From CF",14.0,180.0
+716433,2394,2023-09-26T22:40:00Z,R,Final,65,Cloudy,"13 mph, L To R",13.0,90.0
+716432,2681,2023-09-26T22:40:00Z,R,Final,59,Cloudy,"11 mph, Out To LF",11.0,-45.0
+716431,14,2023-09-26T23:07:00Z,R,Final,65,Clear,"20 mph, R To L",20.0,-90.0
+716428,3,2023-09-26T23:10:00Z,R,Final,56,Partly Cloudy,"8 mph, Out To CF",8.0,0.0
+716429,4705,2023-09-26T23:20:00Z,R,Final,77,Partly Cloudy,"7 mph, L To R",7.0,90.0
+716421,3312,2023-09-26T23:40:00Z,R,Final,64,Overcast,"7 mph, In From LF",7.0,135.0
+716427,4,2023-09-26T23:40:00Z,R,Final,69,Partly Cloudy,"11 mph, L To R",11.0,90.0
+716423,32,2023-09-26T23:40:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+716422,1,2023-09-27T01:38:00Z,R,Final,75,Clear,"5 mph, Out To CF",5.0,0.0
+716437,2395,2023-09-27T01:45:00Z,R,Final,64,Clear,"16 mph, Varies",16.0,
+716425,680,2023-09-27T02:05:00Z,R,Final,57,Roof Closed,"8 mph, Out To LF",8.0,-45.0
+716417,4,2023-09-27T18:10:00Z,R,Final,68,Cloudy,"8 mph, L To R",8.0,90.0
+716411,3289,2023-09-27T20:10:00Z,R,Final,66,Partly Cloudy,"8 mph, R To L",8.0,-90.0
+716430,3289,2023-09-27T20:15:00Z,R,Final,61,Clear,"5 mph, In From RF",5.0,-135.0
+716418,5,2023-09-27T22:10:00Z,R,Final,71,Cloudy,"1 mph, In From RF",1.0,-135.0
+716419,3,2023-09-27T22:10:00Z,R,Final,61,Partly Cloudy,"7 mph, L To R",7.0,90.0
+716416,2,2023-09-27T22:35:00Z,R,Final,67,Clear,"7 mph, In From RF",7.0,-135.0
+716414,2394,2023-09-27T22:40:00Z,R,Final,64,Overcast,"9 mph, Out To LF",9.0,-45.0
+716415,2681,2023-09-27T22:40:00Z,R,Final,64,Partly Cloudy,"10 mph, In From RF",10.0,-135.0
+716413,14,2023-09-27T23:07:00Z,R,Final,68,Clear,"0 mph, None",0.0,
+716412,4705,2023-09-27T23:20:00Z,R,Final,74,Partly Cloudy,"3 mph, Calm",3.0,
+716410,3312,2023-09-27T23:40:00Z,R,Final,69,Partly Cloudy,"6 mph, In From CF",6.0,180.0
+716408,32,2023-09-27T23:40:00Z,R,Final,70,Roof Closed,"0 mph, None",0.0,
+716406,19,2023-09-28T00:40:00Z,R,Final,82,Clear,"5 mph, Out To CF",5.0,0.0
+716420,1,2023-09-28T01:38:00Z,R,Final,75,Partly Cloudy,"8 mph, R To L",8.0,-90.0
+716407,680,2023-09-28T01:40:00Z,R,Final,58,Roof Closed,"0 mph, None",0.0,
+716426,2395,2023-09-28T01:45:00Z,R,Final,62,Partly Cloudy,"19 mph, Out To CF",19.0,0.0
+716414,2394,2023-09-28T17:10:00Z,R,Final,64,Overcast,"9 mph, Out To LF",9.0,-45.0
+716400,3312,2023-09-28T17:10:00Z,R,Final,65,Cloudy,"10 mph, Out To LF",10.0,-45.0
+716443,4,2023-09-28T18:10:00Z,R,Final,68,Cloudy,"10 mph, L To R",10.0,90.0
+716401,2394,2023-09-28T19:10:00Z,R,Final,63,Overcast,"8 mph, L To R",8.0,90.0
+716396,32,2023-09-28T20:10:00Z,R,Final,65,Roof Closed,"0 mph, None",0.0,
+716409,2681,2023-09-28T22:05:00Z,R,Final,62,Cloudy,"12 mph, In From RF",12.0,-135.0
+716402,2,2023-09-28T22:35:00Z,R,Final,67,Partly Cloudy,"9 mph, In From RF",9.0,-135.0
+716403,14,2023-09-28T23:07:00Z,R,Final,63,Overcast,"16 mph, R To L",16.0,-90.0
+716404,3289,2023-09-28T23:10:00Z,R,Completed Early,62,Cloudy,"7 mph, R To L",7.0,-90.0
+716399,4705,2023-09-28T23:20:00Z,R,Final,72,Partly Cloudy,"1 mph, L To R",1.0,90.0
+716405,19,2023-09-29T00:40:00Z,R,Final,81,Partly Cloudy,"8 mph, R To L",8.0,-90.0
+716397,680,2023-09-29T01:40:00Z,R,Final,54,Roof Closed,"0 mph, Calm",0.0,
+716398,31,2023-09-29T22:35:00Z,R,Final,76,Partly Cloudy,"3 mph, Calm",3.0,
+716395,2394,2023-09-29T22:40:00Z,R,Final,69,Cloudy,"4 mph, In From LF",4.0,135.0
+716390,2,2023-09-29T23:05:00Z,R,Final,65,Overcast,"7 mph, In From CF",7.0,180.0
+716392,14,2023-09-29T23:07:00Z,R,Final,64,Clear,"8 mph, R To L",8.0,-90.0
+716394,4705,2023-09-29T23:20:00Z,R,Final,78,Partly Cloudy,"4 mph, Out To CF",4.0,0.0
+716391,4,2023-09-29T23:40:00Z,R,Final,68,Clear,"8 mph, L To R",8.0,90.0
+716387,19,2023-09-30T00:10:00Z,R,Final,82,Partly Cloudy,"8 mph, R To L",8.0,-90.0
+716389,7,2023-09-30T00:10:00Z,R,Final,87,Clear,"10 mph, R To L",10.0,-90.0
+716385,32,2023-09-30T00:10:00Z,R,Final,66,Clear,"4 mph, In From RF",4.0,-135.0
+716388,2889,2023-09-30T00:15:00Z,R,Final,80,Clear,"5 mph, In From CF",5.0,180.0
+716386,1,2023-09-30T01:38:00Z,R,Final,69,Cloudy,"8 mph, Out To CF",8.0,0.0
+716384,15,2023-09-30T01:40:00Z,R,Final,94,Clear,"6 mph, In From LF",6.0,135.0
+716379,680,2023-09-30T02:10:00Z,R,Final,55,Roof Closed,"0 mph, Calm",0.0,
+716382,2395,2023-09-30T02:15:00Z,R,Final,62,Partly Cloudy,"15 mph, Out To CF",15.0,0.0
+716380,2394,2023-09-30T17:10:00Z,R,Final,72,Sunny,"5 mph, In From LF",5.0,135.0
+716383,14,2023-09-30T19:07:00Z,R,Final,68,Partly Cloudy,"7 mph, Out To RF",7.0,45.0
+716376,3289,2023-09-30T20:10:00Z,R,Final,65,Partly Cloudy,"9 mph, In From LF",9.0,135.0
+716393,3289,2023-09-30T20:15:00Z,R,Final,63,Cloudy,"5 mph, In From LF",5.0,135.0
+716378,31,2023-09-30T22:35:00Z,R,Final,75,Cloudy,"7 mph, In From LF",7.0,135.0
+716374,4,2023-09-30T23:10:00Z,R,Final,76,Clear,"7 mph, In From CF",7.0,180.0
+716375,7,2023-09-30T23:10:00Z,R,Final,88,Clear,"11 mph, R To L",11.0,-90.0
+716373,32,2023-09-30T23:10:00Z,R,Final,75,Clear,"5 mph, In From RF",5.0,-135.0
+716377,2,2023-09-30T23:15:00Z,R,Final,68,Cloudy,"6 mph, In From RF",6.0,-135.0
+716372,2889,2023-09-30T23:15:00Z,R,Final,86,Clear,"8 mph, In From RF",8.0,-135.0
+716366,680,2023-09-30T23:15:00Z,R,Final,63,Roof Closed,"0 mph, Calm",0.0,
+716369,4705,2023-09-30T23:20:00Z,R,Final,81,Partly Cloudy,"2 mph, L To R",2.0,90.0
+716370,15,2023-10-01T00:10:00Z,R,Final,78,Roof Closed,"0 mph, None",0.0,
+716368,19,2023-10-01T00:10:00Z,R,Final,82,Cloudy,"8 mph, Out To CF",8.0,0.0
+716381,2395,2023-10-01T01:05:00Z,R,Final,65,Overcast,"8 mph, Out To CF",8.0,0.0
+716371,1,2023-10-01T01:07:00Z,R,Final,66,Overcast,"9 mph, R To L",9.0,-90.0
+716367,2,2023-10-01T19:05:00Z,R,Final,81,Partly Cloudy,"8 mph, In From LF",8.0,135.0
+716363,2395,2023-10-01T19:05:00Z,R,Final,64,Partly Cloudy,"5 mph, Out To CF",5.0,0.0
+716362,31,2023-10-01T19:05:00Z,R,Final,80,Sunny,"5 mph, In From LF",5.0,135.0
+716365,1,2023-10-01T19:07:00Z,R,Final,65,Overcast,"2 mph, Calm",2.0,
+716357,14,2023-10-01T19:07:00Z,R,Final,79,Partly Cloudy,"6 mph, Out To CF",6.0,0.0
+716361,2394,2023-10-01T19:10:00Z,R,Final,78,Partly Cloudy,"3 mph, In From LF",3.0,135.0
+716358,15,2023-10-01T19:10:00Z,R,Final,72,Roof Closed,"0 mph, None",0.0,
+716360,680,2023-10-01T19:10:00Z,R,Final,57,Partly Cloudy,"0 mph, Calm",0.0,
+716359,19,2023-10-01T19:10:00Z,R,Final,79,Partly Cloudy,"9 mph, Out To RF",9.0,45.0
+716355,3289,2023-10-01T19:10:00Z,R,Final,77,Sunny,"10 mph, In From LF",10.0,135.0
+716354,4705,2023-10-01T19:10:00Z,R,Final,81,Partly Cloudy,"6 mph, L To R",6.0,90.0
+716356,4,2023-10-01T19:10:00Z,R,Final,80,Sunny,"3 mph, L To R",3.0,90.0
+716352,7,2023-10-01T19:10:00Z,R,Final,90,Sunny,"5 mph, R To L",5.0,-90.0
+716364,32,2023-10-01T19:10:00Z,R,Final,85,Sunny,"8 mph, R To L",8.0,-90.0
+716353,2889,2023-10-01T19:15:00Z,R,Final,86,Sunny,"6 mph, R To L",6.0,-90.0
+716404,3289,2023-10-02T17:10:00Z,R,Completed Early,62,Cloudy,"7 mph, R To L",7.0,-90.0
+748581,12,2023-10-03T19:08:00Z,F,Final,72,Dome,"0 mph, None",0.0,
+748585,3312,2023-10-03T20:38:00Z,F,Final,84,Overcast,"15 mph, R To L",15.0,-90.0
+748582,32,2023-10-03T23:08:00Z,F,Final,80,Clear,"13 mph, In From CF",13.0,180.0
+748577,2681,2023-10-04T00:08:00Z,F,Final,74,Clear,"4 mph, Out To CF",4.0,0.0
+748580,12,2023-10-04T19:08:00Z,F,Final,72,Dome,"0 mph, None",0.0,
+748583,3312,2023-10-04T20:38:00Z,F,Final,64,Cloudy,"11 mph, Out To LF",11.0,-45.0
+748578,32,2023-10-04T23:08:00Z,F,Final,79,Roof Closed,"13 mph, In From RF",13.0,-135.0
+748575,2681,2023-10-05T00:08:00Z,F,Final,73,Clear,"6 mph, Out To CF",6.0,0.0
+748573,2,2023-10-07T17:03:00Z,D,Final,63,Cloudy,"13 mph, Varies",13.0,
+748568,2392,2023-10-07T20:45:00Z,D,Final,73,Roof Closed,"0 mph, None",0.0,
+748562,4705,2023-10-07T22:07:00Z,D,Final,65,Clear,"12 mph, R To L",12.0,-90.0
+748555,22,2023-10-08T01:20:00Z,D,Final,78,Clear,"4 mph, Out To RF",4.0,45.0
+748569,2,2023-10-08T20:07:00Z,D,Final,60,Cloudy,"14 mph, L To R",14.0,90.0
+748565,2392,2023-10-09T00:03:00Z,D,Final,73,Partly Cloudy,"2 mph, In From CF",2.0,180.0
+748563,4705,2023-10-09T22:07:00Z,D,Final,73,Clear,"10 mph, R To L",10.0,-90.0
+748556,22,2023-10-10T01:07:00Z,D,Final,70,Clear,"2 mph, Calm",2.0,
+748567,3312,2023-10-10T20:07:00Z,D,Final,54,Sunny,"5 mph, Out To CF",5.0,0.0
+748572,5325,2023-10-11T00:03:00Z,D,Final,74,Roof Closed,"0 mph, None",0.0,
+748564,2681,2023-10-11T21:07:00Z,D,Final,70,Clear,"7 mph, Out To CF",7.0,0.0
+748566,3312,2023-10-11T23:07:00Z,D,Final,57,Clear,"10 mph, In From CF",10.0,180.0
+748557,15,2023-10-12T01:07:00Z,D,Final,87,Clear,"1 mph, Calm",1.0,
+748561,2681,2023-10-13T00:07:00Z,D,Final,66,Partly Cloudy,"4 mph, L To R",4.0,90.0
+748553,2392,2023-10-16T00:15:00Z,L,Final,73,Roof Closed,"0 mph, None",0.0,
+748548,2392,2023-10-16T20:37:00Z,L,Final,73,Roof Closed,"0 mph, None",0.0,
+748543,2681,2023-10-17T00:07:00Z,L,Final,56,Cloudy,"10 mph, L To R",10.0,90.0
+748546,2681,2023-10-18T00:07:00Z,L,Final,57,Cloudy,"2 mph, L To R",2.0,90.0
+748552,5325,2023-10-19T00:03:00Z,L,Final,74,Roof Closed,"0 mph, None",0.0,
+748545,15,2023-10-19T21:07:00Z,L,Final,76,Roof Closed,"0 mph, None",0.0,
+748551,5325,2023-10-20T00:03:00Z,L,Final,78,Clear,"1 mph, Calm",1.0,
+748550,5325,2023-10-20T21:07:00Z,L,Final,73,Roof Closed,"0 mph, None",0.0,
+748544,15,2023-10-21T00:07:00Z,L,Final,76,Roof Closed,"0 mph, None",0.0,
+748538,15,2023-10-22T00:07:00Z,L,Final,76,Roof Closed,"0 mph, None",0.0,
+748549,2392,2023-10-23T00:03:00Z,L,Final,73,Roof Closed,"0 mph, None",0.0,
+748539,2681,2023-10-23T21:07:00Z,L,Final,63,Clear,"5 mph, L To R",5.0,90.0
+748547,2392,2023-10-24T00:03:00Z,L,Final,73,Roof Closed,"0 mph, None",0.0,
+748537,2681,2023-10-25T00:07:00Z,L,Final,59,Clear,"5 mph, R To L",5.0,-90.0
+748542,5325,2023-10-28T00:05:00Z,W,Final,73,Roof Closed,"0 mph, None",0.0,
+748541,5325,2023-10-29T00:03:00Z,W,Final,74,Roof Closed,"0 mph, None",0.0,
+748540,15,2023-10-31T00:03:00Z,W,Final,78,Clear,"1 mph, Varies",1.0,
+748535,15,2023-11-01T00:03:00Z,W,Final,78,Clear,"5 mph, L To R",5.0,90.0
+748534,15,2023-11-02T00:03:00Z,W,Final,79,Clear,"1 mph, Varies",1.0,
