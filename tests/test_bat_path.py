@@ -172,3 +172,9 @@ def test_color_modes_and_heat_maps():
     assert "Line drive" in spray_html(c[c["bip"]], "S", {}, "Hit Type", "Points")
     assert "average exit velo" in spray_html(c[c["bip"]], "S", {}, "Exit Velo", "Heat Map")
     assert "how often" in poc_map_html(c, "Result", summary=False, display="Heat Map")
+
+
+def test_framed_chart_is_a_page_that_sizes_itself():
+    from ui.bat_path import framed
+    h = framed("<svg viewBox='0 0 10 10'></svg>")
+    assert h.startswith("<!doctype html>") and "<svg" in h and "setFrameHeight" in h

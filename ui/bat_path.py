@@ -398,3 +398,12 @@ def spray_html(d: pd.DataFrame, title: str = "Spray chart", park: dict | None = 
                   f'<div class="t">{escape(title)}{sub}</div>'
                   f'<svg viewBox="0 0 {W} {H}" style="width:100%;height:auto;max-height:330px">{"".join(g)}</svg>'
                   f'<div class="leg">{note}</div></div></div>')
+
+
+def framed(html: str) -> str:
+    """A chart as its own small page (Streamlit's st.html strips SVG) that tells Streamlit its height."""
+    js = ("<script>function fit(){window.parent.postMessage({isStreamlitMessage:true,type:'streamlit:setFrameHeight',"
+          "height:document.documentElement.scrollHeight+2},'*');}window.addEventListener('load',fit);"
+          "window.addEventListener('resize',fit);new ResizeObserver(fit).observe(document.body);fit();</script>")
+    return ('<!doctype html><html><head><meta charset="utf-8"></head><body style="margin:0;font-family:system-ui,'
+            f'sans-serif">{html}{js}</body></html>')

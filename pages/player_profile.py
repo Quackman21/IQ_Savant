@@ -609,7 +609,7 @@ def bat_path_view(sc: pd.DataFrame, season: int, poc: pd.DataFrame | None = None
     from core import aar as aar_core
     from core import bat_path as bpth
     from core import swing3d
-    from ui.bat_path import COLOR_BY, model_card_html, path3d_html, poc_map_html, spray_html
+    from ui.bat_path import COLOR_BY, framed, model_card_html, path3d_html, poc_map_html, spray_html
     if season < 2023:
         show(empty_html("Bat tracking starts in 2023 -- pick a 2023+ season for his bat path."))
         return
@@ -676,10 +676,10 @@ def bat_path_view(sc: pd.DataFrame, season: int, poc: pd.DataFrame | None = None
             color_by = st.selectbox("Color by", COLOR_BY, key="bp_cby",
                                     help="Heat Map + Exit Velo / Launch Angle = the average there; "
                                          "Heat Map + anything else = how often")
-        show(spray_html(cell[cell["bip"]], f"Spray · {where}", home_park_for(bpth.home_team(sc), season),
-                        color_by, display))
-        show(poc_map_html(cell, color_by, estimated=est, summary=False, title=f"Point of contact · {where}",
-                          display=display))
+        components.html(framed(spray_html(cell[cell["bip"]], f"Spray · {where}",
+                                          home_park_for(bpth.home_team(sc), season), color_by, display)), height=470)
+        components.html(framed(poc_map_html(cell, color_by, estimated=est, summary=False,
+                                            title=f"Point of contact · {where}", display=display)), height=560)
     if scene is not None:
         with st.expander("What's in the 3D view", expanded=False):
             show(model_card_html(scene, stand))
@@ -777,7 +777,10 @@ if main == "Summary":
                 with k[1]:
                     cby_all = st.selectbox("Color by ", COLOR_BY, index=COLOR_BY.index("Pitch Group"), key="bp_cby_all")
                 m = bpth.contact_rows(sc, poc)
-                show(poc_map_html(m, cby_all, estimated=bool(poc.loc[m.index, "estimated"].any()), display=disp_all))
+                import streamlit.components.v1 as components
+                from ui.bat_path import framed
+                components.html(framed(poc_map_html(m, cby_all, estimated=bool(poc.loc[m.index, "estimated"].any()),
+                                                    display=disp_all)), height=640)
         else:
             tabs = st.tabs(["Overview", "Rates", "Contact", "Exit", "Rolling", "Spray"])
             with tabs[0]:
