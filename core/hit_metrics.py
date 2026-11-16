@@ -138,6 +138,43 @@ CATALOG: dict[str, Stat] = {s.key: s for s in [
     S("TOP 8TH BAT SPEED", "Top 8th Bat Speed", "Average of top 8th Statcast bat speeds", "top8", "bat_speed", fmt="num1", good=1),
     S("SWING LENGTH", "Swing Length", "Average swing length (feet), Statcast bat tracking",
       "mean", "swing_length", fmt="num1", good=0),
+    S("FAST SWING%", "Fast Swing%", "Rate of competitive swings at 75+ mph (Statcast's fast-swing threshold)",
+      "ratio", "fast", "bs_n", good=1),
+    S("IDEAL AA%", "Ideal AA%", "Ideal Attack Angle rate\n[Competitive swings with an attack angle of 5-20 deg / "
+      "competitive swings -- Statcast's definition]", "ratio", "ideal_aa", "aa_n", good=1),
+    S("ATTACK DIR", "Attack Dir", "Attack Direction (deg)\n[Horizontal direction of the sweet spot at contact; "
+      "+ = toward the opposite field, - = toward the pull side]", "mean", "attack_dir", fmt="num1", good=0),
+    S("TILT", "Tilt", "Swing Path Tilt (deg)\n[Angle of the swing plane vs flat, over the last 40 ms before contact; "
+      "higher = steeper / more vertical]", "mean", "tilt", fmt="num1", good=0),
+    S("CONTACTS", "Contacts", "Measured contact points\n[Fouls + balls in play with Statcast's intercept point]",
+      "count", "poc_n", fmt="int", good=0),
+    S("POC FRONT", "POC Front", "Point of contact, inches in front of the plate's front edge (MLB's definition)\n"
+      "[Statcast's contact in front of his center of mass - his stance depth on Savant's board; - = behind the "
+      "front edge]", "mean", "poc_front", fmt="num1", good=0),
+    S("POC DEPTH", "POC Depth", "Point of contact, inches in front of his center of mass (Statcast's intercept, "
+      "as measured -- no stance needed)", "mean", "poc_body", fmt="num1", good=0),
+    S("POC SIDE", "POC Side", "Point of contact, inches from his center of mass toward the plate (Statcast's "
+      "intercept, side to side)", "mean", "poc_side", fmt="num1", good=0),
+    S("SQ UP%/CON", "SqUp%/Con", "Squared-up rate per contact\n[EV >= 80% of the most possible: 1.23 x bat speed + "
+      "0.23 x pitch speed (MLB) / tracked contacts with an exit velo]", "ratio", "sq", "sq_n", good=1),
+    S("SQ UP%/SW", "SqUp%/Sw", "Squared-up rate per competitive swing\n[Squared-up contacts / competitive swings]",
+      "ratio", "sq", "bs_n", good=1),
+    S("BLAST%/CON", "Blast%/Con", "Blast rate per contact\n[Squared-up % (as a number) + bat speed >= 164 -- MLB's "
+      "definition / tracked contacts]", "ratio", "blast", "sq_n", good=1),
+    S("BLAST%/SW", "Blast%/Sw", "Blast rate per competitive swing\n[Blasts / competitive swings]",
+      "ratio", "blast", "bs_n", good=1),
+    S("SMASH", "Smash", "Smash factor (Savant)\n[1 + (EV - bat speed) / (pitch speed + bat speed), tracked contacts]",
+      "mean", "smash", fmt="num2", good=1),
+    S("TYPED", "Typed", "Balls in play with a contact type", "count", "ct_n", fmt="int", good=0),
+    S("OPTIMAL%", "Optimal%", "Barrels, or squared up 90%+ at a 8-32 deg launch angle", "ratio", "ct_opt", "ct_n", good=1),
+    S("BACKSPIN%", "Backspin%", "Hit under the ball: left 10+ deg above the bat's path (vs squared-up balls)",
+      "ratio", "ct_back", "ct_n", good=0),
+    S("TOPSPIN%", "Topspin%", "Hit over the top: left 10+ deg below the bat's path", "ratio", "ct_top", "ct_n", good=0),
+    S("HOOK%", "Hook%", "Air balls 20+ deg pull side of the barrel's direction", "ratio", "ct_hook", "ct_n", good=0),
+    S("SLICE%", "Slice%", "Air balls 20+ deg opposite field of the barrel's direction", "ratio", "ct_slice", "ct_n",
+      good=0),
+    S("KNUCKLE%", "Knuckle%", "Near the middle of the ball but not squared up -- little spin", "ratio", "ct_knuck",
+      "ct_n", good=0),
     # bat-to-ball
     S("CONT%", "Cont%", "Rate of contact (BIP/foul) given swing", "ratio", "contact", "swing", good=1),
     S("Z-CONT%", "Z-Cont%", "Rate of contact (BIP/foul) given swing on pitch in zone", "ratio", "z_contact", "z_swing", good=1),
@@ -212,6 +249,13 @@ TABS = {
               "AIRPULL%", "FB-PULL%", "PULL-AIR%", "BARREL%"],
     "Contact": ["PIT", "BIP", "xwOBA", "SAxwOBA", "xwOBACON", "SAxwOBACON", "WEAK GB%", "GB%", "FB%", "WEAK FB%"],
     "Exit": ["PIT", "BIP", "LA", "EV", "90th EV", "MAX EV", "EV<80", "EV>90", "EV>95", "EV>100", "EV>105"],
+}
+BAT_PATH = {     # the Bat Path tab: three tables
+    "Swing": ["# BAT SPEEDS", "SWG", "AVG BAT SPEED", "TOP 8TH BAT SPEED", "FAST SWING%", "SWING LENGTH", "ATTACK",
+              "IDEAL AA%", "ATTACK DIR", "TILT"],
+    "Contact": ["CONTACTS", "BIP", "POC FRONT", "POC DEPTH", "POC SIDE", "SQ UP%/CON", "SQ UP%/SW", "BLAST%/CON",
+                "BLAST%/SW", "SMASH"],
+    "Contact Type": ["TYPED", "BIP", "OPTIMAL%", "BACKSPIN%", "TOPSPIN%", "HOOK%", "SLICE%", "KNUCKLE%"],
 }
 SAMPLE = ["PA", "BIP"]          # sample columns in the click-popup
 ALL_KEYS = list(CATALOG)
@@ -344,6 +388,38 @@ def prep(df: pd.DataFrame, model: str | None = None) -> pd.DataFrame:
     d["bs_n"] = d["bat_speed"].notna()
     d["swing_length"] = _col(df, "swing_length").where(d["bs_n"])
     d["attack_angle"] = _col(df, "attack_angle").where(d["swing"])
+    aa = _col(df, "attack_angle").where(d["bs_n"])
+    d["aa_n"] = aa.notna()
+    d["ideal_aa"] = aa.between(5, 20)
+    d["fast"] = d["bat_speed"] >= 75
+    d["attack_dir"] = _col(df, "attack_direction").where(d["bs_n"])
+    d["tilt"] = _col(df, "swing_path_tilt").where(d["bs_n"])
+    # point of contact (fouls + balls in play): Statcast's intercept from his center of mass; poc_front = vs the
+    # plate (MLB's definition) when the page has joined his stance depth (column poc_front)
+    made = desc.isin(["foul", "foul_tip", "hit_into_play"])
+    cy = _col(df, "intercept_ball_minus_batter_pos_y_inches").where(made)
+    d["poc_n"] = cy.notna()
+    d["poc_body"] = cy
+    d["poc_side"] = _col(df, "intercept_ball_minus_batter_pos_x_inches").where(d["poc_n"])
+    d["poc_front"] = _col(df, "poc_front").where(d["poc_n"])
+    # squared-up / blast / smash (MLB + Savant definitions), contacts with a tracked bat speed + exit velo
+    ev_c, vp = _col(df, "launch_speed").where(made), _col(df, "release_speed")
+    mx = 1.23 * d["bat_speed"] + 0.23 * vp
+    pct = 100 * ev_c / mx
+    d["sq_n"] = pct.notna()
+    d["sq"] = pct >= 80
+    d["blast"] = (pct + d["bat_speed"]) >= 164
+    d["smash"] = (1 + (ev_c - d["bat_speed"]) / (vp + d["bat_speed"])).where(d["sq_n"])
+    # contact type (balls in play) -- core/batted_ball.py
+    try:
+        from core import batted_ball
+        lab = batted_ball.spin_labels(df)
+    except Exception:
+        lab = pd.Series(None, index=df.index, dtype=object)
+    d["ct_n"] = lab.notna()
+    for k, name in (("opt", "Optimal"), ("back", "Backspin"), ("top", "Topspin"), ("hook", "Hook"),
+                    ("slice", "Slice"), ("knuck", "Knuckle")):
+        d[f"ct_{k}"] = lab.eq(name)
 
     # contact by zone / pitch hardness / attack zone
     contact = d["swing"] & ~d["whiff"]
@@ -448,17 +524,17 @@ def compute(d: pd.DataFrame, by: list[str] | None = None, keys: list[str] | None
         sums = d[SUM_COLS].sum().to_frame("All").T
         extra = pd.DataFrame({f"{k}:{c}": [_shape(d[c], k, False)] for k, c in SHAPES}, index=["All"])
     sums = sums.astype(float)
-    out = pd.DataFrame(index=sums.index)
+    cols = {}
     for k in keys:
         s = CATALOG[k]
         if s.kind == "count":
-            out[k] = sums[s.a].where(sums[s.b] > 0) if s.b else sums[s.a]     # b = "only if any of these"
+            cols[k] = sums[s.a].where(sums[s.b] > 0) if s.b else sums[s.a]     # b = "only if any of these"
         elif s.kind == "ratio":
             den = sums[s.b]
-            out[k] = (sums[s.a] / den).where(den > 0)
+            cols[k] = (sums[s.a] / den).where(den > 0)
         else:
-            out[k] = extra[f"{s.kind}:{s.a}"]
-    return out
+            cols[k] = extra[f"{s.kind}:{s.a}"]
+    return pd.DataFrame(cols, index=sums.index)
 
 
 def fmt(key: str, v) -> str:

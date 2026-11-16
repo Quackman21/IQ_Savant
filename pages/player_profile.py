@@ -207,6 +207,18 @@ def league_p(season: int) -> dict:
     return mlb_api.get_league_totals(season, "pitching")
 
 
+@st.cache_data(ttl=6 * 3600, show_spinner=False)
+def stance_board(season: int) -> dict:
+    from core import aar
+    return aar.stance_depths(season)
+
+
+@st.cache_data(ttl=6 * 3600, show_spinner=False)
+def stance_views(season: int) -> dict:
+    from core import stance_feed
+    return stance_feed.views(season)
+
+
 @st.cache_data(ttl=6 * 3600, show_spinner="Pulling Statcast…")
 def statcast(pid: int, start: str, end: str) -> pd.DataFrame:
     return clean(pb.statcast_batter(start, end, pid))
@@ -620,6 +632,16 @@ if main == "Summary":
         sc = statcast(pid, start, end)
         if not sc.empty and "game_type" in sc:
             sc = sc[sc["game_type"].eq("R")] if gtype == "R" else sc[sc["game_type"].isin(POSTSEASON)]
+        # point of contact vs the plate (MLB's definition, as in the AAR) -> the Bat Path tab + POC Front
+        poc = pd.DataFrame()
+        if not sc.empty:
+            try:
+                from core import bat_path
+                stance_me = {sd: dd for (bb_, sd), dd in stance_board(season).items() if bb_ == pid}
+                poc = bat_path.poc(sc, pid, season, stance_views(season), stance_me)
+                sc = sc.assign(poc_front=poc["pf"])
+            except Exception as e:
+                print(f"[Bat Path] point of contact skipped: {type(e).__name__}: {e}")
         d = hm.prep(sc)
         ref = league_ref_for(season)
         ctx = {"player": f'{b["first"]} {b["last"]}', "season_label": str(season)}
@@ -638,7 +660,7 @@ if main == "Summary":
         def ref_for(labels):
             return ref.get(hm.ref_key(labels, zone_dim), {})
 
-        tabs = st.tabs(["Overview", "Rates", "Contact", "Exit", "Rolling", "Spray"])
+        tabs = st.tabs(["Overview", "Rates", "Contact", "Exit", "Bat Path", "Rolling", "Spray"])
         with tabs[0]:
             all_vals = hm.compute(d).iloc[0] if not d.empty else None
             show(overview_html(label, all_vals, ref.get(("all", "All"), {}), ctx))
@@ -646,13 +668,32 @@ if main == "Summary":
             with tabs[i]:
                 show(tab_html(hm.TABS[name], rows, label, ref_for, ctx, zone_dim, show_avgs=avgs))
         with tabs[4]:
+            for name, keys in hm.BAT_PATH.items():
+                st.markdown(f"**{name}**")
+                show(tab_html(keys, rows, label, ref_for, ctx, zone_dim, show_avgs=avgs))
+            if not sc.empty and not poc.empty:
+                from ui.bat_path import poc_map_html
+                color_by = seg("Color", ["Exit Velo", "Pitch Group"], default="Exit Velo", key="bp_color",
+                               collapsed=True) or "Exit Velo"
+                made = sc["description"].astype(str).isin(["foul", "foul_tip", "hit_into_play"])
+                m = pd.DataFrame({
+                    "pf": poc["pf"], "pxc": poc["pxc"], "bip": sc["description"].astype(str).eq("hit_into_play"),
+                    "ev": pd.to_numeric(sc.get("launch_speed"), errors="coerce"),
+                    "la": pd.to_numeric(sc.get("launch_angle"), errors="coerce"),
+                    "pgroup": hm.pitch_group(sc), "ptype": sc.get("pitch_type", ""),
+                    "p_throws": sc["p_throws"].astype(str), "zone_io": d["zone_io"] if "zone_io" in d else None,
+                    "date": sc["game_date"].astype(str).str[:10],
+                    "result": sc["events"].fillna(sc["description"]).astype(str).str.replace("_", " ").str.capitalize(),
+                })[made]
+                show(poc_map_html(m, color_by, estimated=bool(poc.loc[made, "estimated"].any())))
+        with tabs[5]:
             roll = hitting.rolling(sc)
             if roll.empty:
                 show(empty_html("Not enough plate appearances for a rolling chart."))
             else:
                 st.caption("Rolling 50 plate appearances — full Rolling view comes in v13.")
                 st.line_chart(roll)
-        with tabs[5]:
+        with tabs[6]:
             if not sc.empty:
                 spray_chart(sc)
         st.caption("Hover a column name for its definition. Click a number to compare it with MLB average.")

@@ -113,3 +113,32 @@ def spin_label(row) -> dict | None:
         lab = "Backspin" if v_gap > 0 else "Topspin"
     return {"label": lab, "why": LABELS[lab], "v_gap": round(v_gap, 1),
             "h_gap": None if h_gap is None else round(h_gap, 1), **q}
+
+
+def spin_labels(df) -> "pd.Series":
+    """spin_label for every row at once (same rules); None where there's no grade (not in play / no data)."""
+    import numpy as np
+    import pandas as pd
+    num = lambda k: pd.to_numeric(df[k], errors="coerce") if k in df else pd.Series(np.nan, index=df.index)
+    la, aa, ad, ev = num("launch_angle"), num("attack_angle"), num("attack_direction"), num("launch_speed")
+    bs, vp, hx, hy = num("bat_speed"), num("release_speed"), num("hc_x"), num("hc_y")
+    bip = df["description"].astype(str).eq("hit_into_play") if "description" in df else pd.Series(True, index=df.index)
+    yr = pd.to_numeric(df["game_year"], errors="coerce") if "game_year" in df else \
+        pd.to_datetime(df["game_date"], errors="coerce").dt.year if "game_date" in df else pd.Series(np.nan, index=df.index)
+    cen = {y: centers(int(y)) for y in yr.dropna().unique()}
+    vc = yr.map(lambda y: cen.get(y, (V_CENTER, H_CENTER))[0]).fillna(V_CENTER)
+    hc = yr.map(lambda y: cen.get(y, (V_CENTER, H_CENTER))[1]).fillna(H_CENTER)
+    v_gap = la - aa - vc
+    ang = np.degrees(np.arctan2(hx - 125.42, 198.27 - hy))
+    right = df["stand"].astype(str).eq("R") if "stand" in df else pd.Series(True, index=df.index)
+    spray = ang.where(right, -ang)
+    h_gap = (spray - ad - hc).where(la >= 10)
+    sq = 100 * ev / (1.23 * bs + 0.23 * vp)
+    barrel = num("launch_speed_angle").eq(6)
+    opt = barrel | ((sq >= 90) & la.between(8, 32))
+    side = h_gap.abs() >= H_CUT
+    knuckle = (v_gap.abs() < 4) & (h_gap.isna() | (h_gap.abs() < 10))
+    lab = np.select([opt, side & (h_gap < 0), side, v_gap >= V_CUT, v_gap <= -V_CUT, knuckle, v_gap > 0],
+                    ["Optimal", "Hook", "Slice", "Backspin", "Topspin", "Knuckle", "Backspin"], "Topspin")
+    ok = bip & la.notna() & aa.notna() & ev.notna()
+    return pd.Series(lab, index=df.index, dtype=object).where(ok, None)
