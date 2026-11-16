@@ -598,8 +598,15 @@ def home_park_for(abbr: str | None, season: int) -> dict:
 
 
 def _zone_toggle(z: int) -> None:
+    """Click a cell: add it; click a picked cell: remove it -- unless it's the only one (never empty by accident).
+    From 'all' (every cell lit), a click means 'just this one'."""
     cur = set(st.session_state.get("bp_zones", [5]))
-    cur ^= {z}
+    if cur >= set(range(1, 10)):
+        cur = {z}
+    elif z not in cur:
+        cur.add(z)
+    elif len(cur) > 1:
+        cur.discard(z)
     st.session_state["bp_zones"] = sorted(cur)
 
 
@@ -671,7 +678,7 @@ def bat_path_view(sc: pd.DataFrame, season: int, poc: pd.DataFrame | None = None
             st.markdown(ZONE_CSS, unsafe_allow_html=True)
             st.caption("Location")
             with st.popover(bpth.zones_label(zsel, stand), use_container_width=True):
-                st.caption("Catcher's view · click boxes to pick them (as many as you like)")
+                st.caption("Catcher's view · click a box to add it, click a picked box to remove it")
                 with st.container(key="bp_zgrid"):
                     for r0 in (0, 3, 6):
                         cols = st.columns(3)
