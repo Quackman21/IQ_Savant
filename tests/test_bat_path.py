@@ -123,3 +123,52 @@ def test_zone_names_follow_the_hitter():
     assert bp.zone_name(1, "R") == "Up-In" and bp.zone_name(1, "L") == "Up-Away"
     assert bp.zone_name(9, "R") == "Down-Away" and bp.zone_name(9, "L") == "Down-In"
     assert bp.zone_name(13, "R") == "Chase Down-In" and bp.zone_name(12, "L") == "Chase Up-In"
+
+
+def test_cell_spray_and_poc():
+    from core import bat_path as bp
+    from ui.bat_path import poc_map_html, spray_html
+    df = _tracked()
+    df["p_throws"] = "R"
+    poc = pd.DataFrame({"pf": df["intercept_ball_minus_batter_pos_y_inches"] - 27, "pxc": 0.0}, index=df.index)
+    cell = bp.cell_balls(df, poc, "Fastball", 5, "R", "R")
+    exp = df["description"].isin(["foul", "hit_into_play"]) & df["pitch_type"].eq("FF") & df["zone"].eq(5)
+    assert len(cell) == exp.sum() and cell["pf"].notna().all()
+    h = spray_html(cell[cell["bip"]])
+    assert h.count("<circle") == cell["bip"].sum()
+    p = poc_map_html(cell, summary=False, title="POC · x")
+    assert "Where he meets it" not in p and "POC · x" in p
+
+
+def test_spray_on_home_park():
+    from core import aar, bat_path as bp
+    from ui.bat_path import spray_html
+    df = _tracked()
+    df["inning_topbot"] = np.where(np.arange(len(df)) % 3 == 0, "Top", "Bot")
+    df["home_team"] = np.where(df["inning_topbot"] == "Bot", "BOS", "NYY")
+    assert bp.home_team(df) == "BOS"
+    dims = {"leftLine": 310.0, "leftCenter": 379.0, "center": 390.0, "rightCenter": 380.0, "rightLine": 302.0}
+    park = {"venue": "Fenway Park", "dims": dims, "outline": aar.park_outline("Boston Red Sox", dims, venue="Fenway Park")}
+    b = pd.DataFrame({"hc_x": [100.0, 150.0], "hc_y": [80.0, 100.0], "ev": [101.0, 85.0], "la": [25.0, 10.0],
+                      "result": ["Home run", "Single"], "date": ["2025-06-01"] * 2, "ptype": ["FF"] * 2})
+    h = spray_html(b, "Spray", park)
+    assert "Fenway Park" in h and h.count("<circle") == 2 and ">310<" in h
+    assert "generic park" in spray_html(b, "Spray", {})
+
+
+def test_color_modes_and_heat_maps():
+    from core import bat_path as bp
+    from ui.bat_path import COLOR_BY, poc_map_html, spray_html
+    df = _tracked(800)
+    df["p_throws"], df["bb_type"] = "R", np.where(df["description"] == "hit_into_play", "line_drive", None)
+    poc = pd.DataFrame({"pf": df["intercept_ball_minus_batter_pos_y_inches"] - 27, "pxc": 0.0}, index=df.index)
+    c = bp.contact_rows(df, poc)
+    assert set(c["bb"].dropna()) == {"LD"} and c.loc[c["bip"], "ctype"].notna().any()
+    for mode in COLOR_BY:
+        for disp in ("Points", "Heat Map"):
+            p = poc_map_html(c, mode, summary=False, display=disp)
+            s = spray_html(c[c["bip"]], "Spray", {}, mode, disp)
+            assert ("<rect" in p) == (disp == "Heat Map") and ("<circle" in s) == (disp == "Points")
+    assert "Line drive" in spray_html(c[c["bip"]], "S", {}, "Hit Type", "Points")
+    assert "average exit velo" in spray_html(c[c["bip"]], "S", {}, "Exit Velo", "Heat Map")
+    assert "how often" in poc_map_html(c, "Result", summary=False, display="Heat Map")

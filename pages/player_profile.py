@@ -585,19 +585,31 @@ st.markdown(("""<style>
 .stTabs [aria-selected="true"] p{color:#16202b;font-weight:800}
 </style>""").replace("ACTIVE", ACTIVE), unsafe_allow_html=True)
 
+@st.cache_data(ttl=7 * 24 * 3600, show_spinner=False)
+def home_park_for(abbr: str | None, season: int) -> dict:
+    if not abbr:
+        return {}
+    try:
+        from core import bat_path as bpth
+        return bpth.home_park(abbr, season)
+    except Exception as e:
+        print(f"[Bat Path] home park lookup failed: {type(e).__name__}: {e}")
+        return {}
+
+
 def _pick_zone(z: int) -> None:
     st.session_state["bp_zone"] = z
 
 
-def bat_path_view(sc: pd.DataFrame, season: int) -> None:
-    """His average bat path in 3D vs a modeled pitch: pitch group x zone x pitcher hand (default: dead-zone RHP
-    fastball, middle-middle)."""
+def bat_path_view(sc: pd.DataFrame, season: int, poc: pd.DataFrame | None = None) -> None:
+    """Pickers on top; his average bat path in 3D on the left (square, half the width); that cell's spray chart
+    (top right) and point of contact (bottom right). Default: dead-zone RHP fastball, middle-middle."""
     import streamlit.components.v1 as components
 
     from core import aar as aar_core
     from core import bat_path as bpth
     from core import swing3d
-    from ui.bat_path import model_card_html, path3d_html
+    from ui.bat_path import COLOR_BY, model_card_html, path3d_html, poc_map_html, spray_html
     if season < 2023:
         show(empty_html("Bat tracking starts in 2023 -- pick a 2023+ season for his bat path."))
         return
@@ -606,36 +618,37 @@ def bat_path_view(sc: pd.DataFrame, season: int) -> None:
         show(empty_html("No tracked swings for this selection."))
         return
     sides = sw["stand"].value_counts()
-    left, right = st.columns([1.25, 1], gap="medium")
-    with right:
+    # ---- pickers
+    top_l, top_r = st.columns([1, 1.25], gap="medium")
+    with top_l:
         stand = sides.index[0]
         if len(sides) > 1:
             stand = {"As RHB": "R", "As LHB": "L"}[seg("Side", ["As RHB", "As LHB"],
                                                      default="As RHB" if sides.index[0] == "R" else "As LHB",
-                                                     key="bp_side", collapsed=True) or "As RHB"]
+                                                     key="bp_side") or "As RHB"]
         group = seg("Pitch group", list(bpth.GROUPS), default="Fastball", key="bp_group") or "Fastball"
         hand = {"vs RHP": "R", "vs LHP": "L"}[seg("Pitcher", ["vs RHP", "vs LHP"], default="vs RHP",
                                                    key="bp_hand") or "vs RHP"]
-        zone = st.session_state.setdefault("bp_zone", 5)
-        me = sw[(sw.stand == stand) & (sw.group == group)]
-        cnt = me[me.hand == hand]["zone"].value_counts()
+    zone = st.session_state.setdefault("bp_zone", 5)
+    me = sw[(sw.stand == stand) & (sw.group == group)]
+    cnt = me[me.hand == hand]["zone"].value_counts()
+    with top_r:
         st.caption("Location (catcher's view; In / Away from his side) · swings vs this pitch group + hand")
         for r0 in (0, 3, 6):
             cols = st.columns(3)
             for k in range(3):
                 z = r0 + k + 1
                 cols[k].button(f"{bpth.zone_name(z, stand)} · {int(cnt.get(z, 0))}", key=f"bpz{z}",
-                               use_container_width=True,
-                               type="primary" if z == zone else "secondary", on_click=_pick_zone, args=(z,))
+                               use_container_width=True, type="primary" if z == zone else "secondary",
+                               on_click=_pick_zone, args=(z,))
         cols = st.columns(4)
         for k, (z, arrow) in enumerate(((11, "↖"), (12, "↗"), (13, "↙"), (14, "↘"))):
             cols[k].button(f"{arrow} {bpth.zone_name(z, stand).replace('Chase ', '')} · {int(cnt.get(z, 0))}",
-                           key=f"bpz{z}", use_container_width=True,
-                           type="primary" if z == zone else "secondary", on_click=_pick_zone, args=(z,),
-                           help="Chase: just off the corner of the zone")
-    pid_ = pid
+                           key=f"bpz{z}", use_container_width=True, type="primary" if z == zone else "secondary",
+                           on_click=_pick_zone, args=(z,), help="Chase: just off the corner of the zone")
+    # ---- the model
     views = stance_views(season)
-    depth = views.get(f"vs_{hand}", {}).get((pid_, stand)) or views.get("season", {}).get((pid_, stand))
+    depth = views.get(f"vs_{hand}", {}).get((pid, stand)) or views.get("season", {}).get((pid, stand))
     est = False
     if depth is None:                                   # not on the stance board: the AAR's calibrated estimate
         pr = bpth.profile(sw, group, zone, hand, stand)
@@ -643,18 +656,32 @@ def bat_path_view(sc: pd.DataFrame, season: int) -> None:
         c = cal.get(stand)
         if pr.get("cy") is not None and c:
             depth, est = pr["cy"] - (c["F0"] + c["sy"] * pr["cy"]), True
-    scene = bpth.model_scene(sw, group, zone, hand, depth, swing3d.stance_offsets(season, pid_).get(stand), stand)
+    scene = bpth.model_scene(sw, group, zone, hand, depth, swing3d.stance_offsets(season, pid).get(stand), stand)
+    cell = bpth.cell_balls(sc, poc if poc is not None else pd.DataFrame(index=sc.index), group, zone, hand, stand)
+    where = f'{group} · {bpth.zone_name(zone, stand)} · vs {hand}HP'
+    left, right = st.columns(2, gap="medium")
     with left:
         if scene is None:
             show(empty_html("Not enough measured contact to place his path for this pick."))
         else:
             m = scene["model"]
-            title = f'{group} · {bpth.zone_name(zone, stand)} · vs {hand}HP'
             sub = (f'his average path ({m["n"]} swings) vs a modeled {m["ptype"]} {m["velo"]:.1f} mph'
                    + (" · contact depth estimated (not on Savant's stance board)" if est else ""))
-            components.html(path3d_html(scene, title, sub), height=900, scrolling=False)
+            components.html(path3d_html(scene, where, sub), height=900, scrolling=False)
     with right:
-        if scene is not None:
+        k = st.columns([1, 1.6])
+        with k[0]:
+            display = seg("Display", ["Points", "Heat Map"], default="Points", key="bp_disp") or "Points"
+        with k[1]:
+            color_by = st.selectbox("Color by", COLOR_BY, key="bp_cby",
+                                    help="Heat Map + Exit Velo / Launch Angle = the average there; "
+                                         "Heat Map + anything else = how often")
+        show(spray_html(cell[cell["bip"]], f"Spray · {where}", home_park_for(bpth.home_team(sc), season),
+                        color_by, display))
+        show(poc_map_html(cell, color_by, estimated=est, summary=False, title=f"Point of contact · {where}",
+                          display=display))
+    if scene is not None:
+        with st.expander("What's in the 3D view", expanded=False):
             show(model_card_html(scene, stand))
 
 
@@ -720,7 +747,7 @@ if main == "Summary":
         ctx = {"player": f'{b["first"]} {b["last"]}', "season_label": str(season)}
         data_note([season])
         if sub == "Bat Path":
-            bat_path_view(sc, season)
+            bat_path_view(sc, season, poc)
 
         # rows down the side: zone grouping + any splits (apply to Rates / Contact / Exit)
         r = st.columns([3.2, 2.2, 1.6])
@@ -741,19 +768,16 @@ if main == "Summary":
                 show(tab_html(keys, rows, label, ref_for, ctx, zone_dim, show_avgs=avgs))
             if not sc.empty and not poc.empty:
                 from ui.bat_path import poc_map_html
-                color_by = seg("Color", ["Exit Velo", "Pitch Group"], default="Exit Velo", key="bp_color",
-                               collapsed=True) or "Exit Velo"
-                made = sc["description"].astype(str).isin(["foul", "foul_tip", "hit_into_play"])
-                m = pd.DataFrame({
-                    "pf": poc["pf"], "pxc": poc["pxc"], "bip": sc["description"].astype(str).eq("hit_into_play"),
-                    "ev": pd.to_numeric(sc.get("launch_speed"), errors="coerce"),
-                    "la": pd.to_numeric(sc.get("launch_angle"), errors="coerce"),
-                    "pgroup": hm.pitch_group(sc), "ptype": sc.get("pitch_type", ""),
-                    "p_throws": sc["p_throws"].astype(str), "zone_io": d["zone_io"] if "zone_io" in d else None,
-                    "date": sc["game_date"].astype(str).str[:10],
-                    "result": sc["events"].fillna(sc["description"]).astype(str).str.replace("_", " ").str.capitalize(),
-                })[made]
-                show(poc_map_html(m, color_by, estimated=bool(poc.loc[made, "estimated"].any())))
+                from core import bat_path as bpth
+                from ui.bat_path import COLOR_BY
+                st.markdown("**Point of contact · whole selection**")
+                k = st.columns([1, 1.6, 2])
+                with k[0]:
+                    disp_all = seg("Display ", ["Points", "Heat Map"], default="Points", key="bp_disp_all") or "Points"
+                with k[1]:
+                    cby_all = st.selectbox("Color by ", COLOR_BY, index=COLOR_BY.index("Pitch Group"), key="bp_cby_all")
+                m = bpth.contact_rows(sc, poc)
+                show(poc_map_html(m, cby_all, estimated=bool(poc.loc[m.index, "estimated"].any()), display=disp_all))
         else:
             tabs = st.tabs(["Overview", "Rates", "Contact", "Exit", "Rolling", "Spray"])
             with tabs[0]:

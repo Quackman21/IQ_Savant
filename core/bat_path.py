@@ -103,6 +103,45 @@ def synth_pitch(velo: float, ivb: float, hb_arm: float, hand: str, plate_x: floa
             "release_speed": velo, "pfx_x": pfx_x, "pfx_z": ivb / 12, "release_extension": ext}
 
 
+def cell_balls(sc: pd.DataFrame, poc: pd.DataFrame, group: str, zone: int, hand: str, stand: str) -> pd.DataFrame:
+    """Every contact (fouls + balls in play) in this exact cell, for the cell's spray chart + point of contact."""
+    from core import hit_metrics as hm
+    c = contact_rows(sc, poc)
+    if c.empty:
+        return c
+    num = lambda k: pd.to_numeric(sc[k], errors="coerce") if k in sc else pd.Series(np.nan, index=sc.index)
+    m = (hm.pitch_group(sc).eq(group) & num("zone").eq(zone) & sc["p_throws"].astype(str).eq(hand)
+         & sc["stand"].astype(str).eq(stand)).reindex(c.index)
+    return c[m.fillna(False)]
+
+
+def contact_rows(sc: pd.DataFrame, poc: pd.DataFrame) -> pd.DataFrame:
+    """Every contact (fouls + balls in play) with what the spray / point-of-contact charts colour by."""
+    from core import batted_ball
+    from core import hit_metrics as hm
+    if sc is None or sc.empty:
+        return pd.DataFrame()
+    num = lambda c: pd.to_numeric(sc[c], errors="coerce") if c in sc else pd.Series(np.nan, index=sc.index)
+    desc = sc["description"].astype(str)
+    m = desc.isin(["foul", "foul_tip", "hit_into_play"])
+    try:
+        ctype = batted_ball.spin_labels(sc)
+    except Exception:
+        ctype = pd.Series(None, index=sc.index, dtype=object)
+    out = pd.DataFrame({
+        "bb": (sc["bb_type"] if "bb_type" in sc else pd.Series(None, index=sc.index)).map(aar.BB),
+        "ctype": ctype,
+        "pf": poc["pf"] if "pf" in poc else np.nan, "pxc": poc["pxc"] if "pxc" in poc else np.nan,
+        "bip": desc.eq("hit_into_play"), "ev": num("launch_speed"), "la": num("launch_angle"),
+        "hc_x": num("hc_x").where(desc.eq("hit_into_play")), "hc_y": num("hc_y").where(desc.eq("hit_into_play")),
+        "pgroup": hm.pitch_group(sc), "ptype": sc["pitch_type"].astype(str) if "pitch_type" in sc else "",
+        "p_throws": sc["p_throws"].astype(str), "zone_io": np.where(num("zone").le(9), "In Zone", "Out of Zone"),
+        "date": sc["game_date"].astype(str).str[:10],
+        "result": (sc["events"].fillna(sc["description"]) if "events" in sc else desc).astype(str)
+                  .str.replace("_", " ").str.capitalize()}, index=sc.index)
+    return out[m]
+
+
 def swings(sc: pd.DataFrame) -> pd.DataFrame:
     """His competitive swings with what the view needs: group, zone, hand, the measured swing + contact."""
     from core import hit_metrics as hm
@@ -176,3 +215,36 @@ def model_scene(sw: pd.DataFrame, group: str, zone: int, hand: str, depth: float
     sc["model"] = {**pr, "velo": velo, "velo_src": vsrc, "ivb": ivb, "hb": hb, "shape": desc, "ptype": ptype,
                    "zone": zone, "hand": hand, "group": group, "depth": depth}
     return sc
+
+
+def home_team(sc: pd.DataFrame) -> str | None:
+    """His team's abbreviation that season: the home team in the games he batted in the bottom half."""
+    if sc is None or sc.empty or "inning_topbot" not in sc or "home_team" not in sc:
+        return None
+    h = sc.loc[sc["inning_topbot"].astype(str).str.startswith("B"), "home_team"].dropna()
+    return str(h.mode().iloc[0]) if not h.empty else None
+
+
+def home_park(abbr: str, season: int) -> dict:
+    """{team, venue, dims, outline} for that team's home park that season (MLB stats API + the traced outlines)."""
+    import requests
+
+    from core import mlb_api
+    teams = mlb_api.get_teams(season)
+    alias = {"AZ": "ARI", "ARI": "AZ", "ATH": "OAK", "OAK": "ATH", "CWS": "CHW", "CHW": "CWS", "WSH": "WSN",
+             "WSN": "WSH", "KC": "KCR", "SD": "SDP", "SF": "SFG", "TB": "TBR"}
+    want = {abbr.upper(), alias.get(abbr.upper(), abbr.upper())}
+    tid = next((i for i, t in teams.items() if str(t.get("abbr", "")).upper() in want), None)
+    if tid is None:
+        return {}
+    name = teams[tid].get("name", "")
+    venue = (mlb_api.get_team(tid).get("venue") or {})
+    dims = {}
+    try:
+        r = requests.get(f"https://statsapi.mlb.com/api/v1/venues/{venue.get('id')}?hydrate=fieldInfo", timeout=15)
+        v = (r.json().get("venues") or [{}])[0]
+        dims = aar.field_dims({"gameData": {"venue": v}})
+    except Exception:
+        pass
+    return {"team": name, "venue": venue.get("name", ""), "dims": dims,
+            "outline": aar.park_outline(name, dims or None, venue=venue.get("name", ""))}
