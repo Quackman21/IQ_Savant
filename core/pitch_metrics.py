@@ -52,19 +52,19 @@ DETAILS = [*_NP, "|",
                                "line drawn from the pitcher's shoulder directly to the ground (Statcast, 2024+)", "num1"), "|",
            ("IVB", "IVB", "Average Induced Vertical Break (inches, Statcast)", "num2"),
            ("HB", "HB", "Average Horizontal Break (inches, arm side positive, Statcast)", "num2"),
-           ("SPIN_EFF", "Spin Eff.", "Percentage of a pitcher's total spin that directly contributes to the movement "
-                                     "of the ball (our model — coming)", B),
+           ("SPIN_EFF", "Spin Eff.", "Share of spin that makes movement. Not in MLB's pitch-by-pitch data, and seam "
+                                     "effects can't be separated without seam orientation (CV)", B),
            ("SPIN_DIR", "Spin Dir", "Direction of spin of the ball (clock face, Statcast spin axis)", "clock"),
            ("OBS_DIR", "Obs. Dir", "Direction of movement, due to spin (clock face, from observed movement)", "clock"),
-           ("OMV_VB", "O-Mv VB", "Average Vertical Movement induced by Seams (our model — coming)", B),
-           ("OMV_HB", "O-Mv HB", "Average Horizontal Movement induced by Seams (our model — coming)", B),
+           ("OMV_VB", "O-Mv VB", "Average Vertical Movement induced by Seams (needs seam orientation -- CV)", B),
+           ("OMV_HB", "O-Mv HB", "Average Horizontal Movement induced by Seams (needs seam orientation -- CV)", B),
            ("SPIN", "Spin", "Average Total Spin Rate (rpm)", "int"), "|",
            ("VAA", "VAA", "Vertical approach angle at the front of home plate (degrees)", "num2"),
            ("HAA", "HAA", "Horizontal approach angle at the front of home plate (degrees)", "num2"),
-           ("ZAVAA", "ZAVAA", "The estimated vertical approach angle of a pitch of the observed velocity, release "
-                              "point, and movement, if thrown to the middle of the zone (our model — coming)", B),
-           ("ZAHAA", "ZAHAA", "The estimated horizontal approach angle of a pitch of the observed velocity, release "
-                              "point, and movement, if thrown to the middle of the zone (our model — coming)", B), "|",
+           ("ZAVAA", "ZAVAA", "Vertical approach angle of a pitch with the observed velocity, release point and "
+                              "movement, re-aimed to the middle of the zone (2.5 ft, centre of the plate)", "num2"),
+           ("ZAHAA", "ZAHAA", "Horizontal approach angle of a pitch with the observed velocity, release point and "
+                              "movement, re-aimed to the middle of the zone (2.5 ft, centre of the plate)", "num2"), "|",
            ("ACTL", "ActL", "20-80 Action Grade, Versus LHH", G), ("ACTR", "ActR", "20-80 Action Grade, Versus RHH", G)]
 PILLARS = [*_NP, "|",
            ("VELO_T8", "Velo Top 8th", "The average of the top 8th velocities for a given pitch type", "num1"), "|",
@@ -146,6 +146,12 @@ def prep(df: pd.DataFrame) -> pd.DataFrame:
     d["risp"] = np.where(c("on_2b").notna() | c("on_3b").notna(), "RISP", "No RISP")
     d["game"] = d["game_date"].astype(str)
     d["cluster"] = None
+    try:                                                 # zone-adjusted approach angles (measured trajectory)
+        from core import pitch_physics
+        ph = pitch_physics.compute(df)
+        d["zavaa"], d["zahaa"] = ph["zavaa"], ph["zahaa"]
+    except Exception:
+        d["zavaa"] = d["zahaa"] = np.nan
     from models import pitch_quality                     # IQ Stuff+ / Location+ (blank until trained)
     q = pitch_quality.score(df)
     d["stuff_plus"], d["loc_plus"] = q["stuff_plus"], q["loc_plus"]
@@ -173,6 +179,7 @@ def row_values(g: pd.DataFrame, total: int) -> dict:
         "IVB": g["ivb"].mean(), "HB": g["hb"].mean(), "SPIN": g["spin"].mean(),
         "SPIN_DIR": _circ_mean(g["spin_axis"]), "OBS_DIR": _circ_mean(g["obs_axis"]),
         "VAA": g["vaa"].mean(), "HAA": g["haa"].mean(),
+        "ZAVAA": g["zavaa"].mean() if "zavaa" in g else np.nan, "ZAHAA": g["zahaa"].mean() if "zahaa" in g else np.nan,
         "ASW": sw / len(g) if len(g) else np.nan, "ABL": g["ball"].sum() / tk if tk else np.nan,
         "AWF": g["whiff"].sum() / sw if sw else np.nan,
         "AIPRV": g.loc[bip, "rv"].mean() if bip.any() else np.nan,

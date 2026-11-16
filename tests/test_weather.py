@@ -58,3 +58,12 @@ def test_dome_has_no_wind(tmp_path, monkeypatch):
     c = w.conditions(999, 2026, feed=feed)
     assert c["roof_closed"] and c["wind_mph"] == 0 and c["temp_f"] == 72.0 and "roof closed" in w.describe(c)
     w._GAMES.clear(); w._HOURLY.clear()
+
+
+def test_wind_source_default_and_file(tmp_path, monkeypatch):
+    from core import weather as w
+    monkeypatch.setattr(w, "ROOT", tmp_path)
+    assert w.wind_source() == "reported"
+    (tmp_path / "data" / "calibration").mkdir(parents=True)
+    (tmp_path / "data" / "calibration" / "wind_source.json").write_text('{"source": "hourly"}')
+    assert w.wind_source() == "hourly"

@@ -222,7 +222,17 @@ def _hourly(season: int, vid: int) -> pd.DataFrame:
     return _HOURLY[k]
 
 
-def conditions(game_pk: int, season: int, inning: int = 1, top: bool = True, feed: dict | None = None) -> dict:
+def wind_source() -> str:
+    """'reported' (MLB's in-park reading) or 'hourly' (Open-Meteo 10 m) -- whichever the carry check showed explains
+    fly-ball carry better (data/calibration/wind_source.json); 'reported' until it's run."""
+    try:
+        return json.loads((ROOT / "data" / "calibration" / "wind_source.json").read_text()).get("source", "reported")
+    except Exception:
+        return "reported"
+
+
+def conditions(game_pk: int, season: int, inning: int = 1, top: bool = True, feed: dict | None = None,
+               wind: str | None = None) -> dict:
     """The air for a pitch: temp, humidity, pressure, air density (+ % vs a 70°F sea-level day), wind on the field.
     From the season table when it's built; otherwise from a game feed (gameData.weather/venue) + park table."""
     parks = load_parks()
@@ -279,8 +289,14 @@ def conditions(game_pk: int, season: int, inning: int = 1, top: bool = True, fee
                 "air_density": round(rho, 4), "density_vs_std_pct": round(100 * (rho / SEA_LEVEL_STD - 1), 1)})
     # wind on the field: roof closed -> none; else the hourly vector (exact compass direction) if the park's field
     # bearing is known, else MLB's reported direction
+    src = wind or wind_source()
+    rep_ok = row.get("rep_wind_mph") is not None and pd.notna(row.get("rep_wind_mph"))
     if out["roof_closed"]:
         out.update({"wind_mph": 0.0, "wind_field_deg": None, "wind_src": "roof closed"})
+    elif src == "reported" and rep_ok:
+        out.update({"wind_mph": float(row["rep_wind_mph"]),
+                    "wind_field_deg": None if pd.isna(row.get("rep_wind_field_deg")) else float(row["rep_wind_field_deg"]),
+                    "wind_src": "MLB reported (in park)"})
     elif hr is not None and park.get("cf_bearing") is not None:
         out.update({"wind_mph": round(float(hr["wind_mph"]), 1),
                     "wind_field_deg": round(field_angle((float(hr["wind_from"]) + 180) % 360,
@@ -297,7 +313,7 @@ def conditions(game_pk: int, season: int, inning: int = 1, top: bool = True, fee
     return out
 
 
-def carry_check(league: pd.DataFrame, season: int) -> dict:
+def carry_check(league: pd.DataFrame, season: int, wind: str | None = None) -> dict:
     """Does the weather explain carry? Well-hit fly balls (EV 95+, LA 22-38): distance vs the median for that EV / LA,
     against air density and the wind along each ball. Expect thinner air -> longer, tailwind -> longer."""
     b = league[league["description"].eq("hit_into_play")].dropna(
@@ -310,7 +326,7 @@ def carry_check(league: pd.DataFrame, season: int) -> dict:
     cond = {}
     for pk in b["game_pk"].unique():
         try:
-            cond[pk] = conditions(int(pk), season)
+            cond[pk] = conditions(int(pk), season, wind=wind)
         except Exception:
             cond[pk] = {}
     b["dens"] = b["game_pk"].map(lambda k: cond.get(k, {}).get("density_vs_std_pct"))

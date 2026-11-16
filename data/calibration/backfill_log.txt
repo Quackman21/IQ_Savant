@@ -92,3 +92,5 @@
 22:58:05  weather check, reported wind (11,521 well-hit fly balls): +0.36 ft per mph of tailwind, -1.54 ft per 1% denser air, thin-air parks +23 ft vs average
 22:58:05  hip-position fallback: already have it
 22:58:05  regular data update (league reference + grades)
+23:04:19  wind source: hourly (hourly +0.41 ft/mph, reported +0.32 ft/mph)
+23:04:19  backfill done in 0.2 h

@@ -23,6 +23,7 @@ import time
 from datetime import date
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -82,15 +83,17 @@ def season_steps(season: int, force: bool) -> None:
     else:
         log("weather: already have it")
     chk = CAL / f"carry_{season}.json"
-    if force or not chk.exists():
-        c = weather.carry_check(lg, season)
-        chk.write_text(json.dumps(c))
-        if c.get("ft_per_mph_tailwind") is not None:
-            log(f"weather check ({c['n']:,} well-hit fly balls): {c['ft_per_mph_tailwind']:+.2f} ft per mph of tailwind, "
-                f"{c['ft_per_pct_density']:+.2f} ft per 1% denser air"
-                + (f", thin-air parks {c['coors_minus_avg_ft']:+.0f} ft vs average" if c.get("coors_minus_avg_ft") else ""))
-        else:
-            log(f"weather check: not enough matched fly balls ({c.get('n', 0)})")
+    old = json.loads(chk.read_text()) if chk.exists() else {}
+    if force or "by_source" not in old:
+        res = {}
+        for src in ("hourly", "reported"):
+            c = weather.carry_check(lg, season, wind=src)
+            res[src] = c
+            if c.get("ft_per_mph_tailwind") is not None:
+                log(f"weather check, {src} wind ({c['n']:,} well-hit fly balls): {c['ft_per_mph_tailwind']:+.2f} ft per "
+                    f"mph of tailwind, {c['ft_per_pct_density']:+.2f} ft per 1% denser air"
+                    + (f", thin-air parks {c['coors_minus_avg_ft']:+.0f} ft vs average" if c.get("coors_minus_avg_ft") else ""))
+        chk.write_text(json.dumps({"by_source": res}))
     # 4 hip fallback
     if force or not (ROOT / "data" / f"hip_group_{season}.json").exists():
         hip_group.main([str(lg_file)])
@@ -130,6 +133,21 @@ def main(argv: list[str]) -> None:
             _git("push")
     except Exception as e:
         log(f"commit/push skipped: {e}")
+    # wind: keep the source that explains carry (closest to the physics, ~3 ft per mph of tailwind)
+    try:
+        got = {}
+        for s_ in seasons:
+            f = CAL / f"carry_{s_}.json"
+            for src, c in (json.loads(f.read_text()).get("by_source", {}) if f.exists() else {}).items():
+                if c.get("ft_per_mph_tailwind") is not None:
+                    got.setdefault(src, []).append(c["ft_per_mph_tailwind"])
+        if got:
+            best = min(got, key=lambda k: abs(np.mean(got[k]) - 3.0))
+            (CAL / "wind_source.json").write_text(json.dumps({"source": best, "ft_per_mph": {k: round(float(np.mean(v)), 2)
+                                                                                           for k, v in got.items()}}))
+            log(f"wind source: {best} ({', '.join(f'{k} {np.mean(v):+.2f} ft/mph' for k, v in got.items())})")
+    except Exception as e:
+        log(f"wind source pick skipped: {e}")
     log(f"backfill done in {(time.time() - t0) / 3600:.1f} h")
 
 
