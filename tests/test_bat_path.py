@@ -291,8 +291,13 @@ def test_graph_panel_and_trails_in_3d():
     s = scs[0]["series"]
     assert s["cols"][0] == "pf" and len(s["pts"]) > 0 and s["n_fast"] >= 0
     h = path3d_html(scs, "Bat path", "x")
-    for bit in ('id="s3g"', 'id="s3trail"', 'id="gp"', "function drawGraph", "function paint", "gap_v"):
+    for bit in ('id="s3trail"', 'id="tv"', "function paint", "gap_v", "gap_h"):
         assert bit in h
+    assert "vs MLB" not in h and "Horizontal bat angle" not in h            # plane matching only
+    from ui.bat_path import chart_html
+    c = chart_html(scs, bp.series(sw, {"types": None, "hand": "All", "count": "All", "zone": None}, "R"))
+    for bit in ('id="cm"', 'id="cv"', 'value="self"', 'value="league"', "function draw", '"all"'):
+        assert bit in c
 
 
 def test_on_plane_window_and_hba():

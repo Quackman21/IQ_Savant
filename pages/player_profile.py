@@ -639,7 +639,7 @@ def bat_path_view(sc: pd.DataFrame, season: int, poc: pd.DataFrame | None = None
     from core import aar as aar_core
     from core import bat_path as bpth
     from core import swing3d
-    from ui.bat_path import COLOR_BY, compare_html, framed, path3d_html, poc_map_html, spray_html
+    from ui.bat_path import COLOR_BY, chart_html, compare_html, framed, path3d_html, poc_map_html, spray_html
     if season < 2023:
         show(empty_html("Bat tracking starts in 2023 -- pick a 2023+ season for his bat path."))
         return
@@ -746,8 +746,9 @@ def bat_path_view(sc: pd.DataFrame, season: int, poc: pd.DataFrame | None = None
             sub = ("each colour = a swing group · drag to orbit" +
                    (f" · not enough contact to draw {', '.join(missing)}" if missing else "") +
                    (" · contact depth estimated (not on Savant's stance board)" if est else ""))
-            components.html(path3d_html(ok, "Bat path", sub),
-                            height=900, scrolling=False)
+            components.html(path3d_html(ok, "Bat path", sub), height=960, scrolling=False)
+            components.html(chart_html(scenes, bpth.series(sw, {"types": None, "hand": "All", "count": "All",
+                                                                "zone": None}, stand)), height=470, scrolling=False)
     with right:
         k = st.columns([1, 1.6])
         with k[0]:
