@@ -70,9 +70,9 @@ def _woba_style(v) -> str:
     return f"background:rgb({r},{g},{b});color:{'#fff' if t > .6 else INK}"
 
 
-def header_html(pid: int, name: str, team: str, gm: dict) -> str:
+def header_html(pid: int, name: str, team: str, gm: dict, kind: str = "Hitter") -> str:
     return (HEAD_CSS + f'<div class="aarh"><img class="hs" src="{HEADSHOT.format(id=pid)}" alt="">'
-            f'<div><div class="sub">{escape(team)} · Hitter AAR</div><div class="nm">{escape(name)}</div></div>'
+            f'<div><div class="sub">{escape(team)} · {escape(kind)} AAR</div><div class="nm">{escape(name)}</div></div>'
             f'<div class="gm">{_f(gm["away_runs"], "{}", "")}<img src="{LOGO.format(id=gm["away"])}" alt="">'
             f'<div class="d">{escape(gm["abbr_away"])} @ {escape(gm["abbr_home"])}<br>{escape(gm["date"])}</div>'
             f'<img src="{LOGO.format(id=gm["home"])}" alt="">{_f(gm["home_runs"], "{}", "")}</div></div>')
