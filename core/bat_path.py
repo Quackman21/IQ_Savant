@@ -192,7 +192,7 @@ def contact_rows(sc: pd.DataFrame, poc: pd.DataFrame) -> pd.DataFrame:
     return out[m]
 
 
-def swings(sc: pd.DataFrame) -> pd.DataFrame:
+def swings(sc: pd.DataFrame, poc: pd.DataFrame | None = None) -> pd.DataFrame:
     """His competitive swings with what the view needs: group, zone, hand, the measured swing + contact."""
     from core import hit_metrics as hm
     if sc is None or sc.empty or "bat_speed" not in sc:
@@ -208,6 +208,14 @@ def swings(sc: pd.DataFrame) -> pd.DataFrame:
         "swing_path_tilt": num("swing_path_tilt"), "velo": num("release_speed"),
         "cy": num(aar.CONTACT_Y).where(made), "cx": num(aar.CONTACT_X).where(made),
         "sz_top": num("sz_top"), "sz_bot": num("sz_bot")}, index=sc.index)
+    # where he met it (MLB's contact point vs the plate, from the page's point-of-contact layer) + measured plane gaps
+    out["pf"] = poc["pf"].reindex(sc.index) if poc is not None and "pf" in poc else np.nan
+    out["gap_v"], out["gap_h"] = np.nan, np.nan
+    have = out["pf"].notna()
+    if have.any() and {"vx0", "vy0", "vz0", "ax", "ay", "az"} <= set(sc.columns):
+        from pipeline.bat_norms import gaps
+        gv, gh = gaps(sc.loc[have], out.loc[have, "pf"])
+        out.loc[have, "gap_v"], out.loc[have, "gap_h"] = np.asarray(gv, float), np.asarray(gh, float)
     return out[out["bat_speed"].notna()]
 
 
@@ -326,14 +334,105 @@ def group_label(g: dict, stand: str) -> str:
     return " · ".join(bits)
 
 
-def group_scenes(sw: pd.DataFrame, groups: list[dict], stand: str, depth_for, stance_x, all_types) -> list:
-    """One 3D scene per swing group (None where there isn't enough), tagged with its name + colour.
-    depth_for(hand) -> his stance depth for that pitcher-hand filter."""
+def group_scenes(sw: pd.DataFrame, groups: list[dict], stand: str, depth_for, stance_x, all_types,
+                 nm: dict | None = None) -> list:
+    """One 3D scene per swing group (None where there isn't enough), tagged with its name + colour, with his
+    measured swings for the graphs (series) and the matching MLB fast-swing range (norm).
+    depth_for(hand, group) -> his stance depth for that pitcher-hand filter."""
     out = []
     for k, g in enumerate(groups):
         sc = model_scene(sw, g.get("types"), g.get("hand", "All"), g.get("count", "All"), g.get("zone"), stand,
                          depth_for(g.get("hand", "All"), g), stance_x, all_types)
         if sc is not None:
             sc["name"], sc["color"], sc["gid"] = group_label(g, stand), GROUP_COLORS[k % MAX_GROUPS], k
+            sc["series"] = series(sw, g, stand)
+            sc["norm"] = norm_for(nm or {}, g.get("types"), g.get("zone"), all_types)
         out.append(sc)
     return out
+
+
+
+# ----------------------------------------------------------------------------- graphs: his swings + MLB norms
+SERIES = ["pf", "bat_speed", "attack_angle", "attack_direction", "swing_path_tilt", "gap_v", "gap_h"]
+_norms: dict = {}
+
+
+def norms(season: int) -> dict:
+    """MLB fast-swing (75+) ranges from pipeline.bat_norms ({} until it's been run)."""
+    from pathlib import Path
+    import json
+    if season not in _norms:
+        f = Path(__file__).resolve().parents[1] / "data" / "calibration" / f"bat_norms_{season}.json"
+        try:
+            _norms[season] = json.loads(f.read_text())
+        except Exception:
+            _norms[season] = {}
+    return _norms[season]
+
+
+def norm_for(nm: dict, types, zone, all_types=None) -> dict:
+    """The matching MLB range: the group's pitch group (when every type picked is one group) x its zone (when it's
+    one zone); falls back to all pitches / all zones. Returns {key, depth, contact, bins, fallback}."""
+    if not nm or not nm.get("keys"):
+        return {}
+    g = "All"
+    if types:
+        from core import hit_metrics as hm
+        gs = set(hm.pitch_group(pd.DataFrame({"pitch_type": list(types)})).dropna())
+        g = gs.pop() if len(gs) == 1 else "All"
+    zs = zones_of(zone)
+    z = str(zs[0]) if zs and len(zs) == 1 else "All"
+    for key in (f"{g}|{z}", f"{g}|All", f"All|{z}", "All|All"):
+        if key in nm["keys"]:
+            k = nm["keys"][key]
+            return {"key": key, "bins": nm["bins"], "depth": k["depth"], "contact": k["contact"],
+                    "fast": nm.get("fast_mph", 75), "all": nm["keys"].get("All|All", {}).get("depth")}
+    return {}
+
+
+def series(sw: pd.DataFrame, g: dict, stand: str) -> dict:
+    """His measured contact swings for a swing group: one row per swing [pf, bat speed, AA, AD, tilt, gap_v, gap_h]."""
+    s = sw[pick(sw, g.get("types"), g.get("hand", "All"), g.get("count", "All"), g.get("zone"), stand)]
+    s = s[s["pf"].notna()]
+    rows = s[SERIES].round(2).to_numpy()
+    return {"cols": SERIES, "pts": [[None if pd.isna(v) else float(v) for v in r] for r in rows],
+            "n_fast": int((s["bat_speed"] >= 75).sum())}
+
+
+
+def path_angles(sc: dict) -> pd.DataFrame:
+    """Along the drawn path (sweet spot): t (ms), measured/inferred flag, depth y (in front of the plate), the path's
+    vertical + horizontal angles vs the pitch (gap_v / gap_h, batter-oriented: + = steeper / oppo), and the bat's
+    horizontal angle (hba, + = barrel ahead of the hands) -- the same numbers the 3D view colours by."""
+    a = np.asarray([q[:5] for q in sc["arc"]], float)
+    O = np.asarray(sc["O"], float)
+    n = len(a)
+    prv, nxt = a[np.maximum(np.arange(n) - 1, 0)], a[np.minimum(np.arange(n) + 1, n - 1)]
+    d = nxt[:, :3] - prv[:, :3]
+    pv = np.degrees(np.arctan2(d[:, 2], np.hypot(d[:, 0], d[:, 1])))
+    ph = np.degrees(np.arctan2(d[:, 0], d[:, 1]))
+    side = -1.0 if sc.get("side") == "L" else 1.0
+    wrap = lambda v: (v + 540) % 360 - 180
+    h = O - a[:, :3]
+    return pd.DataFrame({"t": a[:, 4] * 1000, "flag": a[:, 3], "y": a[:, 1],
+                         "gap_v": pv + sc["read"]["vaa"], "gap_h": wrap(side * (ph + sc["read"]["haa"])),
+                         "hba": -np.degrees(np.arctan2(h[:, 1], np.abs(h[:, 0])))})
+
+
+def on_plane(sc: dict, mode: str = "gap_v", tol: float = 5.0) -> dict:
+    """The stretch of path around contact within `tol` degrees of the pitch: ms, inches of path, where it starts /
+    ends vs the plate, and how far into it he makes contact (0 = start, 1 = end). After contact = inferred."""
+    p = path_angles(sc)
+    i = int((p["t"] >= 0).idxmax()) if (p["t"] >= 0).any() else len(p) - 1
+    if abs(p[mode].iloc[i]) > tol:
+        return {"on": False, "gap": float(p[mode].iloc[i])}
+    s_, e = i, i
+    while s_ > 0 and abs(p[mode].iloc[s_ - 1]) <= tol:
+        s_ -= 1
+    while e < len(p) - 1 and abs(p[mode].iloc[e + 1]) <= tol:
+        e += 1
+    pts = np.asarray([q[:3] for q in sc["arc"]], float)[s_:e + 1]
+    t0, t1 = float(p["t"].iloc[s_]), float(p["t"].iloc[e])
+    return {"on": True, "ms": t1 - t0, "inches": float(np.linalg.norm(np.diff(pts, axis=0), axis=1).sum()),
+            "y0": float(p["y"].iloc[s_]), "y1": float(p["y"].iloc[e]), "before": -t0, "after": t1,
+            "pct": -t0 / (t1 - t0) if t1 > t0 else 0.5}

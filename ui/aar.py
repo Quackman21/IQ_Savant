@@ -710,7 +710,8 @@ function build(sc) {
   document.getElementById('s3sc').oninput = e => {
     S.playing = false; document.getElementById('s3p').textContent = '▶'; S.t = t0 + (t1 - t0) * e.target.value / 1000; };
   return {stop() { cancelAnimationFrame(S.raf); ren.dispose(); ren.domElement.remove(); },
-          setOn(k, on) { if (!GR[k]) return; GR[k].on = on; GR[k].objs.forEach(o => { o.visible = on; }); }};
+          setOn(k, on) { if (!GR[k]) return; GR[k].on = on; GR[k].objs.forEach(o => { o.visible = on && !o.userData.off; }); },
+          scene, GR, time() { return S.t; }};
 }
 """
 

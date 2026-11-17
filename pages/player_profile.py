@@ -643,7 +643,7 @@ def bat_path_view(sc: pd.DataFrame, season: int, poc: pd.DataFrame | None = None
     if season < 2023:
         show(empty_html("Bat tracking starts in 2023 -- pick a 2023+ season for his bat path."))
         return
-    sw = bpth.swings(sc)
+    sw = bpth.swings(sc, poc)
     if sw.empty:
         show(empty_html("No tracked swings for this selection."))
         return
@@ -726,7 +726,8 @@ def bat_path_view(sc: pd.DataFrame, season: int, poc: pd.DataFrame | None = None
         return pr["cy"] - (c["F0"] + c["sy"] * pr["cy"]) if pr.get("cy") is not None and c else None
 
     est = not ((views.get("season", {}) or {}).get((pid, stand)))
-    scenes = bpth.group_scenes(sw, groups, stand, depth_for, swing3d.stance_offsets(season, pid).get(stand), all_types)
+    scenes = bpth.group_scenes(sw, groups, stand, depth_for, swing3d.stance_offsets(season, pid).get(stand), all_types,
+                               bpth.norms(season))
     pocdf = poc if poc is not None else pd.DataFrame(index=sc.index)
     cells = []
     for k, g in enumerate(groups):

@@ -94,6 +94,15 @@ def season_steps(season: int, force: bool) -> None:
                     f"mph of tailwind, {c['ft_per_pct_density']:+.2f} ft per 1% denser air"
                     + (f", thin-air parks {c['coors_minus_avg_ft']:+.0f} ft vs average" if c.get("coors_minus_avg_ft") else ""))
         chk.write_text(json.dumps({"by_source": res}))
+    # 6 Bat Path normative ranges: MLB fast swings (75+ mph) by pitch group x zone x contact depth
+    bn = CAL / f"bat_norms_{season}.json"
+    if force or not bn.exists():
+        try:
+            from pipeline import bat_norms
+            bat_norms.run(season)
+            log(f"bat path norms: {json.loads(bn.read_text())['swings']['fast']:,} fast swings")
+        except Exception as e:
+            log(f"bat path norms skipped: {type(e).__name__}: {e}")
     # 4 hip fallback
     if force or not (ROOT / "data" / f"hip_group_{season}.json").exists():
         hip_group.main([str(lg_file)])

@@ -235,3 +235,78 @@ def test_swing_groups_on_every_chart():
     assert "Swing groups side by side" in t and "Attack angle" in t
     assert "No measured" in poc_map_html(pd.DataFrame(), summary=False)
     assert "no balls in play" in spray_html(pd.DataFrame())
+
+
+def _raw_league(n=6000, seed=11):
+    rng = np.random.default_rng(seed)
+    bs = rng.normal(72, 5, n)
+    return pd.DataFrame({
+        "game_type": "R", "batter": rng.integers(1, 40, n), "stand": rng.choice(["L", "R"], n),
+        "p_throws": rng.choice(["L", "R"], n), "pitch_type": rng.choice(["FF", "SL", "CH"], n),
+        "zone": rng.integers(1, 10, n), "description": rng.choice(["foul", "hit_into_play", "swinging_strike"], n),
+        "bat_speed": bs, "attack_angle": rng.normal(10, 7, n), "attack_direction": rng.normal(0, 10, n),
+        "swing_path_tilt": rng.normal(32, 4, n), "intercept_ball_minus_batter_pos_y_inches": rng.normal(30, 6, n),
+        "vx0": 5.0, "vy0": -135.0, "vz0": -5.0, "ax": -8.0, "ay": 28.0, "az": -15.0})
+
+
+def test_bat_norms_fast_only(monkeypatch):
+    from core import aar, bat_path as bp
+    from pipeline import bat_norms
+    raw = _raw_league()
+    monkeypatch.setattr(aar, "stance_depths", lambda season: {(b, s): 28.0 for b in range(1, 40) for s in "LR"})
+    d = bat_norms.swings(raw, 2026)
+    assert set(d["description"]) <= {"foul", "hit_into_play"} and (d["pf"] == d["intercept_ball_minus_batter_pos_y_inches"] - 28).all()
+    nm = bat_norms.build(d)
+    k = nm["keys"]["All|All"]
+    fast = d[d["fast"]]
+    assert k["n"] == len(fast) and abs(k["contact"]["bat_speed"]["m"] - fast["bat_speed"].mean()) < 0.01
+    assert min(fast["bat_speed"]) >= 75 and k["contact"]["bat_speed"]["m"] > 76
+    assert "Fastball|5" in nm["keys"] and len(k["depth"]["attack_angle"]["m"]) == len(nm["bins"])
+    # the site's lookup: one pitch group + one zone -> that range; mixed -> all
+    assert bp.norm_for(nm, ["FF"], [5])["key"] == "Fastball|5"
+    assert bp.norm_for(nm, ["FF", "SL"], [5])["key"] == "All|5"
+    assert bp.norm_for(nm, None, None)["key"] == "All|All"
+    assert bp.norm_for({}, None, None) == {}
+
+
+def test_plane_gaps_are_measured():
+    from pipeline.bat_norms import gaps
+    df = pd.DataFrame({"stand": ["R", "L"], "attack_angle": [10.0, 10.0], "attack_direction": [5.0, 5.0],
+                       "vx0": [0.0, 0.0], "vy0": [-135.0, -135.0], "vz0": [-5.0, -5.0], "ax": [0.0, 0.0],
+                       "ay": [28.0, 28.0], "az": [-15.0, -15.0]})
+    gv, gh = gaps(df, pd.Series([0.0, 0.0]))
+    assert -10 < gv.iloc[0] < 10 and abs(gh.iloc[0] - 5.0) < 1e-6          # straight pitch: gap_h = attack direction
+
+
+def test_graph_panel_and_trails_in_3d():
+    from core import bat_path as bp
+    from ui.bat_path import path3d_html
+    df = _tracked(1500)
+    df["p_throws"] = "R"
+    df = df.assign(vx0=5.0, vy0=-135.0, vz0=-5.0, ax=-8.0, ay=28.0, az=-15.0)
+    poc = pd.DataFrame({"pf": df["intercept_ball_minus_batter_pos_y_inches"] - 27, "pxc": 0.0}, index=df.index)
+    sw = bp.swings(df, poc)
+    assert sw["pf"].notna().any() and sw["gap_v"].notna().any()
+    scs = bp.group_scenes(sw, [dict(bp.DEFAULT_GROUP)], "R", lambda h, g: 27.0, 26.0, list(sw.ptype.unique()), {})
+    s = scs[0]["series"]
+    assert s["cols"][0] == "pf" and len(s["pts"]) > 0 and s["n_fast"] >= 0
+    h = path3d_html(scs, "Bat path", "x")
+    for bit in ('id="s3g"', 'id="s3trail"', 'id="gp"', "function drawGraph", "function paint", "gap_v"):
+        assert bit in h
+
+
+def test_on_plane_window_and_hba():
+    from core import bat_path as bp
+    from ui.bat_path import compare_html
+    df = _tracked(1500)
+    df["p_throws"] = "R"
+    sw = bp.swings(df)
+    sc = bp.model_scene(sw, None, "All", "All", [5], "R", 27.0, 26.0)
+    p = bp.path_angles(sc)
+    assert {"gap_v", "gap_h", "hba"} <= set(p.columns) and len(p) == len(sc["arc"])
+    c = p.loc[(p["t"] >= 0).idxmax()]
+    assert abs(c["gap_v"] - sc["read"]["plane_gap"]) < 3          # path angle at contact ~ measured attack angle
+    w = bp.on_plane(sc, "gap_v", tol=90)
+    assert w["on"] and w["ms"] > 0 and 0 <= w["pct"] <= 1
+    t = compare_html([sc | {"name": "A", "color": "#2f5fb3", "gid": 0}])
+    assert "Horizontal bat angle" in t and "On plane, vertical" in t
