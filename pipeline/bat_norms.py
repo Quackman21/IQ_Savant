@@ -31,7 +31,7 @@ EDGES = np.arange(-24, 34, 2.0)
 METRICS = ["bat_speed", "attack_angle", "attack_direction", "swing_path_tilt", "gap_v", "gap_h", "vba", "hba"]
 COLS = ["game_type", "batter", "stand", "p_throws", "pitch_type", "zone", "description", "bat_speed", "plate_x", "plate_z",
         "attack_angle", "attack_direction", "swing_path_tilt", "intercept_ball_minus_batter_pos_y_inches",
-        "vx0", "vy0", "vz0", "ax", "ay", "az"]
+        "intercept_ball_minus_batter_pos_x_inches", "swing_length", "vx0", "vy0", "vz0", "ax", "ay", "az"]
 
 
 def approach(df: pd.DataFrame, pf: pd.Series) -> tuple[pd.Series, pd.Series]:
@@ -109,6 +109,7 @@ def swings(raw: pd.DataFrame, season: int) -> pd.DataFrame:
     d["vba"], d["hba"] = out_v, out_h
     d["group"] = hm.pitch_group(d).fillna("Other")
     d["fast"] = pd.to_numeric(d["bat_speed"], errors="coerce") >= FAST
+    d["year"] = season
     for m in METRICS[:4]:
         d[m] = pd.to_numeric(d[m], errors="coerce")
     return d
@@ -134,9 +135,26 @@ def _stats(v: pd.Series) -> dict:
 
 def build(d: pd.DataFrame) -> dict:
     """Norms from FAST swings only."""
+    from core.bat_path import TGRID, time_band, time_curves
     f = d[d["fast"]]
     centers = ((EDGES[:-1] + EDGES[1:]) / 2).tolist()
-    out = {"fast_mph": FAST, "bins": centers, "keys": {}}
+    out = {"fast_mph": FAST, "bins": centers, "tgrid": TGRID.tolist(), "keys": {}}
+    # every fast swing's angles along its own drawn path (the time view), computed once
+    curves = {}
+    if len(f):
+        n_ = lambda c: pd.to_numeric(f[c], errors="coerce") if c in f else pd.Series(np.nan, index=f.index)
+        sx = _stance_x(int(f["year"].iloc[0])) if "year" in f else {}
+        xs = np.asarray([sx.get((int(b), str(s_)), 27.0) for b, s_ in zip(f["batter"], f["stand"])], float).round(0)
+        curves = {k: np.full((len(f), len(TGRID)), np.nan) for k in ("attack_angle", "attack_direction", "vba", "hba")}
+        for x in np.unique(xs):
+            mm = xs == x
+            g_ = f[mm]
+            cv = time_curves(g_["attack_angle"], g_["attack_direction"], g_["swing_path_tilt"], g_["bat_speed"],
+                             n_("swing_length")[mm], g_["stand"], g_["pf"], g_["depth"],
+                             n_("intercept_ball_minus_batter_pos_x_inches")[mm], 12 * n_("plate_x")[mm].fillna(0),
+                             12 * n_("plate_z")[mm].fillna(2.5), {"R": x, "L": x})
+            for k in curves:
+                curves[k][mm] = cv[k]
     zone = pd.to_numeric(f["zone"], errors="coerce")
     for g in ("All", "Fastball", "Breaking", "Offspeed"):
         for z in ["All"] + list(range(1, 10)):
@@ -157,6 +175,9 @@ def build(d: pd.DataFrame) -> dict:
                     "m": [round(float(mean[i]), 2) if i in mean and n[i] >= MIN_N else None for i in range(len(centers))],
                     "s": [round(float(sd[i]), 2) if i in sd and n[i] >= MIN_N else None for i in range(len(centers))],
                     "n": [int(n[i]) if i in n else 0 for i in range(len(centers))]}
+            if curves:
+                mk = m.to_numpy()
+                k["time"] = time_band({mt: v[mk] for mt, v in curves.items()}, MIN_N)
             out["keys"][f"{g}|{z}"] = k
     return out
 

@@ -805,15 +805,31 @@ function draw() {
       lines.push([info.slice(0, i0 + 1).map(q => [q.t, q[key]]), g.color, true]);
       lines.push([info.slice(i0, i1 + 1).map(q => [q.t, q[key]]), g.color, false]);
       lines.push([info.slice(i1).map(q => [q.t, q[key]]), g.color, true]);
-      if (vs === 'league') { const c = ((g.norm || {}).contact || {})[key]; if (c && c.m !== null) bands.push([[[0, c.m, c.s]], g.color, 'bar', k]); }
+      if (vs === 'league') {
+        const N = g.norm || {}, T = N.tgrid, src = (N.time || {})[key], all = (N.time_all || {})[key];
+        if (T && (src || all)) {
+          const band = T.map((t, i) => { const q = src && src.m[i] !== null ? src : all;
+            return q && q.m[i] !== null ? [t, q.m[i], q.s[i]] : null; }).filter(Boolean);
+          if (band.length) bands.push([band, GS.length > 1 ? g.color : '#9aa4ad']);
+        }
+      }
     });
-    if (vs === 'self') { const r = rows(ALL, key, fast), v = r.pts.map(p => p[r.ci]);
-      if (v.length > 2) { const m = v.reduce((a, b) => a + b, 0) / v.length, s = Math.sqrt(v.reduce((a, b) => a + (b - m) ** 2, 0) / (v.length - 1));
-        bands.push([[[0, m, s]], '#6a7681', 'bar', 0]); } }
+    if (vs === 'self') {
+      const st = D.self_time || {}, b = (fast && st.fast) ? st.fast : st.comp;
+      if (b && b[key] && st.tgrid) {
+        const band = st.tgrid.map((t, i) => b[key].m[i] !== null ? [t, b[key].m[i], b[key].s[i]] : null).filter(Boolean);
+        if (band.length) bands.push([band, '#9aa4ad']);
+      }
+      if (fast && st.comp && !st.fast) note.push('He has under 5 fast (75+) swings with a contact point: his range uses competitive swings.');
+    }
     xs = [Math.floor(lo / 10) * 10, Math.ceil(hi / 10) * 10];
     marks.push([0, '#c0392b', 'contact']);
     note.push('Along his average path, through contact and into the follow-through: solid = measured last 40 ms, dashed = inferred. ' +
-              (vs === 'self' ? 'Bar at contact = all of his swings ±1 SD.' : 'Bar at contact = MLB fast swings (75+ mph) ±1 SD.'));
+              (vs === 'self' ? 'Shaded = all of his own swings, each along its own path, ±1 SD at each moment.'
+                             : 'Shaded = MLB fast swings (75+ mph), each along its own path, ±1 SD at each moment' +
+                               ((GS[0].norm || {}).key ? ` (${GS[0].norm.key.replace('|', ', zone ')})` : '') + '.') +
+              ' Every path here (his and the range) comes from the same swing model on measured angles.');
+    if (vs === 'league' && !(GS[0].norm || {}).tgrid) note.push('Time ranges not built yet: rerun  python -m pipeline.bat_norms <season>');
   }
   if (refs.length) note.push('Horizontal dashed = the angle that matches that pitch (green = within 5°).');
   const ys = [];
@@ -833,9 +849,13 @@ function draw() {
   bands.forEach(([b, c, kind, k]) => {
     if (kind === 'bar') { const [x, m, s] = b[0], xx = X(x) + 7 + 9 * (k || 0);
       svg.push(`<line x1="${xx}" x2="${xx}" y1="${Y(m - s)}" y2="${Y(m + s)}" stroke="${c}" stroke-width="6" stroke-opacity=".35" stroke-linecap="round"/><circle cx="${xx}" cy="${Y(m)}" r="3" fill="#fff" stroke="${c}"/>`); return; }
-    const up = b.map(p => `${X(p[0])},${Y(p[1] + p[2])}`), dn = b.slice().reverse().map(p => `${X(p[0])},${Y(p[1] - p[2])}`);
-    svg.push(`<polygon points="${up.concat(dn).join(' ')}" fill="${c}" fill-opacity="${c === '#9aa4ad' ? .22 : .1}"/>`);
-    svg.push(`<polyline points="${b.map(p => `${X(p[0])},${Y(p[1])}`).join(' ')}" fill="none" stroke="#9aa4ad" stroke-dasharray="3 3"/>`);
+    const runs = []; let cur = [];
+    b.forEach((p, i) => { if (i && p[0] - b[i - 1][0] > 2.5) { runs.push(cur); cur = []; } cur.push(p); }); runs.push(cur);
+    runs.filter(r => r.length > 1).forEach(r => {
+      const up = r.map(p => `${X(p[0])},${Y(p[1] + p[2])}`), dn = r.slice().reverse().map(p => `${X(p[0])},${Y(p[1] - p[2])}`);
+      svg.push(`<polygon points="${up.concat(dn).join(' ')}" fill="${c}" fill-opacity="${c === '#9aa4ad' ? .22 : .1}"/>`);
+      svg.push(`<polyline points="${r.map(p => `${X(p[0])},${Y(p[1])}`).join(' ')}" fill="none" stroke="#9aa4ad" stroke-dasharray="3 3"/>`);
+    });
   });
   refs.forEach(([m, c]) => svg.push(`<line x1="${L}" x2="${W - R}" y1="${Y(m)}" y2="${Y(m)}" stroke="${c}" stroke-dasharray="7 4" stroke-opacity=".8"/><text x="${W - R - 4}" y="${Y(m) - 4}" text-anchor="end" fill="${c}">matches the pitch</text>`));
   marks.forEach(([x, c, lab]) => { if (x < xs[0] || x > xs[1]) return;
@@ -856,14 +876,14 @@ window.addEventListener('resize', draw); draw();
 """
 
 
-def chart_html(scenes: list, all_series: dict) -> str:
+def chart_html(scenes: list, all_series: dict, self_time: dict | None = None) -> str:
     """The plane-matching chart under the 3D view: how well each loaded swing matches the pitch's plane (vertical
     vs VAA) or line (horizontal vs HAA), by contact depth (his measured swings) or time (his average path), vs the
     league (MLB fast swings) or himself (all his swings). Drawn at the frame's real width with a fixed height."""
     import json
     scs = [x for x in scenes if x]
     data = {"groups": [{k: x.get(k) for k in ("name", "color", "series", "norm", "read", "arc", "side", "O")} for x in scs],
-            "all": all_series}
+            "all": all_series, "self_time": self_time or {}}
     css = ("body{margin:0;font:12px system-ui,sans-serif;color:#16202b}"
            ".wrap{border:1px solid #e6eaed;border-radius:10px;padding:8px 12px 8px}"
            ".hd{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:4px}.hd b{font-size:14px;margin-right:6px}"

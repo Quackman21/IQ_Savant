@@ -338,3 +338,27 @@ def test_match_angles_are_the_gap_reference():
     pl = plane(df, pd.Series([0.0, 0.0]))
     assert np.allclose(pl["gap_v"], df["attack_angle"] - pl["match_v"])
     assert np.allclose(pl["gap_h"], df["attack_direction"] - pl["match_h"]) and pl["match_h"][0] == -pl["match_h"][1]
+
+
+def test_time_ranges_league_and_self(monkeypatch):
+    from core import aar, bat_path as bp
+    from pipeline import bat_norms
+    raw = _raw_league().assign(plate_x=0.0, plate_z=2.5, swing_length=7.2,
+                               intercept_ball_minus_batter_pos_x_inches=28.0)
+    monkeypatch.setattr(aar, "stance_depths", lambda season: {(b, s): 28.0 for b in range(1, 40) for s in "LR"})
+    nm = bat_norms.build(bat_norms.swings(raw, 2026))
+    k = nm["keys"]["All|All"]
+    assert len(nm["tgrid"]) == len(bp.TGRID) and set(k["time"]) == set(bp.TIME_METRICS)
+    i0 = nm["tgrid"].index(0.0)
+    assert abs(k["time"]["attack_angle"]["m"][i0] - k["contact"]["attack_angle"]["m"]) < 1.0    # at contact = measured
+    assert k["time"]["attack_angle"]["m"][0] is None or k["time"]["attack_angle"]["n"][0] < k["time"]["attack_angle"]["n"][i0]
+    df = _tracked(800).assign(vx0=5.0, vy0=-135.0, vz0=-5.0, ax=-8.0, ay=28.0, az=-15.0, plate_x=0.0, plate_z=2.5)
+    df["p_throws"] = "R"
+    poc = pd.DataFrame({"pf": df["intercept_ball_minus_batter_pos_y_inches"] - 27, "pxc": 0.0}, index=df.index)
+    sw = bp.swings(df, poc, {"R": 26.0})
+    st = bp.self_time(sw, "R", {"R": 26.0})
+    assert st["comp"]["hba"]["m"][st["tgrid"].index(0.0)] is not None
+    from ui.bat_path import chart_html
+    scs = bp.group_scenes(sw, [dict(bp.DEFAULT_GROUP)], "R", lambda h, g: 27.0, 26.0, list(sw.ptype.unique()), nm)
+    h = chart_html(scs, bp.series(sw, {"types": None, "hand": "All", "count": "All", "zone": None}, "R"), st)
+    assert '"self_time"' in h and '"tgrid"' in h

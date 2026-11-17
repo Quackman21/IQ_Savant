@@ -748,7 +748,9 @@ def bat_path_view(sc: pd.DataFrame, season: int, poc: pd.DataFrame | None = None
                    (" · contact depth estimated (not on Savant's stance board)" if est else ""))
             components.html(path3d_html(ok, "Bat path", sub), height=960, scrolling=False)
             components.html(chart_html(scenes, bpth.series(sw, {"types": None, "hand": "All", "count": "All",
-                                                                "zone": None}, stand)), height=470, scrolling=False)
+                                                                "zone": None}, stand),
+                                       bpth.self_time(sw, stand, swing3d.stance_offsets(season, pid))),
+                            height=470, scrolling=False)
     with right:
         k = st.columns([1, 1.6])
         with k[0]:

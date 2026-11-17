@@ -192,20 +192,13 @@ def contact_rows(sc: pd.DataFrame, poc: pd.DataFrame) -> pd.DataFrame:
     return out[m]
 
 
-def bat_angles(aa, ad, tilt, stand, pf, depth, px_in, pz_in, stance_x=None) -> tuple[np.ndarray, np.ndarray]:
-    """Vertical + horizontal bat angle at contact for each swing (degrees), from that swing's own measured attack
-    angle, attack direction and swing-path tilt -- the same swing-plane geometry the 3D view uses (INFERRED: the bat
-    lies across the measured path, in the measured plane). vba < 0 = barrel below the hands; hba > 0 = barrel ahead
-    of the hands (toward the pitcher), 0 = square."""
+def _plane(aa, ad, tilt, stand, pf, depth, px_in, pz_in, stance_x=None):
+    """Per swing: d (sweet-spot direction at contact, from the measured attack angle + direction) and w (unit vector
+    from the ball toward the hands' centre, in the plane tilted at the measured swing-path tilt) -- the 3D view's
+    geometry, vectorised. Plate frame: x = 1B side, y = toward the pitcher, z = up."""
     aa, ad, tilt = (np.asarray(x, float) for x in (aa, ad, tilt))
     pf, depth, px_in, pz_in = (np.asarray(x, float) for x in (pf, depth, px_in, pz_in))
-    stand = np.asarray(stand)
-    if len(aa) > 8000:                                       # in chunks: n x 180 x 3 arrays
-        parts = [bat_angles(aa[i:i + 8000], ad[i:i + 8000], tilt[i:i + 8000], stand[i:i + 8000], pf[i:i + 8000],
-                            depth[i:i + 8000], px_in[i:i + 8000], pz_in[i:i + 8000], stance_x)
-                 for i in range(0, len(aa), 8000)]
-        return np.concatenate([q[0] for q in parts]), np.concatenate([q[1] for q in parts])
-    right = stand == "R"
+    right = np.asarray(stand) == "R"
     sx = np.asarray([((stance_x or {}).get("R" if r else "L") or 27.0) for r in right], float)
     h = np.radians(np.where(right, ad, -ad))
     a = np.radians(aa)
@@ -223,10 +216,76 @@ def bat_angles(aa, ad, tilt, stand, pf, depth, px_in, pz_in, stance_x=None) -> t
     nrm = np.cross(np.broadcast_to(d[:, None, :], w.shape), w)
     err = np.abs(np.arccos(np.clip(np.abs(nrm[..., 2]) / np.linalg.norm(nrm, axis=-1), 0, 1)) - np.radians(tilt)[:, None])
     best = w[np.arange(len(w)), np.nanargmin(np.where(np.isnan(err), np.inf, err), axis=1)]
-    vba = -np.degrees(np.arcsin(np.clip(best[:, 2], -1, 1)))
-    hba = -np.degrees(np.arctan2(best[:, 1], np.abs(best[:, 0])))
     bad = ~np.isfinite(aa + ad + tilt + pf + depth + px_in + pz_in)
+    return d, best, bad
+
+
+def bat_angles(aa, ad, tilt, stand, pf, depth, px_in, pz_in, stance_x=None) -> tuple[np.ndarray, np.ndarray]:
+    """Vertical + horizontal bat angle at contact for each swing (degrees), from that swing's own measured attack
+    angle, attack direction and swing-path tilt -- the same swing-plane geometry the 3D view uses (INFERRED: the bat
+    lies across the measured path, in the measured plane). vba < 0 = barrel below the hands; hba > 0 = barrel ahead
+    of the hands (toward the pitcher), 0 = square."""
+    aa = np.asarray(aa, float)
+    if len(aa) > 8000:                                       # in chunks: n x 180 x 3 arrays
+        args = [np.asarray(x) for x in (aa, ad, tilt, stand, pf, depth, px_in, pz_in)]
+        parts = [bat_angles(*[x[i:i + 8000] for x in args], stance_x) for i in range(0, len(aa), 8000)]
+        return np.concatenate([q[0] for q in parts]), np.concatenate([q[1] for q in parts])
+    d, w, bad = _plane(aa, ad, tilt, stand, pf, depth, px_in, pz_in, stance_x)
+    vba = -np.degrees(np.arcsin(np.clip(w[:, 2], -1, 1)))
+    hba = -np.degrees(np.arctan2(w[:, 1], np.abs(w[:, 0])))
     return np.where(bad, np.nan, vba), np.where(bad, np.nan, hba)
+
+
+TGRID = np.arange(-80, 72, 2.0)                               # ms from contact, for the time view's ranges
+TIME_METRICS = ["attack_angle", "attack_direction", "vba", "hba"]
+
+
+def time_curves(aa, ad, tilt, bs, swing_len, stand, pf, depth, cx, px_in, pz_in, stance_x=None,
+                grid=TGRID) -> dict:
+    """Each swing's four angles along its own drawn path, sampled every 2 ms (NaN where the path isn't drawn: before
+    bat parallel / beyond the swing length, or past the follow-through) -- exactly the 3D view's path, so the time
+    view's ranges compare like with like. {metric: n x len(grid)}."""
+    aa = np.asarray(aa, float)
+    if len(aa) > 4000:
+        args = [np.asarray(x) for x in (aa, ad, tilt, bs, swing_len, stand, pf, depth, cx, px_in, pz_in)]
+        parts = [time_curves(*[x[i:i + 4000] for x in args], stance_x, grid) for i in range(0, len(aa), 4000)]
+        return {k: np.concatenate([p[k] for p in parts]) for k in parts[0]}
+    d, w, bad = _plane(aa, ad, tilt, stand, pf, depth, px_in, pz_in, stance_x)
+    bs, swing_len = np.asarray(bs, float) * 17.6, np.asarray(swing_len, float) * 12
+    cx, pf, depth = (np.asarray(x, float) for x in (cx, pf, depth))
+    R = np.clip(np.hypot(np.nan_to_num(cx, nan=30.0), pf + depth), 24, 48)
+    measured = np.minimum(bs * 0.040, R * 1.2)
+    phi_bp = -np.pi / 2 - np.arctan2(d[:, 2], w[:, 2])
+    s_bp = R * phi_bp
+    bp_ok = (np.nan_to_num(swing_len) <= 0) | (-s_bp <= swing_len)
+    start = np.where(bp_ok, np.minimum(-measured, s_bp), -measured)                 # inches along the path
+    end = R * np.pi / 2
+    s_ = bs[:, None] * (np.asarray(grid)[None, :] / 1000.0)                         # n x T inches
+    phi = s_ / R[:, None]
+    c, sn = np.cos(phi)[..., None], np.sin(phi)[..., None]
+    tang = w[:, None, :] * sn + d[:, None, :] * c                                   # direction of travel
+    hand = w[:, None, :] * c - d[:, None, :] * sn                                   # barrel -> hands (unit)
+    side = np.where(np.asarray(stand) == "R", 1.0, -1.0)[:, None]
+    wrap = lambda v: (v + 540) % 360 - 180
+    out = {"attack_angle": np.degrees(np.arctan2(tang[..., 2], np.hypot(tang[..., 0], tang[..., 1]))),
+           "attack_direction": wrap(side * np.degrees(np.arctan2(tang[..., 0], tang[..., 1]))),
+           "vba": -np.degrees(np.arcsin(np.clip(hand[..., 2], -1, 1))),
+           "hba": -np.degrees(np.arctan2(hand[..., 1], np.abs(hand[..., 0])))}
+    drawn = (s_ >= start[:, None]) & (s_ <= end[:, None]) & ~bad[:, None] & np.isfinite(bs)[:, None]
+    return {k: np.where(drawn, v, np.nan) for k, v in out.items()}
+
+
+def time_band(curves: dict, min_n: int = 15) -> dict:
+    """Mean / SD / n at each time in the grid, from time_curves()."""
+    out = {}
+    for k, v in curves.items():
+        n = np.isfinite(v).sum(0)
+        with np.errstate(all="ignore"):
+            m, s = np.nanmean(v, 0), np.nanstd(v, 0, ddof=1)
+        ok = n >= min_n
+        out[k] = {"m": [round(float(x), 2) if o else None for x, o in zip(m, ok)],
+                  "s": [round(float(x), 2) if o else None for x, o in zip(s, ok)], "n": [int(x) for x in n]}
+    return out
 
 
 def swings(sc: pd.DataFrame, poc: pd.DataFrame | None = None, stance_x: dict | None = None) -> pd.DataFrame:
@@ -244,7 +303,8 @@ def swings(sc: pd.DataFrame, poc: pd.DataFrame | None = None, stance_x: dict | N
         "attack_angle": num("attack_angle"), "attack_direction": num("attack_direction"),
         "swing_path_tilt": num("swing_path_tilt"), "velo": num("release_speed"),
         "cy": num(aar.CONTACT_Y).where(made), "cx": num(aar.CONTACT_X).where(made),
-        "sz_top": num("sz_top"), "sz_bot": num("sz_bot")}, index=sc.index)
+        "sz_top": num("sz_top"), "sz_bot": num("sz_bot"), "px_in": 12 * num("plate_x"),
+        "pz_in": 12 * num("plate_z")}, index=sc.index)
     # where he met it (MLB's contact point vs the plate, from the page's point-of-contact layer) + measured plane gaps
     out["pf"] = poc["pf"].reindex(sc.index) if poc is not None and "pf" in poc else np.nan
     for k in ("gap_v", "gap_h", "match_v", "match_h", "vba", "hba"):
@@ -432,7 +492,9 @@ def norm_for(nm: dict, types, zone, all_types=None) -> dict:
         if key in nm["keys"]:
             k = nm["keys"][key]
             return {"key": key, "bins": nm["bins"], "depth": k["depth"], "contact": k["contact"],
-                    "fast": nm.get("fast_mph", 75), "all": nm["keys"].get("All|All", {}).get("depth")}
+                    "fast": nm.get("fast_mph", 75), "all": nm["keys"].get("All|All", {}).get("depth"),
+                    "tgrid": nm.get("tgrid"), "time": k.get("time"),
+                    "time_all": nm["keys"].get("All|All", {}).get("time")}
     return {}
 
 
@@ -482,3 +544,17 @@ def on_plane(sc: dict, mode: str = "gap_v", tol: float = 5.0) -> dict:
     return {"on": True, "ms": t1 - t0, "inches": float(np.linalg.norm(np.diff(pts, axis=0), axis=1).sum()),
             "y0": float(p["y"].iloc[s_]), "y1": float(p["y"].iloc[e]), "before": -t0, "after": t1,
             "pct": -t0 / (t1 - t0) if t1 > t0 else 0.5}
+
+
+
+def self_time(sw: pd.DataFrame, stand: str, stance_x: dict | None = None) -> dict:
+    """His own time ranges (all his swings with a contact depth), for 'vs Himself' in the time view:
+    {'fast': band, 'comp': band, 'tgrid': [...]} -- fast = his 75+ swings (empty if he has none)."""
+    s = sw[(sw["stand"] == stand) & sw["pf"].notna()]
+    if s.empty:
+        return {}
+    cv = time_curves(s["attack_angle"], s["attack_direction"], s["swing_path_tilt"], s["bat_speed"], s["swing_length"],
+                     s["stand"], s["pf"], s["cy"] - s["pf"], s["cx"], s["px_in"], s["pz_in"], stance_x)
+    fast = (s["bat_speed"] >= 75).to_numpy()
+    return {"tgrid": TGRID.tolist(), "comp": time_band(cv, 5),
+            "fast": time_band({k: v[fast] for k, v in cv.items()}, 5) if fast.sum() >= 5 else None}
