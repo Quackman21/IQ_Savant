@@ -103,6 +103,14 @@ def season_steps(season: int, force: bool) -> None:
             log(f"bat path norms: {json.loads(bn.read_text())['swings']['fast']:,} fast swings")
         except Exception as e:
             log(f"bat path norms skipped: {type(e).__name__}: {e}")
+    # 7 the bat cube: every competitive swing with depth, plane match + bat angles (any hitter x combo, quickly)
+    from pipeline import bat_cube
+    cube_f = [bat_cube.OUT / f"swings_{season}.parquet", bat_cube.OUT / f"swings_{season}.csv.gz"]
+    if force or not any(f.exists() for f in cube_f):
+        try:
+            bat_cube.run(season)
+        except Exception as e:
+            log(f"bat cube skipped: {type(e).__name__}: {e}")
     # 4 hip fallback
     if force or not (ROOT / "data" / f"hip_group_{season}.json").exists():
         hip_group.main([str(lg_file)])

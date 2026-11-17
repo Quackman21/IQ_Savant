@@ -366,7 +366,7 @@ window.addEventListener('load', fit); fit();
 """
     return (f'<!doctype html><html><head><meta charset="utf-8"><style>{_S3D_CSS}{GRAPH_CSS}</style></head><body>'
             f'<div id="wrap"><div id="hd"><b>{escape(title)}</b><span>{escape(sub)}</span></div>'
-            f'<div id="stage"><div id="cams"></div><div id="grp"></div><div id="tl" hidden></div>'
+            f'<div id="stage"><div id="cams"></div><div id="grp"></div><div id="tl" hidden></div><div id="al" hidden></div>'
             f'<div class="msg" id="s3msg">Loading 3D…</div></div>'
             f'{ctl}{legend}</div>'
             f'<script type="application/json" id="s3d-data">{data}</script>'
@@ -567,6 +567,10 @@ GRAPH_CSS = """
 #tl .lab{display:flex;justify-content:space-between;color:#6a7681;font-size:10px}
 #ctl select#s3trail{max-width:230px}
 #tv{display:inline-flex;border:1px solid #d9dee2;border-radius:6px;overflow:hidden}
+#s3arrow.on{background:#4a8b96;color:#fff;border-color:#4a8b96}
+#al{position:absolute;right:10px;bottom:10px;z-index:2;background:rgba(255,255,255,.93);border:1px solid #e6eaed;
+  border-radius:8px;padding:6px 9px;font:11.5px system-ui;color:#33404c;line-height:1.5}
+#al[hidden]{display:none}
 #tv button{border:none!important;border-radius:0!important;padding:4px 9px} #tv button.on{background:#4a8b96;color:#fff}
 """
 
@@ -574,6 +578,12 @@ GRAPH_CSS = """
 COMMON_JS = r"""
 const STOPS = [[-1, [215, 38, 61]], [-0.66, [244, 96, 54]], [-0.33, [249, 200, 14]], [0, [46, 157, 91]],
                [0.33, [27, 152, 224]], [0.66, [61, 52, 139]], [1, [123, 44, 191]]];
+function match(v, lim = 15) {          // green = on the pitch's plane -> yellow -> red = off it (by how far, either way)
+  if (v === null || v === undefined || isNaN(v)) return [0.62, 0.64, 0.66];
+  const t = Math.min(1, Math.abs(v) / lim), G = [46, 157, 91], Y = [242, 192, 30], R = [214, 51, 40];
+  const [a, b, f] = t < 0.5 ? [G, Y, t / 0.5] : [Y, R, (t - 0.5) / 0.5];
+  return a.map((c, j) => (c + (b[j] - c) * f) / 255);
+}
 function rainbow(v, lim) {
   if (v === null || v === undefined || isNaN(v)) return [0.62, 0.64, 0.66];
   const t = Math.max(-1, Math.min(1, v / lim));
@@ -625,7 +635,7 @@ function paint() {
       if (orig) { o.userData.off = mode !== 'group'; o.visible = G.on && !o.userData.off; }
     });
     if (mode === 'group') return;
-    const g = GSD[k], cols = pathInfo(g).map(q => rainbow(q[mode], 15)), a = g.arc;
+    const g = GSD[k], cols = pathInfo(g).map(q => match(q[mode])), a = g.arc;
     const add = (o) => { o.userData.paint = true; o.visible = G.on; R3.scene.add(o); G.objs.push(o); };
     const meas = a.map((q, i) => [q, cols[i]]).filter(x => x[0][3] === 1);
     if (meas.length > 1) {
@@ -653,9 +663,8 @@ function legendTrail() {
   const el = document.getElementById('tl');
   if (trailMode === 'group') { el.hidden = true; return; }
   const [name, lo, hi] = PLANE[trailMode];
-  const bar = STOPS.map(([t, c]) => `rgb(${c.join(',')}) ${(t + 1) * 50}%`).join(',');
-  el.innerHTML = `<b>${name}</b><div class="bar" style="background:linear-gradient(90deg,${bar})"></div>
-    <div class="lab"><span>−15° ${lo}</span><span>0 matched</span><span>+15° ${hi}</span></div>` +
+  el.innerHTML = `<b>${name}</b><div class="bar" style="background:linear-gradient(90deg,#2e9d5b,#f2c01e,#d63328)"></div>
+    <div class="lab"><span>on the pitch's ${trailMode === 'gap_v' ? 'plane' : 'line'}</span><span>7.5° off</span><span>15°+ off</span></div>` +
     GSD.map((g, k) => { const w = onPlane(g, trailMode), L = `<b style="color:${g.color || '#2f5fb3'}">${g.name ? String.fromCharCode(65 + k) : ''}</b>`;
       if (!w.on) return `<div style="margin-top:3px">${L} not within 5° at contact (${w.gap > 0 ? '+' : ''}${w.gap.toFixed(0)}°)</div>`;
       const where = w.pct < 0.35 ? 'early in it' : w.pct > 0.65 ? 'late in it' : 'in the middle of it';
@@ -663,6 +672,35 @@ function legendTrail() {
     '<div style="margin-top:3px;color:#6a7681">Solid = measured last 40 ms · see-through = inferred (lead-in from bat parallel, follow-through past contact).</div>';
   el.hidden = false;
 }
+// ---- arrow on the barrel: where the sweet spot is heading, side to side (horizontal attack angle), live
+let arrowOn = false, arrows = [], arrowsFor = null;
+function arrowLoop() {
+  requestAnimationFrame(arrowLoop);
+  const box = document.getElementById('al');
+  if (!R3 || !R3.scene) return;
+  if (arrowsFor !== R3) {                             // the scene was rebuilt (resize): new arrows
+    arrows = GSD.map(g => { const h = new THREE.ArrowHelper(new THREE.Vector3(0, 0, -1), new THREE.Vector3(), 16, 0x2e9d5b, 5, 3.2);
+      h.visible = false; R3.scene.add(h); return h; });
+    arrowsFor = R3;
+  }
+  const t = R3.time(), lines = [];
+  GSD.forEach((g, k) => {
+    const h = arrows[k], on = arrowOn && (!R3.GR || R3.GR[k].on);
+    const P = at(g.arc, t), P0 = at(g.arc, t - 0.002), P1 = at(g.arc, t + 0.002);
+    if (!on || !P || !(P0 || P1)) { h.visible = false; return; }
+    const A = P0 || P, B = P1 || P, dx = B[0] - A[0], dy = B[1] - A[1];
+    if (Math.hypot(dx, dy) < 1e-6) { h.visible = false; return; }
+    const side = g.side === 'L' ? -1 : 1, wrap = v => ((v + 540) % 360) - 180;
+    const ph = Math.atan2(dx, dy) * 180 / Math.PI, had = wrap(side * ph), gap = wrap(side * (ph + g.read.haa));
+    h.position.copy(V(P)); h.setDirection(new THREE.Vector3(dx, 0, -dy).normalize());
+    const c = match(gap); h.setColor(new THREE.Color(c[0], c[1], c[2])); h.visible = true;
+    lines.push(`<b style="color:${g.color || '#2f5fb3'}">${g.name ? String.fromCharCode(65 + k) : ''}</b> ➜ ${had >= 0 ? '+' : ''}${had.toFixed(0)}° ${had >= 0 ? 'oppo' : 'pull'} · ${Math.abs(gap).toFixed(0)}° off the pitch's line`);
+  });
+  box.hidden = !arrowOn || !lines.length;
+  box.innerHTML = `<b>Horizontal attack angle</b> (arrow on the barrel)<br>` + lines.join('<br>');
+}
+document.getElementById('s3arrow').onclick = e => { arrowOn = !arrowOn; e.target.classList.toggle('on', arrowOn); };
+arrowLoop();
 function setView(v) {
   document.querySelectorAll('#tv button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
   document.getElementById('s3trail').disabled = v === 'regular';
@@ -678,7 +716,9 @@ def graph_parts() -> tuple[str, str]:
     ctl = ('<span id="tv"><button data-v="regular" class="on">Regular</button><button data-v="rainbow">Rainbow'
            '</button></span><select id="s3trail" disabled title="What the rainbow shows">'
            '<option value="gap_v">Vertical Plane Match</option>'
-           '<option value="gap_h">Horizontal Plane Match</option></select>')
+           '<option value="gap_h">Horizontal Plane Match</option></select>'
+           '<button id="s3arrow" title="Arrow on the barrel: which way it is travelling (horizontal attack angle) '
+           'through the swing">Arrow</button>')
     return ctl, ""
 
 
