@@ -192,7 +192,44 @@ def contact_rows(sc: pd.DataFrame, poc: pd.DataFrame) -> pd.DataFrame:
     return out[m]
 
 
-def swings(sc: pd.DataFrame, poc: pd.DataFrame | None = None) -> pd.DataFrame:
+def bat_angles(aa, ad, tilt, stand, pf, depth, px_in, pz_in, stance_x=None) -> tuple[np.ndarray, np.ndarray]:
+    """Vertical + horizontal bat angle at contact for each swing (degrees), from that swing's own measured attack
+    angle, attack direction and swing-path tilt -- the same swing-plane geometry the 3D view uses (INFERRED: the bat
+    lies across the measured path, in the measured plane). vba < 0 = barrel below the hands; hba > 0 = barrel ahead
+    of the hands (toward the pitcher), 0 = square."""
+    aa, ad, tilt = (np.asarray(x, float) for x in (aa, ad, tilt))
+    pf, depth, px_in, pz_in = (np.asarray(x, float) for x in (pf, depth, px_in, pz_in))
+    stand = np.asarray(stand)
+    if len(aa) > 8000:                                       # in chunks: n x 180 x 3 arrays
+        parts = [bat_angles(aa[i:i + 8000], ad[i:i + 8000], tilt[i:i + 8000], stand[i:i + 8000], pf[i:i + 8000],
+                            depth[i:i + 8000], px_in[i:i + 8000], pz_in[i:i + 8000], stance_x)
+                 for i in range(0, len(aa), 8000)]
+        return np.concatenate([q[0] for q in parts]), np.concatenate([q[1] for q in parts])
+    right = stand == "R"
+    sx = np.asarray([((stance_x or {}).get("R" if r else "L") or 27.0) for r in right], float)
+    h = np.radians(np.where(right, ad, -ad))
+    a = np.radians(aa)
+    d = np.stack([np.sin(h) * np.cos(a), np.cos(h) * np.cos(a), np.sin(a)], -1)                    # n x 3
+    C = np.stack([px_in, pf, pz_in], -1)
+    H = np.stack([np.where(right, -(sx + 8.5), sx + 8.5), -depth, pz_in], -1)
+    tw = H - C
+    tw = tw - (tw * d).sum(-1, keepdims=True) * d
+    flat = np.stack([tw[:, 0], tw[:, 1], np.zeros(len(tw))], -1)
+    flat = flat / np.linalg.norm(flat, axis=-1, keepdims=True)
+    th = np.radians(np.linspace(0, 89.9, 180))[None, :, None]
+    w = np.cos(th) * flat[:, None, :] + np.sin(th) * np.array([0, 0, 1.0])[None, None, :]            # n x k x 3
+    w = w - (w * d[:, None, :]).sum(-1, keepdims=True) * d[:, None, :]
+    w = w / np.linalg.norm(w, axis=-1, keepdims=True)
+    nrm = np.cross(np.broadcast_to(d[:, None, :], w.shape), w)
+    err = np.abs(np.arccos(np.clip(np.abs(nrm[..., 2]) / np.linalg.norm(nrm, axis=-1), 0, 1)) - np.radians(tilt)[:, None])
+    best = w[np.arange(len(w)), np.nanargmin(np.where(np.isnan(err), np.inf, err), axis=1)]
+    vba = -np.degrees(np.arcsin(np.clip(best[:, 2], -1, 1)))
+    hba = -np.degrees(np.arctan2(best[:, 1], np.abs(best[:, 0])))
+    bad = ~np.isfinite(aa + ad + tilt + pf + depth + px_in + pz_in)
+    return np.where(bad, np.nan, vba), np.where(bad, np.nan, hba)
+
+
+def swings(sc: pd.DataFrame, poc: pd.DataFrame | None = None, stance_x: dict | None = None) -> pd.DataFrame:
     """His competitive swings with what the view needs: group, zone, hand, the measured swing + contact."""
     from core import hit_metrics as hm
     if sc is None or sc.empty or "bat_speed" not in sc:
@@ -210,12 +247,20 @@ def swings(sc: pd.DataFrame, poc: pd.DataFrame | None = None) -> pd.DataFrame:
         "sz_top": num("sz_top"), "sz_bot": num("sz_bot")}, index=sc.index)
     # where he met it (MLB's contact point vs the plate, from the page's point-of-contact layer) + measured plane gaps
     out["pf"] = poc["pf"].reindex(sc.index) if poc is not None and "pf" in poc else np.nan
-    out["gap_v"], out["gap_h"] = np.nan, np.nan
+    for k in ("gap_v", "gap_h", "match_v", "match_h", "vba", "hba"):
+        out[k] = np.nan
     have = out["pf"].notna()
     if have.any() and {"vx0", "vy0", "vz0", "ax", "ay", "az"} <= set(sc.columns):
-        from pipeline.bat_norms import gaps
-        gv, gh = gaps(sc.loc[have], out.loc[have, "pf"])
-        out.loc[have, "gap_v"], out.loc[have, "gap_h"] = np.asarray(gv, float), np.asarray(gh, float)
+        from pipeline.bat_norms import plane
+        pl = plane(sc.loc[have], out.loc[have, "pf"])
+        for k in ("gap_v", "gap_h", "match_v", "match_h"):
+            out.loc[have, k] = np.asarray(pl[k], float)
+    if have.any():
+        vba, hba = bat_angles(out.loc[have, "attack_angle"], out.loc[have, "attack_direction"],
+                              out.loc[have, "swing_path_tilt"], out.loc[have, "stand"], out.loc[have, "pf"],
+                              out.loc[have, "cy"] - out.loc[have, "pf"], 12 * num("plate_x")[have],
+                              12 * num("plate_z")[have], stance_x)
+        out.loc[have, "vba"], out.loc[have, "hba"] = vba, hba
     return out[out["bat_speed"].notna()]
 
 
@@ -353,7 +398,8 @@ def group_scenes(sw: pd.DataFrame, groups: list[dict], stand: str, depth_for, st
 
 
 # ----------------------------------------------------------------------------- graphs: his swings + MLB norms
-SERIES = ["pf", "bat_speed", "attack_angle", "attack_direction", "swing_path_tilt", "gap_v", "gap_h"]
+SERIES = ["pf", "bat_speed", "attack_angle", "attack_direction", "swing_path_tilt", "gap_v", "gap_h", "vba", "hba",
+          "match_v", "match_h"]
 _norms: dict = {}
 
 

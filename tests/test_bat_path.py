@@ -315,3 +315,26 @@ def test_on_plane_window_and_hba():
     assert w["on"] and w["ms"] > 0 and 0 <= w["pct"] <= 1
     t = compare_html([sc | {"name": "A", "color": "#2f5fb3", "gid": 0}])
     assert "Horizontal bat angle" in t and "On plane, vertical" in t
+
+
+def test_bat_angles_match_the_3d_geometry():
+    from core import bat_path as bp, swing3d
+    row = {"vx0": 5.0, "vy0": -135.0, "vz0": -5.0, "ax": -8.0, "ay": 28.0, "az": -15.0, "plate_x": 0.1, "plate_z": 2.4,
+           "bat_speed": 72, "attack_angle": 9.0, "attack_direction": -4.0, "swing_path_tilt": 33.0,
+           "intercept_ball_minus_batter_pos_y_inches": 31.0, "intercept_ball_minus_batter_pos_x_inches": 28.0,
+           "description": "foul", "stand": "R", "swing_length": 7.2}
+    sc = swing3d.scene(row, 27.0, 26.0)
+    p = bp.path_angles(sc)
+    v, h = bp.bat_angles([9.0], [-4.0], [33.0], ["R"], [sc["read"]["front"]], [27.0], [sc["read"]["side_in"]],
+                         [sc["read"]["height"]], {"R": 26.0})
+    assert abs(v[0] - sc["read"]["vba"]) < 0.5 and abs(h[0] - p.loc[(p["t"] >= 0).idxmax(), "hba"]) < 0.5
+
+
+def test_match_angles_are_the_gap_reference():
+    from pipeline.bat_norms import plane
+    df = pd.DataFrame({"stand": ["R", "L"], "attack_angle": [10.0, 10.0], "attack_direction": [5.0, 5.0],
+                       "vx0": [3.0, 3.0], "vy0": [-135.0, -135.0], "vz0": [-5.0, -5.0], "ax": [0.0, 0.0],
+                       "ay": [28.0, 28.0], "az": [-15.0, -15.0]})
+    pl = plane(df, pd.Series([0.0, 0.0]))
+    assert np.allclose(pl["gap_v"], df["attack_angle"] - pl["match_v"])
+    assert np.allclose(pl["gap_h"], df["attack_direction"] - pl["match_h"]) and pl["match_h"][0] == -pl["match_h"][1]

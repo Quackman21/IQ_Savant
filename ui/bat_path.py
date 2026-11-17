@@ -589,7 +589,10 @@ function pathInfo(g) {                 // along the drawn path: angles vs the pi
     const p = a[Math.max(0, i - 1)], n = a[Math.min(a.length - 1, i + 1)];
     const dx = n[0] - p[0], dy = n[1] - p[1], dz = n[2] - p[2];
     const pv = Math.atan2(dz, Math.hypot(dx, dy)) * 180 / Math.PI, ph = Math.atan2(dx, dy) * 180 / Math.PI;
-    out.push({t: a[i][4] * 1000, flag: a[i][3], y: a[i][1], gap_v: pv + g.read.vaa, gap_h: wrap(side * (ph + g.read.haa))});
+    const hx = g.O[0] - a[i][0], hy = g.O[1] - a[i][1], hz = g.O[2] - a[i][2];
+    out.push({t: a[i][4] * 1000, flag: a[i][3], y: a[i][1], gap_v: pv + g.read.vaa, gap_h: wrap(side * (ph + g.read.haa)),
+              attack_angle: pv, attack_direction: wrap(side * ph),
+              vba: -Math.asin(hz / Math.hypot(hx, hy, hz)) * 180 / Math.PI, hba: -Math.atan2(hy, Math.abs(hx)) * 180 / Math.PI});
   }
   return out;
 }
@@ -604,8 +607,8 @@ function onPlane(g, mode) {            // the stretch around contact within 5 de
   const t0 = a[s][4] * 1000, t1 = a[e][4] * 1000;
   return {on: true, len, ms: t1 - t0, y0: a[s][1], y1: a[e][1], before: -t0, pct: -t0 / Math.max(1e-6, t1 - t0)};
 }
-const PLANE = {gap_v: ['Vertical: bat path vs the pitch\'s plane (VAA)', 'flatter than the pitch', 'steeper than the pitch'],
-               gap_h: ['Horizontal: bat path vs the pitch\'s line (HAA)', 'pull side of its line', 'oppo side of its line']};
+const PLANE = {gap_v: ['Vertical Plane Match (bat path vs the pitch\'s VAA)', 'flatter than the pitch', 'steeper than the pitch'],
+               gap_h: ['Horizontal Plane Match (bat path vs the pitch\'s HAA)', 'pull side of its line', 'oppo side of its line']};
 """
 
 TRAIL_JS = r"""
@@ -632,13 +635,16 @@ function paint() {
       geo.setAttribute('color', new THREE.Float32BufferAttribute(c, 3));
       add(new THREE.Mesh(geo, new THREE.MeshLambertMaterial({vertexColors: true})));
     }
-    for (const part of [a.map((q, i) => [q, cols[i]]).filter(x => x[0][3] === 2 && x[0][4] < 0),
-                        a.map((q, i) => [q, cols[i]]).filter(x => x[0][3] === 2 && x[0][4] > 0)]) {
+    const all = a.map((q, i) => [q, cols[i]]);
+    const i0 = all.findIndex(x => x[0][3] === 1), i1 = all.length - 1 - [...all].reverse().findIndex(x => x[0][3] === 1);
+    for (const part of [all.slice(0, i0 + 1), all.slice(i1)]) {        // inferred: lead-in + follow-through past contact
       if (part.length < 2) continue;
-      const geo = new THREE.BufferGeometry().setFromPoints(part.map(x => V(x[0])));
-      geo.setAttribute('color', new THREE.Float32BufferAttribute(part.flatMap(x => x[1]), 3));
-      const l = new THREE.Line(geo, new THREE.LineDashedMaterial({vertexColors: true, dashSize: 2.2, gapSize: 1.6}));
-      l.computeLineDistances(); add(l);
+      const SEG = Math.max(8, part.length * 2), RAD = 8;
+      const geo = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(part.map(x => V(x[0]))), SEG, 0.55, RAD);
+      const c = [];
+      for (let i = 0; i <= SEG; i++) { const m = part[Math.round(i / SEG * (part.length - 1))][1]; for (let r = 0; r <= RAD; r++) c.push(...m); }
+      geo.setAttribute('color', new THREE.Float32BufferAttribute(c, 3));
+      add(new THREE.Mesh(geo, new THREE.MeshLambertMaterial({vertexColors: true, transparent: true, opacity: 0.5})));
     }
   });
   legendTrail();
@@ -654,7 +660,7 @@ function legendTrail() {
       if (!w.on) return `<div style="margin-top:3px">${L} not within 5° at contact (${w.gap > 0 ? '+' : ''}${w.gap.toFixed(0)}°)</div>`;
       const where = w.pct < 0.35 ? 'early in it' : w.pct > 0.65 ? 'late in it' : 'in the middle of it';
       return `<div style="margin-top:3px">${L} within 5° for ${w.ms.toFixed(0)} ms (${w.len.toFixed(0)}″ of path, ${w.y0.toFixed(0)}″ → ${w.y1.toFixed(0)}″ vs the plate); contact ${w.before.toFixed(0)} ms in, ${where}</div>`; }).join('') +
-    '<div style="margin-top:3px;color:#6a7681">Dashed / after contact = inferred.</div>';
+    '<div style="margin-top:3px;color:#6a7681">Solid = measured last 40 ms · see-through = inferred (lead-in from bat parallel, follow-through past contact).</div>';
   el.hidden = false;
 }
 function setView(v) {
@@ -671,8 +677,8 @@ def graph_parts() -> tuple[str, str]:
     """(Regular / Rainbow controls for the 3D window's bar, '')."""
     ctl = ('<span id="tv"><button data-v="regular" class="on">Regular</button><button data-v="rainbow">Rainbow'
            '</button></span><select id="s3trail" disabled title="What the rainbow shows">'
-           '<option value="gap_v">Matching the pitch\'s plane (vertical, VAA)</option>'
-           '<option value="gap_h">Matching the pitch\'s line (horizontal, HAA)</option></select>')
+           '<option value="gap_v">Vertical Plane Match</option>'
+           '<option value="gap_h">Horizontal Plane Match</option></select>')
     return ctl, ""
 
 
@@ -705,12 +711,23 @@ function leagueAt(g, key, x) {
 function ticks(lo, hi, n = 5) { const st = Math.pow(10, Math.floor(Math.log10((hi - lo) / n))), e = (hi - lo) / n / st;
   const step = st * (e > 5 ? 10 : e > 2 ? 5 : e > 1 ? 2 : 1), out = [];
   for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) out.push(+v.toFixed(6)); return out; }
+const NAME = {attack_angle: ['Vertical attack angle', '°', '+ = uphill'], vba: ['Vertical bat angle (inferred)', '°', '− = barrel below hands'],
+              hba: ['Horizontal bat angle (inferred)', '°', '+ = barrel ahead of hands, 0 = square'],
+              attack_direction: ['Horizontal attack angle', '°', '+ = oppo, − = pull']};
+const MATCH = {attack_angle: 'match_v', attack_direction: 'match_h'};
 function draw() {
   const key = document.getElementById('cm').value, xmode = document.getElementById('cx').value,
         fast = document.getElementById('cs').value === 'fast', vs = document.getElementById('cv').value;
   const box = document.getElementById('chart'), W = Math.max(320, box.clientWidth), H = 320, L = 46, R = 14, Tp = 16, B = 36;
-  const svg = [], note = [], lines = [], dots = [], bands = [], marks = [];
+  const svg = [], note = [], lines = [], dots = [], bands = [], marks = [], refs = [];
   let xs;
+  GS.forEach((g, k) => {                       // the angle that would match this group's pitch (attack angles only)
+    if (!ON[k] || !MATCH[key]) return;
+    const r = rows(g.series, MATCH[key], false), v = r.pts.map(p => p[r.ci]);
+    const side = g.side === 'L' ? -1 : 1;
+    const m = v.length ? v.reduce((a, b) => a + b, 0) / v.length : (key === 'attack_angle' ? -g.read.vaa : -side * g.read.haa);
+    refs.push([m, g.color]);
+  });
   if (xmode === 'depth') {
     xs = [-20, 28];
     GS.forEach((g, k) => {
@@ -737,15 +754,17 @@ function draw() {
       if (!(GS[0].norm || {}).bins) note.push('MLB range not built yet: run  python -m pipeline.bat_norms <season>');
     }
     marks.push([0, '#9aa4ad', 'front of plate']);
-    note.unshift('Each dot = one of his swings (measured angles vs that pitch\'s measured approach), placed where he met it; line = smoothed. 0 = matched. Dashed = his average contact.');
+    note.unshift('Each dot = one of his swings, placed where he met the ball; line = smoothed. Vertical dashed = his average contact.' +
+                 (key === 'vba' || key === 'hba' ? ' Bat angles are inferred from each swing\'s measured attack angle, direction + tilt.' : ' Attack angles are measured.'));
   } else {
     let lo = 0, hi = 10;
     GS.forEach((g, k) => {
       if (!ON[k]) return;
       const info = pathInfo(g); lo = Math.min(lo, info[0].t); hi = Math.max(hi, info[info.length - 1].t);
-      lines.push([info.filter(q => q.flag === 2 && q.t < 0).map(q => [q.t, q[key]]), g.color, true]);
-      lines.push([info.filter(q => q.flag === 1).map(q => [q.t, q[key]]), g.color, false]);
-      lines.push([info.filter(q => q.flag === 2 && q.t > 0).map(q => [q.t, q[key]]), g.color, true]);
+      const i0 = info.findIndex(q => q.flag === 1), i1 = info.length - 1 - [...info].reverse().findIndex(q => q.flag === 1);
+      lines.push([info.slice(0, i0 + 1).map(q => [q.t, q[key]]), g.color, true]);
+      lines.push([info.slice(i0, i1 + 1).map(q => [q.t, q[key]]), g.color, false]);
+      lines.push([info.slice(i1).map(q => [q.t, q[key]]), g.color, true]);
       if (vs === 'league') { const c = ((g.norm || {}).contact || {})[key]; if (c && c.m !== null) bands.push([[[0, c.m, c.s]], g.color, 'bar', k]); }
     });
     if (vs === 'self') { const r = rows(ALL, key, fast), v = r.pts.map(p => p[r.ci]);
@@ -753,20 +772,22 @@ function draw() {
         bands.push([[[0, m, s]], '#6a7681', 'bar', 0]); } }
     xs = [Math.floor(lo / 10) * 10, Math.ceil(hi / 10) * 10];
     marks.push([0, '#c0392b', 'contact']);
-    note.push('Along his average path vs that group\'s pitch: solid = measured last 40 ms, dashed = inferred. 0 = matched. ' +
+    note.push('Along his average path, through contact and into the follow-through: solid = measured last 40 ms, dashed = inferred. ' +
               (vs === 'self' ? 'Bar at contact = all of his swings ±1 SD.' : 'Bar at contact = MLB fast swings (75+ mph) ±1 SD.'));
   }
-  const ys = [0];
-  dots.forEach(d => ys.push(d[1])); lines.forEach(l => l[0].forEach(p => p[1] !== null && ys.push(p[1])));
+  if (refs.length) note.push('Horizontal dashed = the angle that matches that pitch (green = within 5°).');
+  const ys = [];
+  refs.forEach(r => ys.push(r[0] - 6, r[0] + 6));
+  dots.forEach(d => ys.push(d[1])); lines.forEach(l => l[0].forEach(p => p[1] !== null && p[1] !== undefined && ys.push(p[1])));
   bands.forEach(b => b[0].forEach(p => { ys.push(p[1] - p[2]); ys.push(p[1] + p[2]); }));
-  let y0 = Math.max(-40, Math.min(...ys)), y1 = Math.min(40, Math.max(...ys)); const pad = (y1 - y0) * 0.08 || 1; y0 -= pad; y1 += pad;
-  const X = x => L + (x - xs[0]) / (xs[1] - xs[0]) * (W - L - R), Y = y => Tp + (y1 - Math.max(y0, Math.min(y1, y))) / (y1 - y0) * (H - Tp - B);
-  svg.push(`<rect x="${L}" y="${Y(5)}" width="${W - L - R}" height="${Y(-5) - Y(5)}" fill="#2e9d5b" fill-opacity=".07"/>`);
-  ticks(y0, y1).forEach(v => svg.push(`<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="${v === 0 ? '#2e9d5b' : '#eef1f3'}"/><text x="${L - 5}" y="${Y(v) + 3}" text-anchor="end">${v}</text>`));
+  let y0 = Math.min(...ys), y1 = Math.max(...ys); if (!isFinite(y0)) { y0 = -10; y1 = 10; }
+  const pad = (y1 - y0) * 0.06 || 1; y0 -= pad; y1 += pad;
+  const X = x => L + (x - xs[0]) / (xs[1] - xs[0]) * (W - L - R), Y = y => Tp + (y1 - y) / (y1 - y0) * (H - Tp - B);
+  refs.forEach(([m, c]) => svg.push(`<rect x="${L}" y="${Y(m + 5)}" width="${W - L - R}" height="${Y(m - 5) - Y(m + 5)}" fill="#2e9d5b" fill-opacity=".06"/>`));
+  ticks(y0, y1).forEach(v => svg.push(`<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="#eef1f3"/><text x="${L - 5}" y="${Y(v) + 3}" text-anchor="end">${v}</text>`));
   ticks(xs[0], xs[1], 8).forEach(v => svg.push(`<text x="${X(v)}" y="${H - B + 14}" text-anchor="middle">${v}</text>`));
   svg.push(`<text x="${(L + W - R) / 2}" y="${H - 4}" text-anchor="middle">${xmode === 'depth' ? 'inches in front of the plate (deep → out front)' : 'ms from contact'}</text>`);
-  svg.push(`<text x="12" y="${(Tp + H - B) / 2}" transform="rotate(-90 12 ${(Tp + H - B) / 2})" text-anchor="middle">${key === 'gap_v' ? 'vertical gap to the pitch (°)' : 'horizontal gap to the pitch (°)'}</text>`);
-  svg.push(`<text x="${W - R - 4}" y="${Y(5) - 3}" text-anchor="end" fill="#2e9d5b">±5° = matched</text>`);
+  svg.push(`<text x="12" y="${(Tp + H - B) / 2}" transform="rotate(-90 12 ${(Tp + H - B) / 2})" text-anchor="middle">${NAME[key][0]} (°) · ${NAME[key][2]}</text>`);
   if (xmode === 'time') { const ms = GS.flatMap((g, k) => ON[k] ? g.arc.filter(q => q[3] === 1).map(q => q[4] * 1000) : []);
     if (ms.length) svg.push(`<rect x="${X(Math.min(...ms))}" y="${Tp}" width="${X(Math.max(...ms)) - X(Math.min(...ms))}" height="${H - Tp - B}" fill="#2f5fb3" fill-opacity=".05"/>`); }
   bands.forEach(([b, c, kind, k]) => {
@@ -776,6 +797,7 @@ function draw() {
     svg.push(`<polygon points="${up.concat(dn).join(' ')}" fill="${c}" fill-opacity="${c === '#9aa4ad' ? .22 : .1}"/>`);
     svg.push(`<polyline points="${b.map(p => `${X(p[0])},${Y(p[1])}`).join(' ')}" fill="none" stroke="#9aa4ad" stroke-dasharray="3 3"/>`);
   });
+  refs.forEach(([m, c]) => svg.push(`<line x1="${L}" x2="${W - R}" y1="${Y(m)}" y2="${Y(m)}" stroke="${c}" stroke-dasharray="7 4" stroke-opacity=".8"/><text x="${W - R - 4}" y="${Y(m) - 4}" text-anchor="end" fill="${c}">matches the pitch</text>`));
   marks.forEach(([x, c, lab]) => { if (x < xs[0] || x > xs[1]) return;
     svg.push(`<line x1="${X(x)}" x2="${X(x)}" y1="${Tp}" y2="${H - B}" stroke="${c}" stroke-dasharray="4 3"/>` + (lab ? `<text x="${X(x) + 3}" y="${Tp + 9}">${lab}</text>` : '')); });
   dots.forEach(([x, y, c]) => { if (x >= xs[0] && x <= xs[1]) svg.push(`<circle cx="${X(x)}" cy="${Y(y)}" r="2.4" fill="${c}" fill-opacity=".3"/>`); });
@@ -800,7 +822,7 @@ def chart_html(scenes: list, all_series: dict) -> str:
     league (MLB fast swings) or himself (all his swings). Drawn at the frame's real width with a fixed height."""
     import json
     scs = [x for x in scenes if x]
-    data = {"groups": [{k: x.get(k) for k in ("name", "color", "series", "norm", "read", "arc", "side")} for x in scs],
+    data = {"groups": [{k: x.get(k) for k in ("name", "color", "series", "norm", "read", "arc", "side", "O")} for x in scs],
             "all": all_series}
     css = ("body{margin:0;font:12px system-ui,sans-serif;color:#16202b}"
            ".wrap{border:1px solid #e6eaed;border-radius:10px;padding:8px 12px 8px}"
@@ -811,9 +833,11 @@ def chart_html(scenes: list, all_series: dict) -> str:
            "align-items:center;color:#9aa4ad}#cg i{width:9px;height:9px;border-radius:50%;background:#d9dee2;"
            "display:inline-block}#cg button.on{color:#16202b;border-color:var(--c)}#cg button.on i{background:var(--c)}"
            "#chart text{font:10px system-ui;fill:#6a7681}#cn{color:#6a7681;font-size:11px;line-height:1.45}")
-    head = ('<div class="hd"><b>Matching the pitch</b>'
-            '<select id="cm"><option value="gap_v">Vertical plane (vs VAA)</option>'
-            '<option value="gap_h">Horizontal line (vs HAA)</option></select>'
+    head = ('<div class="hd"><b>Bat angles</b>'
+            '<select id="cm"><option value="attack_angle">Vertical attack angle</option>'
+            '<option value="vba">Vertical bat angle (inferred)</option>'
+            '<option value="hba">Horizontal bat angle (inferred)</option>'
+            '<option value="attack_direction">Horizontal attack angle</option></select>'
             '<select id="cx"><option value="depth">By contact depth (his measured swings)</option>'
             '<option value="time">By time (his average path)</option></select>'
             '<select id="cv"><option value="league">vs League (MLB fast swings)</option>'

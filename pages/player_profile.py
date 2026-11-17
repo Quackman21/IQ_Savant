@@ -638,12 +638,12 @@ def bat_path_view(sc: pd.DataFrame, season: int, poc: pd.DataFrame | None = None
 
     from core import aar as aar_core
     from core import bat_path as bpth
-    from core import swing3d
+    from core import swing3d  # noqa: F811
     from ui.bat_path import COLOR_BY, chart_html, compare_html, framed, path3d_html, poc_map_html, spray_html
     if season < 2023:
         show(empty_html("Bat tracking starts in 2023 -- pick a 2023+ season for his bat path."))
         return
-    sw = bpth.swings(sc, poc)
+    sw = bpth.swings(sc, poc, swing3d.stance_offsets(season, pid))
     if sw.empty:
         show(empty_html("No tracked swings for this selection."))
         return
