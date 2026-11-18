@@ -7,6 +7,9 @@ Hitters not on the stance board fall back to the AAR's calibrated estimate (flag
 """
 from __future__ import annotations
 
+import json
+import math
+
 import numpy as np
 import pandas as pd
 
@@ -386,8 +389,75 @@ def model_scene(sw: pd.DataFrame, types=None, hand: str = "All", count: str = "A
     if sc is None:
         return None
     sc["read"].update({"ptype": ptype, "count": "", "result": "", "video": ""})
+    try:
+        sc = fit_path(sc, me, stand, pz, px, pr)
+    except Exception:
+        sc["path_src"] = {"kind": "circle"}
     sc["model"] = {**pr, "velo": velo, "velo_src": vsrc, "ivb": ivb, "hb": hb, "shape": desc, "ptype": ptype,
                    "zone": zone, "hand": ph, "group": group, "depth": depth}
+    return sc
+
+
+_LEAGUE_RATES: dict = {}
+
+
+def _league_rates() -> dict:
+    """The newest season's league path rates (core.path_fit), cached."""
+    if "lr" not in _LEAGUE_RATES:
+        from core import path_fit
+        lr = {}
+        for f in sorted(path_fit.OUT.glob("path_fit_*.json"), reverse=True):
+            try:
+                lr = json.loads(f.read_text()).get("league") or {}
+            except Exception:
+                lr = {}
+            if lr:
+                break
+        _LEAGUE_RATES["lr"] = lr
+    return _LEAGUE_RATES["lr"]
+
+
+def fit_path(sc: dict, me: pd.DataFrame, stand: str, pz: float, px: float, pr: dict) -> dict:
+    """Swap the assumed circle for his MEASURED path (core.path_fit) where his swings back it: his contact swings
+    with the same kind of plane / speed / pitch location, lined up by contact depth, give how fast the path turns,
+    rises and speeds up through the zone. Inside the depths those swings reach: measured (flag 3; Statcast's own
+    window stays flag 1); beyond: keeps turning at the last measured rate (flag 2, drawn see-through)."""
+    from core import path_fit
+    rows = me[me["pf"].notna()] if "pf" in me else me.iloc[0:0]
+    rows = pd.DataFrame({"pf": rows.get("pf"), "plate_z": (rows.get("pz_in") / 12.0).fillna(pz),
+                         "xh": ((rows.get("px_in") / 12.0) * (-1 if stand == "L" else 1)).fillna(
+                             px * (-1 if stand == "L" else 1)),
+                         "swing_path_tilt": rows.get("swing_path_tilt"), "bat_speed": rows.get("bat_speed"),
+                         "attack_angle": rows.get("attack_angle"), "attack_direction": rows.get("attack_direction")}
+                        ).dropna() if len(rows) else pd.DataFrame()
+    target = {"swing_path_tilt": pr.get("swing_path_tilt"), "bat_speed": pr.get("bat_speed"), "plate_z": pz,
+              "xh": px * (-1 if stand == "L" else 1)}
+    cur = path_fit.hitter_curve(rows, target, _league_rates()) if len(rows) else None
+    if not cur:
+        sc["path_src"] = {"kind": "circle", "why": "too few contact swings to measure his path"}
+        return sc
+    arc = sc["arc"]
+    v = float(pr.get("bat_speed") or sc["read"]["bat_speed"]) * 17.6
+    pre_len, post_len = max(-arc[0][4] * v, 6.0), max(arc[-1][4] * v, 6.0)
+    r = path_fit.rebuild(sc["contact"], float(sc["read"]["attack_angle"]), float(sc["read"]["attack_direction"]),
+                         float(sc["read"]["bat_speed"]), stand, cur, pre_len, post_len)
+    pts, hands = r["arc"], r["hands"]
+    for p in pts:                                            # Statcast's measured window keeps its own flag
+        if p[3] == 3 and -0.040 <= p[4] <= 0:
+            p[3] = 1
+    i0 = min(range(len(pts)), key=lambda i: abs(pts[i][4]))
+    sc["arc"], sc["hands"] = pts, hands
+    sc["read"]["vba"] = round(-math.degrees(math.asin(max(-1.0, min(1.0, hands[i0][2])))), 1)
+    bp = None                                                # bat parallel: hands level with the barrel, before contact
+    for i in range(i0, 0, -1):
+        if hands[i][2] * hands[i - 1][2] <= 0:
+            bp = {"at": pts[i][:3], "inches_before": round(sum(
+                math.dist(pts[j][:3], pts[j + 1][:3]) for j in range(i, i0)), 1), "t": pts[i][4]}
+            break
+    sc["bp"] = bp
+    sc["read"]["bp_in"] = bp["inches_before"] if bp else None
+    sc["path_src"] = {"kind": "measured", "n_eff": cur["n_eff"], "range": r["range"],
+                      "rates": {k: cur[k]["slope"] for k in ("attack_angle", "attack_direction", "bat_speed")}}
     return sc
 
 

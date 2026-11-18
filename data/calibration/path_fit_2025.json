@@ -1,0 +1,179 @@
+{
+ "season": 2025,
+ "league": {
+  "n": 233193,
+  "hitters": 714,
+  "by_tilt": {
+   "0-28": {
+    "attack_angle": {
+     "slope": 0.7072,
+     "curve": -0.00478
+    },
+    "attack_direction": {
+     "slope": -1.6384,
+     "curve": 0.00072
+    },
+    "bat_speed": {
+     "slope": 0.2333,
+     "curve": -0.00514
+    },
+    "circle": {
+     "attack_angle": 0.4853,
+     "attack_direction": -1.2334
+    },
+    "n": 62634
+   },
+   "28-32": {
+    "attack_angle": {
+     "slope": 0.8597,
+     "curve": -0.0059
+    },
+    "attack_direction": {
+     "slope": -1.5689,
+     "curve": 0.0015
+    },
+    "bat_speed": {
+     "slope": 0.2264,
+     "curve": -0.00585
+    },
+    "circle": {
+     "attack_angle": 0.6051,
+     "attack_direction": -1.1841
+    },
+    "n": 52292
+   },
+   "32-36": {
+    "attack_angle": {
+     "slope": 0.9482,
+     "curve": -0.00691
+    },
+    "attack_direction": {
+     "slope": -1.5302,
+     "curve": 0.00283
+    },
+    "bat_speed": {
+     "slope": 0.2231,
+     "curve": -0.00667
+    },
+    "circle": {
+     "attack_angle": 0.685,
+     "attack_direction": -1.1549
+    },
+    "n": 52589
+   },
+   "36-40": {
+    "attack_angle": {
+     "slope": 1.0333,
+     "curve": -0.007
+    },
+    "attack_direction": {
+     "slope": -1.4885,
+     "curve": 0.00337
+    },
+    "bat_speed": {
+     "slope": 0.2214,
+     "curve": -0.00723
+    },
+    "circle": {
+     "attack_angle": 0.7689,
+     "attack_direction": -1.1229
+    },
+    "n": 37851
+   },
+   "40-90": {
+    "attack_angle": {
+     "slope": 1.1392,
+     "curve": -0.00838
+    },
+    "attack_direction": {
+     "slope": -1.4652,
+     "curve": 0.00492
+    },
+    "bat_speed": {
+     "slope": 0.2139,
+     "curve": -0.00812
+    },
+    "circle": {
+     "attack_angle": 0.9018,
+     "attack_direction": -1.0728
+    },
+    "n": 27827
+   }
+  },
+  "all": {
+   "attack_angle": {
+    "slope": 0.8978,
+    "curve": -0.00542
+   },
+   "attack_direction": {
+    "slope": -1.553,
+    "curve": 0.00267
+   },
+   "bat_speed": {
+    "slope": 0.2255,
+    "curve": -0.00645
+   },
+   "circle": {
+    "attack_angle": 0.6562,
+    "attack_direction": -1.1751
+   },
+   "n": 233193
+  }
+ },
+ "test": {
+  "hitters": 479,
+  "swings": 220785,
+  "attack_angle": {
+   "all": {
+    "measured": 4.625,
+    "circle": 4.875,
+    "flat": 7.505
+   },
+   "deep (6+ in behind his avg)": {
+    "measured": 4.637,
+    "circle": 5.149,
+    "flat": 8.957,
+    "n": 54453
+   },
+   "middle": {
+    "measured": 4.501,
+    "circle": 4.637,
+    "flat": 6.006,
+    "n": 113290
+   },
+   "out front (6+ in ahead)": {
+    "measured": 4.869,
+    "circle": 5.078,
+    "flat": 8.662,
+    "n": 53042
+   },
+   "hitters_measured_beats_circle": 0.944
+  },
+  "attack_direction": {
+   "all": {
+    "measured": 5.24,
+    "circle": 5.768,
+    "flat": 11.666
+   },
+   "deep (6+ in behind his avg)": {
+    "measured": 5.407,
+    "circle": 6.205,
+    "flat": 13.878,
+    "n": 54453
+   },
+   "middle": {
+    "measured": 5.066,
+    "circle": 5.362,
+    "flat": 8.613,
+    "n": 113290
+   },
+   "out front (6+ in ahead)": {
+    "measured": 5.427,
+    "circle": 6.127,
+    "flat": 14.503,
+    "n": 53042
+   },
+   "hitters_measured_beats_circle": 0.983
+  }
+ }
+}

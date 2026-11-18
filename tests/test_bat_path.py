@@ -362,3 +362,21 @@ def test_time_ranges_league_and_self(monkeypatch):
     scs = bp.group_scenes(sw, [dict(bp.DEFAULT_GROUP)], "R", lambda h, g: 27.0, 26.0, list(sw.ptype.unique()), nm)
     h = chart_html(scs, bp.series(sw, {"types": None, "hand": "All", "count": "All", "zone": None}, "R"), st)
     assert '"self_time"' in h and '"tgrid"' in h
+
+
+def test_scene_uses_his_measured_path_when_his_swings_back_it():
+    from core import bat_path as bp
+    df = _tracked()
+    rng = np.random.default_rng(5)
+    poc = pd.DataFrame({"pf": rng.normal(4, 6, len(df)), "pxc": 0.0}, index=df.index)
+    # make his attack direction turn ~1 deg / in to the pull side as contact moves out front
+    df["attack_direction"] = -2 - 1.0 * (poc["pf"] - 4) + rng.normal(0, 1.5, len(df))
+    sw = bp.swings(df, poc)
+    sc = bp.model_scene(sw, None, "All", "All", 5, "R", 27.0, 26.0)
+    assert sc["path_src"]["kind"] == "measured", sc.get("path_src")
+    assert len(sc["hands"]) == len(sc["arc"]) and {p[3] for p in sc["arc"]} >= {1, 2}
+    assert sc["path_src"]["rates"]["attack_direction"] < -0.4
+    t = [p[4] for p in sc["arc"]]
+    assert all(b > a for a, b in zip(t, t[1:]))
+    from ui.bat_path import path3d_html
+    assert "arcRuns" in path3d_html(sc, "t", "s")

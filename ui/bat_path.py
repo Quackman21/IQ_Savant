@@ -331,8 +331,9 @@ def path3d_html(scene, title: str, sub: str) -> str:
            '<span class="clk" id="s3c"></span>' + graph_parts()[0] + '</div>')
     multi = bool(scene.get("name"))
     legend = ('<div id="lg">Each colour = one swing group (A, B, … -- toggle them top right). Solid tube = his average '
-              'bat path, last 40 ms before contact (measured); dashed + dot = back to bat parallel + follow-through '
-              '(inferred); thin line = that group\'s modeled pitch; big dot = his average contact point · drag to '
+              'bat path, last 40 ms before contact (measured); solid line = how his path turns through the zone, '
+              'measured from his own swings at different contact depths; dashed + dot = beyond what his swings cover '
+              '(kept turning at his last measured rate, or the circle when there aren\'t enough swings); thin line = that group\'s modeled pitch; big dot = his average contact point · drag to '
               'orbit, scroll to zoom</div>') if multi else \
              ('<div id="lg"><i style="color:#e07b24">━</i> modeled pitch &nbsp; <i style="color:#2f5fb3">━</i> his '
               'average bat path, last 40 ms before contact (from his measured swings) &nbsp; <i style="color:#7b5cc4">┅ ●'
@@ -599,7 +600,8 @@ function pathInfo(g) {                 // along the drawn path: angles vs the pi
     const p = a[Math.max(0, i - 1)], n = a[Math.min(a.length - 1, i + 1)];
     const dx = n[0] - p[0], dy = n[1] - p[1], dz = n[2] - p[2];
     const pv = Math.atan2(dz, Math.hypot(dx, dy)) * 180 / Math.PI, ph = Math.atan2(dx, dy) * 180 / Math.PI;
-    const hx = g.O[0] - a[i][0], hy = g.O[1] - a[i][1], hz = g.O[2] - a[i][2];
+    const hv = g.hands && g.hands.length === a.length ? g.hands[i] : [g.O[0] - a[i][0], g.O[1] - a[i][1], g.O[2] - a[i][2]];
+    const hx = hv[0], hy = hv[1], hz = hv[2];
     out.push({t: a[i][4] * 1000, flag: a[i][3], y: a[i][1], gap_v: pv + g.read.vaa, gap_h: wrap(side * (ph + g.read.haa)),
               attack_angle: pv, attack_direction: wrap(side * ph),
               vba: -Math.asin(hz / Math.hypot(hx, hy, hz)) * 180 / Math.PI, hba: -Math.atan2(hy, Math.abs(hx)) * 180 / Math.PI});

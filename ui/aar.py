@@ -502,6 +502,26 @@ function loadThree(cb) {
 }
 const V = (p) => new THREE.Vector3(p[0], p[2], -p[1]);   // plate frame (x, y toward pitcher, z up) -> three (x, up, -y)
 function fmt(v, d = 1) { return v === null || v === undefined ? '–' : (+v).toFixed(d); }
+function arcRuns(arc) {               // the path in runs of the same kind (1 Statcast's window, 3 measured from
+  const out = [];                      // his swings, 2 assumed); each run joins the next so the line is unbroken
+  for (let i = 0; i < arc.length; i++) {
+    const f = arc[i][3];
+    if (!out.length || out[out.length - 1].flag !== f) {
+      if (out.length) out[out.length - 1].pts.push(arc[i]);
+      out.push({flag: f, pts: [arc[i]]});
+    } else out[out.length - 1].pts.push(arc[i]);
+  }
+  return out;
+}
+function handU(g, t, P) {             // sweet spot -> hands: the measured path's own curve if it has one, else the circle
+  if (g.hands && g.hands.length === g.arc.length) {
+    const a = g.arc, T_ = q => q[q.length - 1];
+    let k = a.findIndex(q => T_(q) >= t); if (k < 0) k = a.length - 1;
+    const h = g.hands[k];
+    return new THREE.Vector3(h[0], h[2], -h[1]).normalize();
+  }
+  return new THREE.Vector3(g.O[0] - P[0], g.O[2] - P[2], -(g.O[1] - P[1])).normalize();
+}
 function at(pts, t) {
   const T = q => q[q.length - 1];
   if (!pts || !pts.length || t < T(pts[0])) return null;
@@ -573,10 +593,8 @@ function build(sc) {
   const cc = d => (MC !== null ? MC : d);
   scene.add(line(sc.pitch, new THREE.LineBasicMaterial({color: cc(0xe07b24), transparent: true, opacity: .25})));
   const dashed = new THREE.LineDashedMaterial({color: cc(0x7b5cc4), dashSize: 2.2, gapSize: 1.6});
-  const pre = sc.arc.filter(q => q[3] === 2 && q[4] < 0), post = sc.arc.filter(q => q[3] === 2 && q[4] > 0);
-  const m0 = sc.arc.find(q => q[3] === 1), m1 = [...sc.arc].reverse().find(q => q[3] === 1);
-  if (pre.length) scene.add(line(pre.concat([m0]), dashed));
-  if (post.length) scene.add(line([m1].concat(post), dashed));
+  arcRuns(sc.arc).forEach(r => { if (r.flag === 2) scene.add(line(r.pts, dashed));
+    else if (r.flag === 3) scene.add(line(r.pts, new THREE.LineBasicMaterial({color: cc(0x2f5fb3)}))); });
   if (sc.bp) { const m = new THREE.Mesh(new THREE.SphereGeometry(1.8, 16, 12), new THREE.MeshBasicMaterial({color: cc(0x7b5cc4)}));
     m.position.copy(V(sc.bp.at)); scene.add(m); }
   const meas = sc.arc.filter(q => q[3] === 1);
@@ -598,10 +616,8 @@ function build(sc) {
     const s0 = scene.children.length, C = HC(g.color);
     scene.add(line(g.pitch, new THREE.LineBasicMaterial({color: C, transparent: true, opacity: .25})));
     const dm = new THREE.LineDashedMaterial({color: C, dashSize: 2.2, gapSize: 1.6});
-    const pr = g.arc.filter(q => q[3] === 2 && q[4] < 0), po = g.arc.filter(q => q[3] === 2 && q[4] > 0);
-    const a0 = g.arc.find(q => q[3] === 1), a1 = [...g.arc].reverse().find(q => q[3] === 1);
-    if (pr.length) scene.add(line(pr.concat([a0]), dm));
-    if (po.length) scene.add(line([a1].concat(po), dm));
+    arcRuns(g.arc).forEach(r => { if (r.flag === 2) scene.add(line(r.pts, dm));
+      else if (r.flag === 3) scene.add(line(r.pts, new THREE.LineBasicMaterial({color: C}))); });
     if (g.bp) { const m = new THREE.Mesh(new THREE.SphereGeometry(1.8, 16, 12), new THREE.MeshBasicMaterial({color: C}));
       m.position.copy(V(g.bp.at)); scene.add(m); }
     const ms = g.arc.filter(q => q[3] === 1);
@@ -649,7 +665,7 @@ function build(sc) {
     const P = t < T(g.arc[0]) ? null : at(g.arc, Math.min(t, T(g.arc[g.arc.length - 1])));
     mesh.visible = !!P;
     if (P) {
-      const u = new THREE.Vector3(g.O[0] - P[0], g.O[2] - P[2], -(g.O[1] - P[1])).normalize();
+      const u = handU(g, t, P);
       mesh.position.copy(V(P).add(u.clone().multiplyScalar(10.5)));
       mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), u);
     }
@@ -666,7 +682,7 @@ function build(sc) {
     const P = t < T(sc.arc[0]) ? null : at(sc.arc, Math.min(t, tEnd));        // holds the finish of the follow-through
     bat.visible = !!P;
     if (P) {
-      const u = new THREE.Vector3(sc.O[0] - P[0], sc.O[2] - P[2], -(sc.O[1] - P[1])).normalize();   // sweet spot -> hands
+      const u = handU(sc, Math.min(t, tEnd), P);                                                   // sweet spot -> hands
       const mid = V(P).add(u.clone().multiplyScalar(10.5));                                         // 33" bat, sweet spot 6" from the end
       bat.position.copy(mid); bat.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), u);
     }
