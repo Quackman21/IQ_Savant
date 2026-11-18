@@ -1388,7 +1388,13 @@ if main == "Summary":
                     if not rows:
                         st.caption(f"No {role.lower()} games in the ABS seasons.")
                         continue
-                    show(abs_view.summary_html(rows, ref, role))
+                    teams_y = {}
+                    for y in abs_years:
+                        t_y = all_[y][0]
+                        if not t_y.empty and "team" in t_y:
+                            tm = t_y[pd.to_numeric(t_y["challenger"], errors="coerce").eq(pid) & t_y["role"].eq(role)]
+                            teams_y[str(y)] = ", ".join(sorted(tm["team"].dropna().astype(str).unique()))
+                    show(abs_view.summary_html(rows, ref, role, f'{b["first"]} {b["last"]}', teams_y))
                     mine = tab_[pd.to_numeric(tab_["challenger"], errors="coerce").eq(pid) & tab_["role"].eq(role)] \
                         if not tab_.empty else tab_
                     if mine.empty:

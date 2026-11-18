@@ -38,45 +38,89 @@ def _fmt(k, v) -> str:
     return s.replace("+0.000", "0.000").replace("-0.000", "0.000").replace("+0.00", "0.00").replace("-0.00", "0.00")
 
 
-def _color(k, v, ref) -> str:
-    if k not in abs_stats.GRADED or not ref or v is None or (isinstance(v, float) and math.isnan(v)):
-        return ""
+def _zval(k, v, ref) -> float:
+    if not ref or v is None or (isinstance(v, float) and math.isnan(v)):
+        return math.nan
     avg, sd = ref
     if avg is None or sd is None or (isinstance(sd, float) and (math.isnan(sd) or sd == 0)):
+        return math.nan
+    return (v - avg) / sd * abs_stats.GRADED.get(k, 1)
+
+
+def _color(k, v, ref) -> str:
+    """Same colouring as the Hitting / Core 4 tables: green = better, red = worse, deeper = more STDEVS off."""
+    if k not in abs_stats.GRADED:
         return ""
-    z = (v - avg) / sd * abs_stats.GRADED[k]
+    z = _zval(k, v, ref)
+    if math.isnan(z):
+        return ""
     t = min(abs(z) / 2.0, 1.0) * 0.85
     return f"background:{_mix(GREEN if z > 0 else RED, t)};color:#16202b"
 
 
-CSS = f"""<style>
-.abs{{font:13px system-ui,sans-serif;color:{INK}}}
-.abs table{{border-collapse:collapse;width:100%}}
-.abs th{{font:600 11px system-ui;color:{MUTED};padding:7px 8px;border-bottom:1.5px solid {TEAL};text-align:right;
-  white-space:nowrap;cursor:help}} .abs th:first-child{{text-align:left}}
-.abs td{{font:13px ui-monospace,"SF Mono",Menlo,monospace;padding:6px 8px;border-bottom:1px solid {LINE};text-align:right}}
-.abs td:first-child{{text-align:left;font-family:system-ui;font-weight:600}}
-.abs tr.lg td{{color:{MUTED};font-style:italic;background:#fafbfb}}
-.abs .note{{font-size:11.5px;color:{MUTED};margin-top:6px;line-height:1.5}}
-</style>"""
+# the column groups (separators like Core 4)
+GROUPS = [("Volume", ["G", "Challenges", "Chal/G"]), ("Results", ["Overturned", "Failed", "Overturn %"]),
+          ("Value", ["ABS Runs", "Challenge cost", "Net ABS Runs", "Net/G"]), ("", ["Not counted"])]
+LEAD = ["Year", "Period", "Type", "Team"]
 
 
-def summary_html(rows: list[tuple[str, dict]], ref: dict, role: str) -> str:
-    """rows = [(label, summarize() dict)], ref = league()[role]."""
-    head = "<tr><th>Season</th>" + "".join(f'<th title="{escape(TIPS.get(k, ""))}">{k}</th>' for k in abs_stats.STATS) + "</tr>"
+def _popup(k, v, ref, who: str, season: str, role: str) -> str:
+    avg = (ref or (math.nan, math.nan))[0]
+    z = _zval(k, v, ref)
+    delta = (v - avg) if (v is not None and avg is not None and not (isinstance(avg, float) and math.isnan(avg))
+                          and not (isinstance(v, float) and math.isnan(v))) else math.nan
+    dtxt = "-" if isinstance(delta, float) and math.isnan(delta) else (
+        f"{100 * delta:+.0f}%" if FMT.get(k) == "pct" else _fmt(k, delta))
+    ztxt = "-" if math.isnan(z) else f"{z:.2f}"
+    return (f'<div class="pop"><small>Click elsewhere to dismiss</small><table>'
+            f'<tr><th></th><th>{escape(k)}</th><th>STDEVS</th></tr>'
+            f'<tr><td>{escape(season)} MLB AVG ({escape(role.lower())})</td><td class="num">{_fmt(k, avg)}</td><td></td></tr>'
+            f'<tr><td>{escape(who)}</td><td class="num">{_fmt(k, v)}</td><td></td></tr>'
+            f'<tr><td>Delta</td><td class="num">{dtxt}</td><td class="num" style="{_color(k, v, ref)}">{ztxt}</td></tr>'
+            f'</table></div>')
+
+
+def summary_html(rows: list[tuple[str, dict]], ref: dict, role: str, who: str = "", teams: dict | None = None,
+                 show_avg: bool = True) -> str:
+    """Core-4-style table: rows = [(season, summarize() dict)], ref = league()[role] (latest season)."""
+    from ui.core4 import SEASON_CSS
+    from ui.hitting import CSS as HT_CSS
+    teams = teams or {}
+    keys = [k for _, ks in GROUPS for k in ks]
+    firsts = {ks[0] for _, ks in GROUPS}
+    n = len(keys)
+    grp = '<tr>' + f'<th class="grp" colspan="{len(LEAD)}"></th>' + "".join(
+        f'<th class="grp sep" colspan="{len(ks)}">{escape(g)}</th>' for g, ks in GROUPS) + "</tr>"
+    head = "<tr>" + "".join(f'<th style="text-align:left;cursor:default">{h}</th>' for h in LEAD)
+    head += "".join(f'<th class="{"r " if i > n / 2 else ""}{"sep" if k in firsts else ""}" '
+                    f'data-tip="{escape(TIPS.get(k, k))}">{escape(k)}</th>' for i, k in enumerate(keys)) + "</tr>"
     body = ""
     for lab, v in rows:
-        body += f"<tr><td>{escape(lab)}</td>" + "".join(
-            f'<td style="{_color(k, v.get(k), ref.get(k))}">{_fmt(k, v.get(k))}</td>' for k in abs_stats.STATS) + "</tr>"
-    if ref:
-        who = {"Hitting": "hitters", "Catching": "catchers", "Pitching": "pitchers"}[role]
-        body += f'<tr class="lg"><td>MLB {who}</td>' + "".join(
-            f"<td>{_fmt(k, (ref.get(k) or (None,))[0])}</td>" for k in abs_stats.STATS) + "</tr>"
-    return (CSS + f'<div class="abs"><table>{head}{body}</table><div class="note">Coloured vs MLB {role.lower()} '
-            'challenges (green = better than average, red = worse; deeper = further off). Counting stats per player '
-            'on the MLB row. Not counted = last pitch of the game, the call stood, and it was right by 3"+. Challenge cost = each failed '
-            'challenge costs the average missed call against his team that game (blended to the season); graded on '
-            'Net ABS Runs.</div></div>')
+        body += ('<tr class="season">' + f'<td class="lbl">{escape(lab)}</td><td class="lbl">Season</td>'
+                 f'<td class="lbl">Reg</td><td class="lbl">{escape(teams.get(lab, ""))}</td>')
+        for k in keys:
+            sep = " sep" if k in firsts else ""
+            if k in abs_stats.GRADED:
+                body += (f'<td class="c{sep}" tabindex="0" style="{_color(k, v.get(k), ref.get(k))}">'
+                         f'{_fmt(k, v.get(k))}{_popup(k, v.get(k), ref.get(k), who, lab, role)}</td>')
+            else:
+                body += f'<td class="cnt{sep}">{_fmt(k, v.get(k))}</td>'
+        body += "</tr>"
+    if ref and show_avg:
+        body += ('<tr class="avg"><td class="lbl">MLB AVG</td><td class="lbl">'
+                 f'{ {"Hitting": "Hitters", "Catching": "Catchers", "Pitching": "Pitchers"}[role]}</td>'
+                 '<td class="lbl"></td><td class="lbl"></td>' + "".join(
+                     f'<td class="{"sep" if k in firsts else ""}">{_fmt(k, (ref.get(k) or (None,))[0])}</td>'
+                     for k in keys) + "</tr>")
+    note = ('<div class="ht-note">Coloured by STDEVS vs MLB ' + role.lower() + ' challenges (green = better, red = '
+            'worse); click a coloured number for MLB AVG / Delta / STDEVS. Counting stats on the MLB AVG row are per '
+            'player. Not counted = last pitch of the game, the call stood, and it was right by 3"+. Challenge cost = '
+            'each failed challenge costs the average missed call against his team that game (blended to the '
+            'season).</div>')
+    fix = ('<style>.ht table.pin .pop td,.ht table.pin .pop th{position:static;min-width:0;max-width:none;'
+           'box-shadow:none;white-space:nowrap}.ht tr.season .pop td,.ht tr.season .pop th{border:1px solid #e3e7ea;'
+           'font-weight:600}</style>')
+    return HT_CSS + SEASON_CSS + fix + f'<div class="ht"><table class="pin">{grp}{head}{body}</table></div>{note}'
 
 
 # ----------------------------------------------------------------------------- the zone

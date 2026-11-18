@@ -51,7 +51,7 @@ DEFAULT_VALUES = {"0-0": .087, "1-0": .108, "2-0": .145, "3-0": .175, "0-1": .07
 COLS = ["game_date", "game_pk", "at_bat_number", "pitch_number", "challenger", "role", "overturned", "result",
         "counted", "final_pitch", "margin_in", "from_call", "to_call", "value", "runs", "balls", "strikes", "inning",
         "inning_topbot", "outs_when_up", "batter", "pitcher", "fielder_2", "stand", "p_throws", "pitch_type",
-        "release_speed", "plate_x", "plate_z", "sz_top", "sz_bot", "home_team", "away_team", "play_id", "team_misses",
+        "release_speed", "plate_x", "plate_z", "sz_top", "sz_bot", "home_team", "away_team", "play_id", "team", "team_misses",
         "game_miss_value", "cost", "net"]
 
 
