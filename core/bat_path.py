@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import math
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -365,7 +366,8 @@ def time_band(curves: dict, min_n: int = 15) -> dict:
     out = {}
     for k, v in curves.items():
         n = np.isfinite(v).sum(0)
-        with np.errstate(all="ignore"):
+        with np.errstate(all="ignore"), warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)          # empty / single-swing bins -> NaN, as intended
             m, s = np.nanmean(v, 0), np.nanstd(v, 0, ddof=1)
         ok = n >= min_n
         out[k] = {"m": [round(float(x), 2) if o else None for x, o in zip(m, ok)],

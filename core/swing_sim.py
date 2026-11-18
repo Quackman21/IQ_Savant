@@ -316,7 +316,8 @@ class Bat:
         if len(H) != len(a):                                         # the circle: toward its centre
             O = np.asarray(sc["O"], float)
             H = O - self.P
-        self.H = H / np.linalg.norm(H, axis=1, keepdims=True)
+        with np.errstate(invalid="ignore", divide="ignore"):          # a zero-length point stays NaN (skipped)
+            self.H = H / np.linalg.norm(H, axis=1, keepdims=True)
         dt = np.gradient(self.t)
         self.V = np.gradient(self.P, axis=0) / np.where(dt == 0, 1e-6, dt)[:, None] / 17.6     # mph
 
@@ -327,7 +328,8 @@ class Bat:
         return f(self.P), f(self.H), f(self.V), ok
 
 
-def meet(bat: Bat, ball_xyz: np.ndarray, ball_t: np.ndarray, ball_v: np.ndarray, stand: str, q: float) -> dict:
+def meet(bat: Bat, ball_xyz: np.ndarray, ball_t: np.ndarray, ball_v: np.ndarray, stand: str, q: float,
+         defer: bool = False) -> dict:
     """Where (and whether) one pitch meets the swing: closest approach of the ball's centre to the bat's centre
     line (barrel only) over time; contact if within the two radii -> the collision at that spot, priced."""
     S, H, Vb, ok = bat.at(ball_t)
@@ -353,12 +355,25 @@ def meet(bat: Bat, ball_xyz: np.ndarray, ball_t: np.ndarray, ball_v: np.ndarray,
     r = co.collide(ball_v[i:i + 1], Vb[i:i + 1], a[None], [D], q)
     ev = float(r["ev"][0] * eff_along(lam[i]))
     la, sp_phys = float(r["la"][0]), float(r["spray"][0])
-    spray = float(bearing([ev], [la], [sp_phys], [stand])[0])
-    fair = abs(spray) <= 45 and -20 < la < 80
-    runs = float(price([ev], [la], [spray], [stand])[0]) if fair else FOUL_RUNS
-    out.update(result="fair" if fair else "foul", D=round(D, 2), ev=round(ev, 1), la=round(la, 1),
-               spray=round(spray, 1), runs=round(runs, 3), eff=round(float(eff_along(lam[i])), 3))
-    return out
+    out.update(D=round(D, 2), eff=round(float(eff_along(lam[i])), 3), _ev=ev, _la=la, _sp=sp_phys)
+    return out if defer else finish([out], stand)[0]
+
+
+def finish(rows: list, stand: str) -> list:
+    """Spray model + fair / foul + runs for every contact in one batch (the models are slow one ball at a time)."""
+    hit = [r for r in rows if "_ev" in r]
+    if hit:
+        ev = np.array([r["_ev"] for r in hit])
+        la = np.array([r["_la"] for r in hit])
+        spray = bearing(ev, la, np.array([r["_sp"] for r in hit]), np.full(len(hit), stand))
+        runs = price(ev, la, spray, np.full(len(hit), stand))
+        for r, e, l_, s, v in zip(hit, ev, la, spray, runs):
+            fair = abs(float(s)) <= 45 and -20 < float(l_) < 80
+            r.update(result="fair" if fair else "foul", ev=round(float(e), 1), la=round(float(l_), 1),
+                     spray=round(float(s), 1), runs=round(float(v) if fair else FOUL_RUNS, 3))
+            for k in ("_ev", "_la", "_sp"):
+                r.pop(k)
+    return rows
 
 
 def _pitch_samples(d: dict, t_from: float, t_to: float, n: int = 1600):
@@ -375,9 +390,10 @@ def timing_layer(sc: dict, pitch: dict, stand: str, q: float, shifts=np.arange(-
     ts, xyz, v = _pitch_samples(pitch, t_c - 0.045, t_c + 0.045)
     rows = []
     for sh in shifts:
-        m = meet(bat, xyz, ts - t_c + sh / 1000.0, v, stand, q)      # bat clock: early swing = further along
+        m = meet(bat, xyz, ts - t_c + sh / 1000.0, v, stand, q, defer=True)   # bat clock: early = further along
         m["shift"] = int(sh)
         rows.append(m)
+    rows = finish(rows, stand)
     pos = [r for r in rows if r["runs"] > 0]
     return {"rows": rows, "window_ms": int(len(pos) * (shifts[1] - shifts[0])) if pos else 0}
 
@@ -413,9 +429,10 @@ def arsenal_layer(sc: dict, ref: dict, stand: str, hand: str, q: float, n: int =
         d = synth_pitch(velo, ivb, hb, hand, ref["plate_x"] + off[0], ref["plate_z"] + off[2])
         tc = _t_front(d, 0.0) - COMMIT_S
         ts, xyz, v = _pitch_samples(d, tc, _t_front(d, -40.0), 1400)
-        m = meet(bat, xyz, ts - tc - tau, v, stand, q)
+        m = meet(bat, xyz, ts - tc - tau, v, stand, q, defer=True)
         line = _traj(d, np.linspace(tc, _t_front(d, -12.0), 24)).round(1).tolist()
         rows.append({"type": k, "velo": round(float(velo), 1), "line": line, **m})
+    rows = finish(rows, stand)
     df = pd.DataFrame(rows)
     by = []
     for k, g in df.groupby("type"):

@@ -302,7 +302,7 @@ def prep(df: pd.DataFrame, model: str | None = None) -> pd.DataFrame:
     if df is None or df.empty:
         return pd.DataFrame()
     df = clean(df)
-    d = pd.DataFrame(index=df.index)
+    d = {}                                   # collected, then built in one go (no fragmented-frame warnings)
     for keep in ("batter", "game_date", "game_pk", "game_type", "stand", "p_throws"):
         if keep in df:
             d[keep] = df[keep]
@@ -380,7 +380,7 @@ def prep(df: pd.DataFrame, model: str | None = None) -> pd.DataFrame:
     bunt = desc.astype(str).str.contains("bunt") | ev_.astype(str).str.contains("bunt") | \
         _col(df, "des", "").astype(str).str.contains("bunt")
     tracked = bs.where(d["swing"] & bs.notna() & ~bunt)
-    who = d["batter"] if "batter" in d else pd.Series(0, index=d.index)
+    who = d["batter"] if "batter" in d else pd.Series(0, index=df.index)
     g = tracked.groupby(who)
     slow = g.rank(method="first") <= np.floor(g.transform("count") * 0.10)        # exactly the slowest tenth
     keep = tracked.notna() & (~slow | ((tracked >= 60) & (_col(df, "launch_speed") >= 90)))
@@ -468,7 +468,7 @@ def prep(df: pd.DataFrame, model: str | None = None) -> pd.DataFrame:
     d["count_grp"] = count_group(df)
     d["platoon"] = _col(df, "p_throws", "").map({"L": "vs LHP", "R": "vs RHP"})
     d["pitch_grp"] = pitch_group(df)
-    return d
+    return pd.DataFrame(d, index=df.index)
 
 
 # ----------------------------------------------------------------------------
