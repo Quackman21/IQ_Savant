@@ -244,14 +244,87 @@ TIME_METRICS = ["attack_angle", "attack_direction", "vba", "hba"]
 
 
 def time_curves(aa, ad, tilt, bs, swing_len, stand, pf, depth, cx, px_in, pz_in, stance_x=None,
-                grid=TGRID) -> dict:
+                grid=TGRID, lr: dict | None = None) -> dict:
+    """Each swing's four angles along its path over time, every 2 ms. With the league's MEASURED path rates
+    (core.path_fit) when they're built -- the same rule the 3D view's measured path uses -- else the circle."""
+    lr = _league_rates() if lr is None else lr
+    if lr:
+        return time_curves_measured(aa, ad, tilt, bs, swing_len, stand, pf, lr, grid)
+    return time_curves_circle(aa, ad, tilt, bs, swing_len, stand, pf, depth, cx, px_in, pz_in, stance_x, grid)
+
+
+MEASURED_SPAN = 15.0          # inches of contact depth either side of contact the measured rates are trusted over
+POST_IN = 40.0                # inches of path drawn past contact (follow-through)
+
+
+def time_curves_measured(aa, ad, tilt, bs, swing_len, stand, pf, lr: dict, grid=TGRID, dt_ms: float = 0.5) -> dict:
+    """Each swing's path stepped out from contact at the league's MEASURED rates for its tilt: attack angle and
+    direction change per inch of contact depth (+ how that rate changes), bat speed too. Past MEASURED_SPAN inches
+    of depth the path keeps turning at the rate it had there. Drawn back to the start of his measured swing length
+    and POST_IN inches past contact. Bat orientation (vba / hba): toward the centre of the path's curve."""
+    from core import path_fit
+    aa0, ad0, tilt, bs0 = (np.asarray(x, float) for x in (aa, ad, tilt, bs))
+    swing_len = np.asarray(swing_len, float) * 12
+    n = len(aa0)
+    right = np.asarray(stand) != "L"
+    side = np.where(right, 1.0, -1.0)
+    coef = {}
+    for k in ("attack_angle", "attack_direction", "bat_speed"):
+        coef[k] = np.array([[(path_fit._league_for(lr, float(t) if t == t else 34.0).get(k) or {}).get(c, 0.0)
+                             for c in ("slope", "curve")] for t in tilt]).reshape(n, 2)
+    grid = np.asarray(grid, float)
+    out = {k: np.full((n, len(grid)), np.nan) for k in TIME_METRICS}
+    pos = np.full((n, len(grid), 3), np.nan)
+    dt = dt_ms / 1000.0
+    for sgn in (1.0, -1.0):
+        a, d_, u, s_, P = aa0.copy(), ad0.copy(), np.zeros(n), np.zeros(n), np.zeros((n, 3))
+        ra, rd = np.zeros(n), np.zeros(n)
+        cols = [j for j, g in enumerate(grid) if (g >= 0) == (sgn > 0)]
+        cols = sorted(cols, key=lambda j: abs(grid[j]))
+        tnow, ci = 0.0, 0
+        limit = np.where(sgn > 0, POST_IN, np.where(np.isfinite(swing_len) & (swing_len > 0), swing_len, 40.0))
+        while ci < len(cols):
+            while ci < len(cols) and abs(grid[cols[ci]]) / 1000.0 <= tnow + 1e-12:
+                j = cols[ci]
+                out["attack_angle"][:, j] = np.where(s_ <= limit, a, np.nan)
+                out["attack_direction"][:, j] = np.where(s_ <= limit, d_, np.nan)
+                pos[:, j] = np.where((s_ <= limit)[:, None], P, np.nan)
+                ci += 1
+            h = np.radians(side * d_)
+            ar = np.radians(a)
+            T = np.stack([np.sin(h) * np.cos(ar), np.cos(h) * np.cos(ar), np.sin(ar)], -1)
+            v = np.maximum(bs0 + coef["bat_speed"][:, 0] * np.clip(u, -MEASURED_SPAN, MEASURED_SPAN), 30.0) * 17.6
+            ds = v * dt
+            inside = np.abs(u) < MEASURED_SPAN
+            ty = np.maximum(T[:, 1], 0.0)
+            ra = np.where(inside, (coef["attack_angle"][:, 0] + 2 * coef["attack_angle"][:, 1] * u) * ty, ra)
+            rd = np.where(inside, (coef["attack_direction"][:, 0] + 2 * coef["attack_direction"][:, 1] * u) * ty, rd)
+            P = P + sgn * T * ds[:, None]
+            u = u + sgn * T[:, 1] * ds
+            a = a + sgn * ra * ds
+            d_ = d_ + sgn * rd * ds
+            s_ = s_ + ds
+            tnow += dt
+    # bat orientation from the path's curve (sweet spot -> hands = toward the centre of curvature)
+    Tg = np.gradient(pos, axis=1)
+    Tg = Tg / np.linalg.norm(Tg, axis=-1, keepdims=True)
+    N = np.gradient(Tg, axis=1)
+    N = N / np.linalg.norm(N, axis=-1, keepdims=True)
+    with np.errstate(invalid="ignore"):
+        out["vba"] = -np.degrees(np.arcsin(np.clip(N[..., 2], -1, 1)))
+        out["hba"] = -np.degrees(np.arctan2(N[..., 1], np.abs(N[..., 0])))
+    bad = ~np.isfinite(aa0 + ad0 + tilt + bs0)
+    return {k: np.where(bad[:, None], np.nan, v) for k, v in out.items()}
+
+
+def time_curves_circle(aa, ad, tilt, bs, swing_len, stand, pf, depth, cx, px_in, pz_in, stance_x=None,
+                       grid=TGRID) -> dict:
     """Each swing's four angles along its own drawn path, sampled every 2 ms (NaN where the path isn't drawn: before
-    bat parallel / beyond the swing length, or past the follow-through) -- exactly the 3D view's path, so the time
-    view's ranges compare like with like. {metric: n x len(grid)}."""
+    bat parallel / beyond the swing length, or past the follow-through) -- the circle (before measured rates)."""
     aa = np.asarray(aa, float)
     if len(aa) > 4000:
         args = [np.asarray(x) for x in (aa, ad, tilt, bs, swing_len, stand, pf, depth, cx, px_in, pz_in)]
-        parts = [time_curves(*[x[i:i + 4000] for x in args], stance_x, grid) for i in range(0, len(aa), 4000)]
+        parts = [time_curves_circle(*[x[i:i + 4000] for x in args], stance_x, grid) for i in range(0, len(aa), 4000)]
         return {k: np.concatenate([p[k] for p in parts]) for k in parts[0]}
     d, w, bad = _plane(aa, ad, tilt, stand, pf, depth, px_in, pz_in, stance_x)
     bs, swing_len = np.asarray(bs, float) * 17.6, np.asarray(swing_len, float) * 12

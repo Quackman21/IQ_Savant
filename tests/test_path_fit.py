@@ -60,3 +60,18 @@ def test_hitter_curve_and_rebuilt_path_follow_the_rates():
     assert abs(ad - (-2.0 + 6 * cur["attack_direction"]["slope"] + 36 * cur["attack_direction"]["curve"])) < 1.0
     assert {p[3] for p in r["arc"]} == {2, 3}                     # measured (3) inside, extended (2) beyond
     assert len(r["hands"]) == len(r["arc"])
+
+
+def test_time_curves_follow_the_measured_rates():
+    from core.bat_path import TGRID, time_curves
+    lr = {"all": {"attack_angle": {"slope": 0.9, "curve": 0.0}, "attack_direction": {"slope": -1.55, "curve": 0.0},
+                  "bat_speed": {"slope": 0.23, "curve": 0.0}}}
+    n = 3
+    cv = time_curves([8.0] * n, [0.0] * n, [34.0] * n, [72.0] * n, [7.0] * n, ["R"] * n, [5.0] * n, [30.0] * n,
+                     [30.0] * n, [0.0] * n, [30.0] * n, lr=lr)
+    j0 = int(np.argmin(np.abs(TGRID)))
+    assert abs(cv["attack_angle"][0, j0] - 8.0) < 1e-6
+    later = j0 + 3                                                    # 6 ms after contact
+    assert cv["attack_angle"][0, later] > 8.0 + 3 and cv["attack_direction"][0, later] < -5   # rising, turning pull
+    assert -60 < cv["vba"][0, j0] < -10                               # barrel below the hands
+    assert np.isnan(cv["attack_angle"][0, 0]) or TGRID[0] > -70       # drawn back only to his swing length
