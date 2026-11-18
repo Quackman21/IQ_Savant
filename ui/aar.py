@@ -636,7 +636,10 @@ function build(sc) {
   const openSide = sc.side === 'R' ? 1 : -1;
   const PRESETS = {Catcher: {th: 0, ph: 1.32, r: 170}, 'Open side': {th: openSide * Math.PI / 2, ph: 1.38, r: 190},
                    Overhead: {th: 0.0001, ph: 0.06, r: 260}, Pitcher: {th: Math.PI, ph: 1.4, r: 260}};
+  let custom = null;                 // a fixed eye (e.g. the commit point) until a preset / drag / zoom
   function place() {
+    const fov = custom ? custom[2] : 38; if (cam.fov !== fov) { cam.fov = fov; cam.updateProjectionMatrix(); }
+    if (custom) { cam.position.copy(custom[0]); cam.lookAt(custom[1]); return; }
     cam.position.set(tgt.x + st.r * Math.sin(st.ph) * Math.sin(st.th), tgt.y + st.r * Math.cos(st.ph),
                      tgt.z + st.r * Math.sin(st.ph) * Math.cos(st.th));
     cam.lookAt(tgt);
@@ -644,17 +647,17 @@ function build(sc) {
   const cams = document.getElementById('cams'); cams.innerHTML = '';
   Object.entries(PRESETS).forEach(([k, v], i) => {
     const b = document.createElement('button'); b.textContent = k; if (!i) b.classList.add('on');
-    b.onclick = () => { Object.assign(st, v); place(); cams.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); };
+    b.onclick = () => { custom = null; Object.assign(st, v); place(); cams.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); };
     cams.appendChild(b);
   });
   let drag = null;
   ren.domElement.addEventListener('pointerdown', e => { drag = [e.clientX, e.clientY]; ren.domElement.setPointerCapture(e.pointerId); });
   ren.domElement.addEventListener('pointermove', e => {
-    if (!drag) return; st.th -= (e.clientX - drag[0]) * 0.008; st.ph = Math.max(0.05, Math.min(1.55, st.ph - (e.clientY - drag[1]) * 0.008));
+    if (!drag) return; custom = null; st.th -= (e.clientX - drag[0]) * 0.008; st.ph = Math.max(0.05, Math.min(1.55, st.ph - (e.clientY - drag[1]) * 0.008));
     drag = [e.clientX, e.clientY]; place(); cams.querySelectorAll('button').forEach(x => x.classList.remove('on'));
   });
   ren.domElement.addEventListener('pointerup', () => { drag = null; });
-  ren.domElement.addEventListener('wheel', e => { e.preventDefault(); st.r = Math.max(40, Math.min(1500, st.r * (1 + e.deltaY * 0.001))); place(); }, {passive: false});
+  ren.domElement.addEventListener('wheel', e => { e.preventDefault(); custom = null; st.r = Math.max(40, Math.min(1500, st.r * (1 + e.deltaY * 0.001))); place(); }, {passive: false});
   place();
   // time
   const T = q => q[q.length - 1];
@@ -727,7 +730,9 @@ function build(sc) {
     S.playing = false; document.getElementById('s3p').textContent = '▶'; S.t = t0 + (t1 - t0) * e.target.value / 1000; };
   return {stop() { cancelAnimationFrame(S.raf); ren.dispose(); ren.domElement.remove(); },
           setOn(k, on) { if (!GR[k]) return; GR[k].on = on; GR[k].objs.forEach(o => { o.visible = on && !o.userData.off; }); },
-          scene, GR, time() { return S.t; }};
+          scene, GR, time() { return S.t; },
+          cam, look(from, to, fov = 38) { custom = [V(from), V(to), fov]; place(); cams.querySelectorAll('button').forEach(x => x.classList.remove('on')); },
+          preset(name) { const b = [...cams.querySelectorAll('button')].find(x => x.textContent === name); if (b) b.click(); }};
 }
 """
 

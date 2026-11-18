@@ -746,7 +746,7 @@ def bat_path_view(sc: pd.DataFrame, season: int, poc: pd.DataFrame | None = None
             sub = ("each colour = a swing group · drag to orbit" +
                    (f" · not enough contact to draw {', '.join(missing)}" if missing else "") +
                    (" · contact depth estimated (not on Savant's stance board)" if est else ""))
-            components.html(path3d_html(ok, "Bat path", sub), height=960, scrolling=False)
+            components.html(path3d_html(ok, "Bat path", sub), height=1380, scrolling=True)
             components.html(chart_html(scenes, bpth.series(sw, {"types": None, "hand": "All", "count": "All",
                                                                 "zone": None}, stand),
                                        bpth.self_time(sw, stand, swing3d.stance_offsets(season, pid))),

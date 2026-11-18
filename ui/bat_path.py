@@ -320,7 +320,7 @@ def path3d_html(scene, title: str, sub: str) -> str:
     if isinstance(scene, list):
         scs = [x for x in scene if x]
         scene = {**scs[0], "extra": [{k: x.get(k) for k in ("pitch", "arc", "contact", "O", "bp", "color", "name",
-                                                             "series", "norm", "read", "side")}
+                                                             "series", "norm", "read", "side", "hands")}
                                      for x in scs[1:]]}
     data = json.dumps(scene).replace("</", "<\\/")
     ctl = ('<div id="ctl"><button id="s3p">❚❚</button><select id="s3sp"><option value="4">1/4 speed</option>'
@@ -359,19 +359,20 @@ function start() {
   const w = stage.clientWidth; if (Math.abs(w - lastW) < 8) return; lastW = w;
   document.getElementById('s3msg').style.display = 'none';
   if (R3) R3.stop(); R3 = build(SC); ON.forEach((on, k) => R3.setOn(k, on));
-  if (typeof paint === 'function' && trailMode !== 'group') paint(); fit();
+  if (typeof paint === 'function' && trailMode !== 'group') paint();
+  if (typeof setTab === 'function' && TAB !== 'Swing') setTab(TAB); fit();
 }
 loadThree(start);
 window.addEventListener('resize', () => { if (window.THREE) start(); });
 window.addEventListener('load', fit); fit();
 """
-    return (f'<!doctype html><html><head><meta charset="utf-8"><style>{_S3D_CSS}{GRAPH_CSS}</style></head><body>'
-            f'<div id="wrap"><div id="hd"><b>{escape(title)}</b><span>{escape(sub)}</span></div>'
+    return (f'<!doctype html><html><head><meta charset="utf-8"><style>{_S3D_CSS}{GRAPH_CSS}{LAYERS_CSS}</style></head><body>'
+            f'<div id="wrap"><div id="hd"><b>{escape(title)}</b><span>{escape(sub)}</span><div id="tabs"></div></div>'
             f'<div id="stage"><div id="cams"></div><div id="grp"></div><div id="tl" hidden></div><div id="al" hidden></div>'
             f'<div class="msg" id="s3msg">Loading 3D…</div></div>'
-            f'{ctl}{legend}</div>'
+            f'{ctl}{legend}<div id="lay" hidden></div></div>'
             f'<script type="application/json" id="s3d-data">{data}</script>'
-            f'<script>const THREE_SRC = "{THREE_JS}";{S3D_CORE}{js}{COMMON_JS}{TRAIL_JS}</script></body></html>')
+            f'<script>const THREE_SRC = "{THREE_JS}";{S3D_CORE}{js}{COMMON_JS}{TRAIL_JS}{LAYERS_JS}</script></body></html>')
 
 
 def model_card_html(sc: dict, hitter_side: str) -> str:
@@ -913,3 +914,166 @@ def chart_html(scenes: list, all_series: dict, self_time: dict | None = None) ->
             f'{head}<div id="chart"></div><div id="cn"></div></div>'
             f'<script type="application/json" id="cd">{blob}</script>'
             f'{js}<script>{COMMON_JS}{CHART_JS}fit();</script></body></html>')
+
+
+# ============================================================================= simulator tabs: Contact / Timing / Arsenal
+LAYERS_CSS = """
+#tabs{display:inline-flex;border:1px solid #d9dee2;border-radius:8px;overflow:hidden;margin-left:auto}
+#tabs button{font:600 12px system-ui;border:none;background:#fff;padding:5px 12px;cursor:pointer;color:#16202b}
+#tabs button.on{background:#4a8b96;color:#fff}
+#hd{display:flex;align-items:center;gap:10px}
+#lay{margin-top:10px;font:12.5px system-ui;color:#16202b} #lay[hidden]{display:none}
+#lay .h{font-weight:700;font-size:13.5px} #lay .s{color:#6a7681;font-size:11.5px;margin:2px 0 6px;line-height:1.45}
+#lay svg{display:block;max-width:100%} #lay .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+#lay .tile{border:1px solid #e6eaed;border-radius:8px;padding:5px;text-align:center}
+#lay .tile div:first-child{font-size:10.5px;color:#6a7681} #lay .tile div:last-child{font:700 14px ui-monospace,Menlo,monospace}
+#lay .leg{display:flex;align-items:center;gap:6px;font-size:10.5px;color:#6a7681;margin-top:4px}
+#lay .bar{height:8px;width:180px;border-radius:4px;background:linear-gradient(90deg,#313695,#74add1,#ffffbf,#fdae61,#a50026)}
+#lay table{border-collapse:collapse;width:100%;margin-top:6px} #lay td,#lay th{padding:4px 6px;border-bottom:1px solid #eef1f3;
+  text-align:right;font-size:12px} #lay td:first-child,#lay th:first-child{text-align:left} #lay th{color:#6a7681;font-size:10.5px}
+#lay .camb{display:flex;gap:6px;margin:4px 0} #lay .camb button{font:600 11.5px system-ui;border:1px solid #d9dee2;background:#fff;
+  border-radius:6px;padding:4px 9px;cursor:pointer} #lay .tip{font-size:11px;color:#6a7681;min-height:15px;margin-top:3px}
+"""
+
+LAYERS_JS = r"""
+const LY = SC.layers || null;
+const HEAT = [[0, [49, 54, 149]], [.35, [116, 173, 209]], [.55, [255, 255, 191]], [.75, [253, 174, 97]], [1, [165, 0, 38]]];
+function heat(v, lo = -0.3, hi = 1.2) {
+  const t = Math.max(0, Math.min(1, (v - lo) / (hi - lo)));
+  for (let i = 1; i < HEAT.length; i++) if (t <= HEAT[i][0]) {
+    const [t0, c0] = HEAT[i - 1], [t1, c1] = HEAT[i], f = (t - t0) / (t1 - t0);
+    return c0.map((c, k) => Math.round(c + (c1[k] - c) * f)); }
+  return HEAT[HEAT.length - 1][1];
+}
+const rgb = c => `rgb(${c.join(',')})`;
+const OUTC = {fair: '#2e9d5b', foul: '#e0a400', whiff: '#9aa5ae'};
+const sgn = (v, d = 2) => (v > 0.0005 ? '+' : '') + Number(v).toFixed(d);
+let TAB = 'Swing', OVL = null;
+function clearOverlay() { if (OVL && R3) { R3.scene.remove(OVL); } OVL = null; }
+function overlay() { clearOverlay(); if (!R3) return null; OVL = new THREE.Group(); R3.scene.add(OVL); return OVL; }
+function ball(at, color, r = 1.45, op = 1) {
+  const m = new THREE.Mesh(new THREE.SphereGeometry(r, 14, 10), new THREE.MeshBasicMaterial({color, transparent: op < 1, opacity: op}));
+  m.position.copy(V(at)); return m;
+}
+function atContact() { const k = document.getElementById('s3k'); if (k) k.click(); }
+const leg = '<div class="leg">−0.3 runs (out / whiff)<span class="bar"></span>+1.2 (barrel)</div>';
+// ---------- Contact
+function grid(cl, W, H, dots) {
+  const nE = cl.eff.length, nD = cl.D.length, cw = W / nD, ch = H / nE;
+  let s = '';
+  for (let i = 0; i < nE; i++) for (let j = 0; j < nD; j++)
+    s += `<rect x="${(40 + j * cw).toFixed(1)}" y="${(8 + (nE - 1 - i) * ch).toFixed(1)}" width="${(cw + .6).toFixed(1)}" height="${(ch + .6).toFixed(1)}" fill="${rgb(heat(cl.runs[i][j]))}" data-i="${i}" data-j="${j}"/>`;
+  const X = d => 40 + (d - cl.D[0] + 0.05) / (cl.D[nD - 1] - cl.D[0] + 0.1) * W, Y = e => 8 + (1 - (e - cl.eff[0]) / (cl.eff[nE - 1] - cl.eff[0])) * H;
+  (dots || []).forEach(([d, e]) => { if (d >= cl.D[0] && d <= cl.D[nD - 1] && e >= cl.eff[0])
+    s += `<circle cx="${X(d).toFixed(1)}" cy="${Y(Math.min(e, 1)).toFixed(1)}" r="2.3" fill="#fff" stroke="#16202b" stroke-width=".7" opacity=".85" pointer-events="none"/>`; });
+  [-1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2].forEach(v => s += `<text x="${X(v).toFixed(1)}" y="${H + 22}" font-size="10" fill="#6a7681" text-anchor="middle">${sgn(v, 1)}"</text>`);
+  [.7, .8, .9, 1].forEach(e => s += `<text x="34" y="${(Y(e) + 3).toFixed(1)}" font-size="10" fill="#6a7681" text-anchor="end">${Math.round(e * 100)}%</text>`);
+  return `<svg viewBox="0 0 ${W + 50} ${H + 44}" width="100%">${s}<text x="${40 + W / 2}" y="${H + 38}" font-size="10.5" text-anchor="middle">← topped · square · undercut →</text><text x="9" y="${8 + H / 2}" font-size="10.5" transform="rotate(-90 9 ${8 + H / 2})" text-anchor="middle">barrel efficiency</text></svg>`;
+}
+function lookupRuns(cl, d, e) {
+  let j = 0, i = 0;
+  cl.D.forEach((v, k) => { if (Math.abs(v - d) < Math.abs(cl.D[j] - d)) j = k; });
+  cl.eff.forEach((v, k) => { if (Math.abs(v - e) < Math.abs(cl.eff[i] - e)) i = k; });
+  return cl.runs[i][j];
+}
+function showContact() {
+  const cl = LY.contact; let bi = 0, bj = 0;
+  cl.runs.forEach((r, i) => r.forEach((v, j) => { if (v > cl.runs[bi][bj]) { bi = i; bj = j; } }));
+  const his = (cl.dots || []).filter(([d, e]) => d >= cl.D[0] && d <= cl.D[cl.D.length - 1]);
+  const val = his.length ? his.reduce((a, [d, e]) => a + lookupRuns(cl, d, Math.min(e, 1)), 0) / his.length : null;
+  document.getElementById('lay').innerHTML = `<div class="h">Contact: every possible contact on the barrel, priced</div>
+    <div class="s">This swing vs this pitch. Each cell = where on the barrel it's hit (across: topped ← square → undercut; up: share of the sweet spot's exit velo) → exit velo, launch, spray → runs. White dots = his real balls in play.</div>
+    ${grid(cl, 520, 250, cl.dots)}${leg}<div class="tip" id="ltip">Hover a cell.</div>
+    <div class="tiles"><div class="tile"><div>Best contact</div><div>${sgn(cl.D[bj], 1)}" · ${Math.round(cl.eff[bi] * 100)}%</div></div>
+    <div class="tile"><div>→</div><div>${Math.round(cl.ev[bi][bj])} mph · ${Math.round(cl.la[bi][bj])}°</div></div>
+    <div class="tile"><div>Best cell</div><div>${sgn(cl.runs[bi][bj])} runs</div></div>
+    <div class="tile"><div>His contacts here (avg)</div><div>${val === null ? '–' : sgn(val)}</div></div></div>`;
+  document.querySelectorAll('#lay rect[data-i]').forEach(r => r.onmouseenter = () => { const i = +r.dataset.i, j = +r.dataset.j;
+    document.getElementById('ltip').textContent = `${sgn(cl.D[j], 1)}" ${cl.D[j] >= 0 ? 'under' : 'over'} · ${Math.round(cl.eff[i] * 100)}% efficiency → ${cl.ev[i][j]} mph, ${cl.la[i][j]}°, spray ${cl.spray[i][j]}° · ${sgn(cl.runs[i][j])} runs`; });
+  // 3D: the barrel painted with the map (around = offset, along = efficiency both sides of the sweet spot)
+  const g = overlay(); if (!g) return; atContact();
+  const cv = document.createElement('canvas'); cv.width = 64; cv.height = 128; const cx = cv.getContext('2d');
+  const nD = cl.D.length, nE = cl.eff.length;
+  for (let y = 0; y < 128; y++) for (let x = 0; x < 64; x++) {
+    const ang = (x / 64) * 2 * Math.PI, D = Math.sin(ang) * 2.68, lam = 10 - (y / 127) * 16;
+    const e = Math.max(0.5, 1 - 0.011 * lam * lam), v = lookupRuns(cl, D, e);
+    cx.fillStyle = rgb(heat(Math.cos(ang) > -0.2 ? v : -0.3)); cx.fillRect(x, y, 1, 1);
+  }
+  const tex = new THREE.CanvasTexture(cv);
+  const k0 = SC.arc.reduce((b, q, k) => Math.abs(q[4]) < Math.abs(SC.arc[b][4]) ? k : b, 0);
+  const hv = SC.hands ? SC.hands[k0] : [SC.O[0] - SC.contact[0], SC.O[1] - SC.contact[1], SC.O[2] - SC.contact[2]];
+  const u = new THREE.Vector3(hv[0], hv[2], -hv[1]).normalize();
+  const cyl = new THREE.Mesh(new THREE.CylinderGeometry(1.45, 1.45, 16, 32, 1, true), new THREE.MeshBasicMaterial({map: tex}));
+  cyl.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), u);
+  cyl.position.copy(V(SC.contact).add(u.clone().multiplyScalar(2)));
+  g.add(cyl);
+}
+// ---------- Timing
+function showTiming() {
+  const T = LY.timing, cl = LY.contact, rows = T.rows, W = 520, H = 220;
+  const Dg = []; for (let d = -1.5; d <= 2.001; d += 0.25) Dg.push(+d.toFixed(2));
+  const cw = W / rows.length, ch = H / Dg.length;
+  let s = '';
+  rows.forEach((r, a) => Dg.forEach((d, b) => {
+    const v = r.result === 'whiff' ? -0.3 : lookupRuns(cl, d, r.eff || 1);
+    s += `<rect x="${(40 + a * cw).toFixed(1)}" y="${(8 + (Dg.length - 1 - b) * ch).toFixed(1)}" width="${(cw + .6).toFixed(1)}" height="${(ch + .6).toFixed(1)}" fill="${rgb(heat(v))}" opacity=".55"/>`; }));
+  const Y = d => 8 + (1 - (d - Dg[0]) / (Dg[Dg.length - 1] - Dg[0])) * H;
+  const pts = rows.filter(r => r.D !== undefined).map(r => `${(40 + (rows.indexOf(r) + .5) * cw).toFixed(1)},${Y(Math.max(-1.5, Math.min(2, r.D))).toFixed(1)}`).join(' ');
+  s += `<polyline points="${pts}" fill="none" stroke="#16202b" stroke-width="2" stroke-dasharray="4 3"/>`;
+  rows.forEach((r, a) => { const x = 40 + (a + .5) * cw;
+    if (r.result === 'whiff') s += `<text x="${x}" y="${8 + H / 2}" font-size="11" text-anchor="middle" fill="#6a7681">×</text>`;
+    else s += `<circle cx="${x.toFixed(1)}" cy="${Y(Math.max(-1.5, Math.min(2, r.D))).toFixed(1)}" r="4" fill="${rgb(heat(r.runs))}" stroke="#16202b" stroke-width=".8"/>`;
+    if (a % 2 === 0) s += `<text x="${x.toFixed(1)}" y="${H + 22}" font-size="10" fill="#6a7681" text-anchor="middle">${r.shift > 0 ? '+' : ''}${r.shift}</text>`; });
+  [-1, 0, 1, 2].forEach(d => s += `<text x="34" y="${(Y(d) + 3).toFixed(1)}" font-size="10" fill="#6a7681" text-anchor="end">${sgn(d, 0)}"</text>`);
+  const strip = rows.map(r => `<td title="${r.shift} ms: ${r.result}${r.ev ? ', ' + r.ev + ' mph ' + r.la + '°' : ''} (${sgn(r.runs)})" style="background:${rgb(heat(r.runs))};padding:7px 0"></td>`).join('');
+  const by = sh => rows.find(r => r.shift === sh) || {runs: NaN};
+  document.getElementById('lay').innerHTML = `<div class="h">Timing: every crossing of this pitch</div>
+    <div class="s">Same swing, same pitch, started earlier (+ ms) or later (−). Dots = where the ball meets the barrel at each timing (above = undercut), coloured by runs; × = a miss. Early = further along his measured path: higher and more pull.</div>
+    <svg viewBox="0 0 ${W + 50} ${H + 40}" width="100%">${s}<text x="${40 + W / 2}" y="${H + 36}" font-size="10.5" text-anchor="middle">← late · ms vs on time · early →</text></svg>${leg}
+    <table><tr><td style="width:96px">Value by timing</td>${strip}</tr></table>
+    <div class="tiles"><div class="tile"><div>On time</div><div>${sgn(by(0).runs)}</div></div><div class="tile"><div>15 ms late</div><div>${sgn(by(-15).runs)}</div></div>
+    <div class="tile"><div>15 ms early</div><div>${sgn(by(15).runs)}</div></div><div class="tile"><div>Window above 0 runs</div><div>${T.window_ms} ms</div></div></div>`;
+  const g = overlay(); if (!g) return; atContact();
+  rows.forEach(r => g.add(ball(r.at, r.result === 'whiff' ? 0x9aa5ae : new THREE.Color(...heat(r.runs).map(c => c / 255)), 0.9, r.result === 'whiff' ? .5 : 1)));
+}
+// ---------- Arsenal
+function showArsenal() {
+  const A = LY.arsenal, PC = LY.pt_color, W = 260, H = 260;
+  const X = x => W / 2 + (x / 12) * 75, Y = z => H - 20 - ((z / 12) - 1.0) * 75;
+  let s = `<rect x="${X(-8.5)}" y="${Y(42)}" width="${X(8.5) - X(-8.5)}" height="${Y(18) - Y(42)}" fill="none" stroke="#4a8b96" stroke-width="1.6"/>`;
+  A.rows.forEach(r => { const c = PC[r.type] || '#555', x = X(r.at[0]).toFixed(1), y = Y(r.at[2]).toFixed(1);
+    s += r.result === 'fair' ? `<circle cx="${x}" cy="${y}" r="3.4" fill="${c}"/>` : r.result === 'whiff' ? `<circle cx="${x}" cy="${y}" r="3.2" fill="none" stroke="${c}" stroke-width="1.5"/>`
+      : `<rect x="${x - 3}" y="${y - 3}" width="6" height="6" fill="none" stroke="${c}" stroke-width="1.4"/>`; });
+  const rows = A.by_type.map(b => `<tr><td><b style="color:${PC[b.type] || '#555'}">${b.type}</b></td><td>${b.n}</td><td>${b.velo}</td><td>${Math.round(b.whiff * 100)}%</td><td>${Math.round(b.foul * 100)}%</td><td>${Math.round(b.fair * 100)}%</td><td style="background:${rgb(heat(b.runs, -0.15, 0.3))}">${sgn(b.runs)}</td></tr>`).join('');
+  const c = A.counts || {};
+  document.getElementById('lay').innerHTML = `<div class="h">Arsenal: the same swing vs every pitch that looks the same at the commit point</div>
+    <div class="s">A typical MLB ${SC.model && SC.model.hand === 'L' ? 'LHP' : 'RHP'} pitch mix, every pitch lined up to pass the same spot at the commit point (${A.commit_ms} ms before the plate), then breaking on its own. His swing is timed for the modeled pitch; each one meets his measured path. Chart = where each pitch reached his bat (catcher's view): ● in play, ○ whiff, □ foul.</div>
+    <div class="camb"><button id="cpl">At the plate</button><button id="ccm">From the commit point</button></div>
+    <div style="display:flex;gap:12px;align-items:flex-start"><svg viewBox="0 0 ${W} ${H}" width="44%">${s}</svg>
+    <div style="flex:1"><table><tr><th>Pitch</th><th>n</th><th>Velo</th><th>Whiff</th><th>Foul</th><th>In play</th><th>Runs / swing</th></tr>${rows}</table>
+    <div class="tiles" style="grid-template-columns:1fr 1fr 1fr"><div class="tile"><div>In play / foul / whiff</div><div>${c.fair || 0} / ${c.foul || 0} / ${c.whiff || 0}</div></div>
+    <div class="tile"><div>Path robustness (runs / 100)</div><div>${sgn(A.runs100, 1)}</div></div>
+    <div class="tile"><div>MLB-average path shape</div><div>${A.mlb_runs100 === null || A.mlb_runs100 === undefined ? '–' : sgn(A.mlb_runs100, 1)}</div></div></div></div></div>`;
+  const g = overlay(); if (!g) return; atContact();
+  A.rows.forEach(r => {
+    const col = new THREE.Color(PC[r.type] || '#555');
+    g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(r.line.map(V)), new THREE.LineBasicMaterial({color: col, transparent: true, opacity: .28})));
+    g.add(ball(r.at, new THREE.Color(OUTC[r.result]), 1.45, .95));
+  });
+  const mk = ball(A.commit, 0x16202b, 0.5, .5); g.add(mk);
+  document.getElementById('cpl').onclick = () => { mk.visible = true; R3.preset('Open side'); };
+  document.getElementById('ccm').onclick = () => { R3.look(A.eye || [A.commit[0], A.commit[1] + 150, A.commit[2] + 10], SC.contact, 9); };
+}
+function setTab(t) {
+  TAB = t; if (R3 && t !== 'Arsenal') R3.preset('Catcher'); document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
+  const lay = document.getElementById('lay'), lg = document.getElementById('lg');
+  if (t === 'Swing' || !LY) { lay.hidden = true; if (lg) lg.hidden = false; clearOverlay(); fit(); return; }
+  lay.hidden = false; if (lg) lg.hidden = true;
+  ({Contact: showContact, Timing: showTiming, Arsenal: showArsenal})[t](); fit();
+}
+if (LY) {
+  const tb = document.getElementById('tabs');
+  ['Swing', 'Contact', 'Timing', 'Arsenal'].forEach(t => { const b = document.createElement('button'); b.textContent = t; b.dataset.t = t;
+    if (t === 'Swing') b.classList.add('on'); b.onclick = () => setTab(t); tb.appendChild(b); });
+}
+"""

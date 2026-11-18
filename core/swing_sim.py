@@ -95,23 +95,93 @@ def bearing(ev, la, spray_phys, stand) -> np.ndarray:
 
 
 # ----------------------------------------------------------------------------- price
-def price(ev, la, spray, stand) -> np.ndarray:
-    """Runs per batted ball from our spray-aware xwOBA (Savant-style EV + LA curve if it isn't trained)."""
+def _model_xwoba(ev, la, spray, stand) -> np.ndarray | None:
+    """Our spray-aware xwOBA for a batch of batted balls (None if it isn't trained). Slow: one call runs the
+    model over every park x spray blur, so it is only used to build the price grid."""
     ev, la, spray = (np.asarray(x, float) for x in (ev, la, spray))
     left = np.asarray(stand) == "L"
     df = pd.DataFrame({"launch_speed": ev, "launch_angle": la, "stand": np.where(left, "L", "R"),
                        "hc_x": 125.42 + 200 * np.sin(np.radians(spray)), "hc_y": 198.27 - 200 * np.cos(np.radians(spray)),
                        "type": "X", "bb_type": None, "game_date": "2026-06-01"})
-    x = None
     try:
         from models import xwoba_iq
+        if xwoba_iq.load() is None:
+            return None
         x = xwoba_iq.score_batted_balls(df).to_numpy(float)
     except Exception:
-        x = None
-    if x is None or not np.isfinite(x).any():
+        return None
+    return x if np.isfinite(x).any() else None
+
+
+# the price grid: the model scored once over EV x LA x spray x side, then read by interpolation
+G_EV = np.arange(40.0, 122.0, 3.0)
+G_LA = np.arange(-30.0, 82.0, 4.0)
+G_SP = np.arange(-48.0, 49.0, 8.0)
+_grid: dict = {}
+
+
+def _grid_file() -> Path:
+    return Path(__file__).resolve().parents[1] / "data" / "calibration" / "price_grid.npz"
+
+
+def price_grid(build: bool = True):
+    """{'R': interpolator, 'L': interpolator} over (ev, la, spray) -> xwOBA, or None without the model.
+    Rebuilt when the xwOBA model file changes (about a minute, once)."""
+    if "g" in _grid:
+        return _grid["g"]
+    from scipy.interpolate import RegularGridInterpolator
+    try:
+        from models import xwoba_iq
+        art = xwoba_iq.ARTIFACT
+        stamp = float(art.stat().st_mtime) if art.exists() else None
+    except Exception:
+        stamp = None
+    if stamp is None:
+        _grid["g"] = None
+        return None
+    f = _grid_file()
+    vals = None
+    try:
+        z = np.load(f)
+        if float(z["stamp"]) == stamp and z["vals"].shape == (2, len(G_EV), len(G_LA), len(G_SP)):
+            vals = z["vals"]
+    except Exception:
+        vals = None
+    if vals is None:
+        if not build:
+            return None
+        E, A, S = np.meshgrid(G_EV, G_LA, G_SP, indexing="ij")
+        vals = np.zeros((2,) + E.shape)
+        for k, side in enumerate("RL"):
+            x = _model_xwoba(E.ravel(), A.ravel(), S.ravel(), np.full(E.size, side))
+            if x is None:
+                _grid["g"] = None
+                return None
+            x = np.where(np.isfinite(x), x, _fallback_xwoba(E.ravel(), A.ravel()))
+            vals[k] = x.reshape(E.shape)
+        try:
+            f.parent.mkdir(parents=True, exist_ok=True)
+            np.savez_compressed(f, vals=vals, stamp=stamp)
+        except Exception:
+            pass
+    _grid["g"] = {s: RegularGridInterpolator((G_EV, G_LA, G_SP), vals[k], bounds_error=False, fill_value=None)
+                  for k, s in enumerate("RL")}
+    return _grid["g"]
+
+
+def price(ev, la, spray, stand) -> np.ndarray:
+    """Runs per batted ball from our spray-aware xwOBA (read off the price grid), or a Savant-style EV + LA curve
+    if the model isn't trained."""
+    ev, la, spray = (np.atleast_1d(np.asarray(x, float)) for x in (ev, la, spray))
+    st = np.broadcast_to(np.asarray(stand), ev.shape)
+    g = price_grid()
+    if g is None:
         x = _fallback_xwoba(ev, la)
     else:
-        x = np.where(np.isfinite(x), x, _fallback_xwoba(ev, la))
+        pts = np.column_stack([np.clip(ev, G_EV[0], G_EV[-1]), np.clip(la, G_LA[0], G_LA[-1]),
+                               np.clip(spray, G_SP[0], G_SP[-1])])
+        x = np.where(st == "L", g["L"](pts), g["R"](pts))
+        x = np.where(np.isfinite(x), np.clip(x, 0, 2.1), _fallback_xwoba(ev, la))
     return x / WOBA_SCALE - OUT_RUNS
 
 
@@ -197,3 +267,215 @@ def run(season: int, sample: int = 120000) -> dict:
 if __name__ == "__main__":
     for a in sys.argv[1:] or ["2026"]:
         run(int(a))
+
+
+# ============================================================================= timing + arsenal layers (3D sim)
+R_MEET = co.R_BALL + co.R_BAT                   # ball centre within this of the bat's centre line = contact
+BARREL = (-6.0, 22.0)                           # inches along the bat from the sweet spot (- = toward the tip)
+COMMIT_S = 0.175                                # the commit point: ~175 ms before the ball reaches the plate
+WHIFF_RUNS, FOUL_RUNS = -0.06, -0.03            # a swing-and-miss / a foul, on the run scale (average count)
+FRONT_FT = 17 / 12
+# a typical MLB pitch mix by pitcher hand (usage, velo mean/sd, IVB, HB arm side; inches) -- public Savant averages
+MIX = {"FF": (0.33, 94.5, 2.0, 15.5, 8.0), "SI": (0.14, 93.8, 2.0, 8.0, 15.0), "FC": (0.08, 89.0, 2.5, 9.0, -2.0),
+       "SL": (0.14, 85.5, 2.5, 1.5, -4.0), "ST": (0.08, 82.0, 2.5, 1.0, -14.0), "CH": (0.12, 86.0, 2.5, 6.0, 14.0),
+       "CU": (0.08, 79.0, 3.0, -10.0, -8.0), "FS": (0.03, 86.5, 2.0, 3.0, 10.0)}
+PT_COLOR = {"FF": "#d22d49", "SI": "#fe9d00", "FC": "#933f2c", "SL": "#c3bd0e", "ST": "#ddb33a", "CH": "#1dbe3a",
+            "CU": "#00d1ed", "FS": "#3bacac"}
+
+
+def eff_along(lam) -> np.ndarray:
+    """Share of the sweet spot's exit velo at lam inches along the bat from it (a smooth fall-off on both sides;
+    ~90% at 3" -- matches MLB's median efficiency). To be refit once contact spots can be measured."""
+    lam = np.asarray(lam, float)
+    return np.clip(1 - 0.011 * lam ** 2, 0.5, 1.0)
+
+
+def _traj(d: dict, ts) -> np.ndarray:
+    """Pitch centre (scene inches: x, y in front of the plate's front edge, z) at times ts (s, 0 = at y = 50 ft)."""
+    ts = np.asarray(ts, float)
+    a, b, c = 0.5 * d["ay"], d["vy0"], 50 - FRONT_FT
+    tf = (-b - np.sqrt(b * b - 4 * a * c)) / (2 * a)
+    x = d["plate_x"] + d["vx0"] * (ts - tf) + 0.5 * d["ax"] * (ts ** 2 - tf ** 2)
+    z = d["plate_z"] + d["vz0"] * (ts - tf) + 0.5 * d["az"] * (ts ** 2 - tf ** 2)
+    y = 50 + d["vy0"] * ts + 0.5 * d["ay"] * ts ** 2
+    return np.stack([x * 12, (y - FRONT_FT) * 12, z * 12], -1)
+
+
+def _t_front(d: dict, y_in: float = 0.0) -> float:
+    """Time (from y = 50 ft) the pitch reaches y_in inches in front of the plate's front edge."""
+    a, b, c = 0.5 * d["ay"], d["vy0"], 50 - (FRONT_FT + y_in / 12)
+    return float((-b - np.sqrt(b * b - 4 * a * c)) / (2 * a))
+
+
+class Bat:
+    """The swing as a function of time (scene arc + bat direction), interpolated."""
+    def __init__(self, sc: dict):
+        a = np.asarray(sc["arc"], float)
+        self.t, self.P = a[:, -1], a[:, :3]
+        H = np.asarray(sc.get("hands") or [], float)
+        if len(H) != len(a):                                         # the circle: toward its centre
+            O = np.asarray(sc["O"], float)
+            H = O - self.P
+        self.H = H / np.linalg.norm(H, axis=1, keepdims=True)
+        dt = np.gradient(self.t)
+        self.V = np.gradient(self.P, axis=0) / np.where(dt == 0, 1e-6, dt)[:, None] / 17.6     # mph
+
+    def at(self, t):
+        t = np.asarray(t, float)
+        ok = (t >= self.t[0]) & (t <= self.t[-1])
+        f = lambda A: np.stack([np.interp(t, self.t, A[:, k]) for k in range(3)], -1)
+        return f(self.P), f(self.H), f(self.V), ok
+
+
+def meet(bat: Bat, ball_xyz: np.ndarray, ball_t: np.ndarray, ball_v: np.ndarray, stand: str, q: float) -> dict:
+    """Where (and whether) one pitch meets the swing: closest approach of the ball's centre to the bat's centre
+    line (barrel only) over time; contact if within the two radii -> the collision at that spot, priced."""
+    S, H, Vb, ok = bat.at(ball_t)
+    lam = np.clip(((ball_xyz - S) * H).sum(-1), *BARREL)
+    Q = S + H * lam[:, None]
+    dist = np.where(ok, np.linalg.norm(ball_xyz - Q, axis=1), np.inf)
+    i = int(np.argmin(dist))
+    out = {"i": i, "dist": float(dist[i]), "lam": float(lam[i]), "at": ball_xyz[i].round(2).tolist(),
+           "t": float(ball_t[i])}
+    if not np.isfinite(dist[i]) or dist[i] >= R_MEET:
+        out.update(result="whiff", runs=WHIFF_RUNS)
+        return out
+    # signed offset: + when the ball is above the bat's centre (perpendicular to the bat + the relative velocity)
+    a = H[i]
+    u = ball_v[i] - Vb[i]
+    up = u - (u @ a) * a
+    uh = up / (np.linalg.norm(up) or 1)
+    s = np.cross(a, uh)
+    s = s / (np.linalg.norm(s) or 1)
+    if s[2] < 0:
+        s = -s
+    D = float((ball_xyz[i] - Q[i]) @ s)
+    r = co.collide(ball_v[i:i + 1], Vb[i:i + 1], a[None], [D], q)
+    ev = float(r["ev"][0] * eff_along(lam[i]))
+    la, sp_phys = float(r["la"][0]), float(r["spray"][0])
+    spray = float(bearing([ev], [la], [sp_phys], [stand])[0])
+    fair = abs(spray) <= 45 and -20 < la < 80
+    runs = float(price([ev], [la], [spray], [stand])[0]) if fair else FOUL_RUNS
+    out.update(result="fair" if fair else "foul", D=round(D, 2), ev=round(ev, 1), la=round(la, 1),
+               spray=round(spray, 1), runs=round(runs, 3), eff=round(float(eff_along(lam[i])), 3))
+    return out
+
+
+def _pitch_samples(d: dict, t_from: float, t_to: float, n: int = 1600):
+    ts = np.linspace(t_from, t_to, n)
+    xyz = _traj(d, ts)
+    v = np.gradient(xyz, axis=0) / np.gradient(ts)[:, None] / 17.6
+    return ts, xyz, v
+
+
+def timing_layer(sc: dict, pitch: dict, stand: str, q: float, shifts=np.arange(-30, 31, 3)) -> dict:
+    """The pitch he saw vs his swing started earlier / later (ms; + = early): every crossing, priced."""
+    bat = Bat(sc)
+    t_c = _t_front(pitch, sc["contact"][1])                     # when the ball reaches his contact depth
+    ts, xyz, v = _pitch_samples(pitch, t_c - 0.045, t_c + 0.045)
+    rows = []
+    for sh in shifts:
+        m = meet(bat, xyz, ts - t_c + sh / 1000.0, v, stand, q)      # bat clock: early swing = further along
+        m["shift"] = int(sh)
+        rows.append(m)
+    pos = [r for r in rows if r["runs"] > 0]
+    return {"rows": rows, "window_ms": int(len(pos) * (shifts[1] - shifts[0])) if pos else 0}
+
+
+def _mix_sample(hand: str, n: int, rng) -> list:
+    keys = list(MIX)
+    p = np.array([MIX[k][0] for k in keys])
+    picks = rng.choice(keys, n, p=p / p.sum())
+    out = []
+    for k in picks:
+        _, v, vs, ivb, hb = MIX[k]
+        out.append((k, rng.normal(v, vs), rng.normal(ivb, 2.5), rng.normal(hb, 2.5)))
+    return out
+
+
+def arsenal_layer(sc: dict, ref: dict, stand: str, hand: str, q: float, n: int = 160, seed: int = 11,
+                  bat_sc: dict | None = None) -> dict:
+    """The same swing vs pitches that look like the one he's sitting on at the commit point: each sampled pitch is
+    lined up to pass through the reference pitch's commit-point position (+ a little scatter), then breaks on its own;
+    his swing is timed off the commit point for the reference pitch."""
+    from core.bat_path import synth_pitch
+    rng = np.random.default_rng(seed)
+    bat = Bat(bat_sc or sc)
+    t_ref_c = _t_front(ref, sc["contact"][1])
+    t_ref_commit = _t_front(ref, 0.0) - COMMIT_S
+    commit = _traj(ref, [t_ref_commit])[0]
+    tau = t_ref_c - t_ref_commit                                     # commit -> his contact, for the reference pitch
+    rows = []
+    for k, velo, ivb, hb in _mix_sample(hand, n, rng):
+        d = synth_pitch(velo, ivb, hb, hand, ref["plate_x"], ref["plate_z"])
+        tc = _t_front(d, 0.0) - COMMIT_S
+        off = (commit - _traj(d, [tc])[0]) / 12 + np.array([rng.normal(0, 1.5), 0, rng.normal(0, 1.5)]) / 12
+        d = synth_pitch(velo, ivb, hb, hand, ref["plate_x"] + off[0], ref["plate_z"] + off[2])
+        tc = _t_front(d, 0.0) - COMMIT_S
+        ts, xyz, v = _pitch_samples(d, tc, _t_front(d, -40.0), 1400)
+        m = meet(bat, xyz, ts - tc - tau, v, stand, q)
+        line = _traj(d, np.linspace(tc, _t_front(d, -12.0), 24)).round(1).tolist()
+        rows.append({"type": k, "velo": round(float(velo), 1), "line": line, **m})
+    df = pd.DataFrame(rows)
+    by = []
+    for k, g in df.groupby("type"):
+        by.append({"type": k, "n": int(len(g)), "velo": round(float(g["velo"].mean()), 1),
+                   "whiff": round(float((g["result"] == "whiff").mean()), 3),
+                   "foul": round(float((g["result"] == "foul").mean()), 3),
+                   "fair": round(float((g["result"] == "fair").mean()), 3), "runs": round(float(g["runs"].mean()), 3)})
+    by.sort(key=lambda r: -r["n"])
+    eye = _traj(ref, [t_ref_commit - 0.09])[0] + np.array([0.0, 0.0, 3.0])   # behind the commit point, along the pitch
+    return {"rows": rows, "by_type": by, "commit": commit.round(1).tolist(), "eye": eye.round(1).tolist(),
+            "commit_ms": int(COMMIT_S * 1000),
+            "counts": {k: int(v) for k, v in df["result"].value_counts().items()}, "runs100": round(float(df["runs"].mean() * 100), 2)}
+
+
+def layers(sc: dict, sw: pd.DataFrame | None, stand: str, season: int = 2026) -> dict:
+    """Contact + timing + arsenal for a Bat Path scene (its modeled pitch + his measured path)."""
+    from core import path_fit
+    from core.bat_path import synth_pitch
+    m = sc.get("model") or {}
+    q = (co.load(season).get("measured") or {}).get("q", co.Q0)
+    hand = m.get("hand", "R")
+    ref = synth_pitch(m["velo"], m["ivb"], m["hb"], hand, m["px"], m["pz"])
+    bat = Bat(sc)
+    t_c = _t_front(ref, sc["contact"][1])
+    ts, xyz, v = _pitch_samples(ref, t_c - 0.002, t_c + 0.002, 9)
+    S, H, Vb, _ = bat.at(np.zeros(1))
+    vb = v[4]
+    cl = contact_layer(vb, Vb[0], H[0], stand, q)
+    # his balls in play on the map
+    dots = []
+    if sw is not None and len(sw) and {"ev", "la", "match_v", "match_h"} <= set(sw):
+        r = sw[(sw["stand"] == stand) & sw["ev"].notna() & sw["la"].notna() & sw["match_v"].notna()]
+        if len(r):
+            right = stand != "L"
+            rows = pd.DataFrame({"release_speed": r["velo"], "vaa": -r["match_v"],
+                                 "haa": np.where(right, -r["match_h"], r["match_h"]), "bat_speed": r["bat_speed"],
+                                 "attack_angle": r["attack_angle"], "attack_direction": r["attack_direction"],
+                                 "stand": stand, "launch_angle": r["la"], "launch_speed": r["ev"]}).dropna()
+            if len(rows):
+                ax = co.axis_measured(rows["attack_angle"], rows["attack_direction"], rows["stand"],
+                                      r.loc[rows.index, "swing_path_tilt"], path_fit.load(season).get("league"))
+                rows["ax_m"], rows["ay_m"], rows["az_m"] = ax[:, 0], ax[:, 1], ax[:, 2]
+                hc = his_contacts(rows, q)
+                dots = [[round(float(a), 2), round(float(b), 3)] for a, b in zip(hc["D"], hc["eff"])
+                        if a == a and b == b][:400]
+    cl["dots"] = dots
+    tl = timing_layer(sc, ref, stand, q)
+    ar = arsenal_layer(sc, ref, stand, hand, q)
+    # the same swing with an MLB-average path shape (league turning rates), for comparison
+    try:
+        lr = path_fit.load(season).get("league") or {}
+        L = path_fit._league_for(lr, float(sc["read"].get("tilt") or 34))
+        cur = {"center": sc["contact"][1], "lo": sc["contact"][1] - 15, "hi": sc["contact"][1] + 15,
+               **{k: {"slope": (L.get(k) or {}).get("slope", 0.0), "curve": (L.get(k) or {}).get("curve", 0.0)}
+                  for k in ("attack_angle", "attack_direction", "bat_speed")}}
+        v = float(sc["read"]["bat_speed"]) * 17.6
+        rb = path_fit.rebuild(sc["contact"], float(sc["read"]["attack_angle"]), float(sc["read"]["attack_direction"]),
+                              float(sc["read"]["bat_speed"]), stand, cur, -sc["arc"][0][4] * v, sc["arc"][-1][4] * v)
+        avg = arsenal_layer(sc, ref, stand, hand, q, bat_sc={"arc": rb["arc"], "hands": rb["hands"], "O": sc["O"]})
+        ar["mlb_runs100"] = avg["runs100"]
+    except Exception:
+        ar["mlb_runs100"] = None
+    return {"contact": cl, "timing": tl, "arsenal": ar, "pt_color": PT_COLOR, "q": q}

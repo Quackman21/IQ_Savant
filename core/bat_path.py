@@ -389,7 +389,8 @@ def swings(sc: pd.DataFrame, poc: pd.DataFrame | None = None, stance_x: dict | N
         "swing_path_tilt": num("swing_path_tilt"), "velo": num("release_speed"),
         "cy": num(aar.CONTACT_Y).where(made), "cx": num(aar.CONTACT_X).where(made),
         "sz_top": num("sz_top"), "sz_bot": num("sz_bot"), "px_in": 12 * num("plate_x"),
-        "pz_in": 12 * num("plate_z")}, index=sc.index)
+        "pz_in": 12 * num("plate_z"), "ev": num("launch_speed").where(made), "la": num("launch_angle").where(made)},
+        index=sc.index)
     # where he met it (MLB's contact point vs the plate, from the page's point-of-contact layer) + measured plane gaps
     out["pf"] = poc["pf"].reindex(sc.index) if poc is not None and "pf" in poc else np.nan
     for k in ("gap_v", "gap_h", "match_v", "match_h", "vba", "hba"):
@@ -476,7 +477,7 @@ def model_scene(sw: pd.DataFrame, types=None, hand: str = "All", count: str = "A
     except Exception:
         sc["path_src"] = {"kind": "circle"}
     sc["model"] = {**pr, "velo": velo, "velo_src": vsrc, "ivb": ivb, "hb": hb, "shape": desc, "ptype": ptype,
-                   "zone": zone, "hand": ph, "group": group, "depth": depth}
+                   "zone": zone, "hand": ph, "group": group, "depth": depth, "px": px, "pz": pz}
     return sc
 
 
@@ -604,6 +605,12 @@ def group_scenes(sw: pd.DataFrame, groups: list[dict], stand: str, depth_for, st
             sc["name"], sc["color"], sc["gid"] = group_label(g, stand), GROUP_COLORS[k % MAX_GROUPS], k
             sc["series"] = series(sw, g, stand)
             sc["norm"] = norm_for(nm or {}, g.get("types"), g.get("zone"), all_types)
+            if not any(o is not None for o in out):          # the simulator layers, for the first group shown
+                try:
+                    from core import swing_sim
+                    sc["layers"] = swing_sim.layers(sc, sw, stand)
+                except Exception:
+                    sc["layers"] = None
         out.append(sc)
     return out
 
