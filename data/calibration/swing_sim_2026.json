@@ -1,0 +1,30 @@
+{
+ "season": 2026,
+ "q": 0.24,
+ "bearing": {
+  "n": 107934,
+  "physics_mae": 14.97,
+  "model_mae": 6.87,
+  "physics_corr": 0.773,
+  "model_corr": 0.843
+ },
+ "typical_best": {
+  "D": 0.6,
+  "eff": 1.0,
+  "ev": 107.9,
+  "la": 24.6,
+  "runs": 1.294
+ },
+ "league_contacts": {
+  "D_p25_p50_p75": [
+   -0.47,
+   0.28,
+   0.96
+  ],
+  "eff_p25_p50_p75": [
+   0.801,
+   0.897,
+   0.95
+  ]
+ }
+}

@@ -229,6 +229,14 @@ def bat_angles(aa, ad, tilt, stand, pf, depth, px_in, pz_in, stance_x=None) -> t
     lies across the measured path, in the measured plane). vba < 0 = barrel below the hands; hba > 0 = barrel ahead
     of the hands (toward the pitcher), 0 = square."""
     aa = np.asarray(aa, float)
+    lr = _league_rates()
+    if lr:                                                   # the measured path's curve (beat the circle on spray)
+        from core.collision import axis_measured
+        w = axis_measured(aa, ad, stand, tilt, lr)
+        bad = ~np.isfinite(aa + np.asarray(ad, float) + np.asarray(tilt, float))
+        vba = -np.degrees(np.arcsin(np.clip(w[:, 2], -1, 1)))
+        hba = -np.degrees(np.arctan2(w[:, 1], np.abs(w[:, 0])))
+        return np.where(bad, np.nan, vba), np.where(bad, np.nan, hba)
     if len(aa) > 8000:                                       # in chunks: n x 180 x 3 arrays
         args = [np.asarray(x) for x in (aa, ad, tilt, stand, pf, depth, px_in, pz_in)]
         parts = [bat_angles(*[x[i:i + 8000] for x in args], stance_x) for i in range(0, len(aa), 8000)]
@@ -309,7 +317,8 @@ def time_curves_measured(aa, ad, tilt, bs, swing_len, stand, pf, lr: dict, grid=
     Tg = np.gradient(pos, axis=1)
     Tg = Tg / np.linalg.norm(Tg, axis=-1, keepdims=True)
     N = np.gradient(Tg, axis=1)
-    N = N / np.linalg.norm(N, axis=-1, keepdims=True)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        N = N / np.linalg.norm(N, axis=-1, keepdims=True)
     with np.errstate(invalid="ignore"):
         out["vba"] = -np.degrees(np.arcsin(np.clip(N[..., 2], -1, 1)))
         out["hba"] = -np.degrees(np.arctan2(N[..., 1], np.abs(N[..., 0])))
