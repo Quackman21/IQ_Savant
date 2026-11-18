@@ -26,7 +26,8 @@ import pandas as pd
 ABS_FIRST = 2026
 RAW = Path(__file__).resolve().parent.parent / "data" / "raw"
 WORKERS = 6
-COLS = ["game_pk", "at_bat_number", "pitch_number", "overturned", "challenger", "team", "review_type", "feed_call"]
+COLS = ["game_pk", "at_bat_number", "pitch_number", "overturned", "challenger", "team", "review_type", "feed_call",
+        "play_id"]
 
 
 def _is_review(obj) -> bool:
@@ -38,11 +39,12 @@ def parse(pbp: dict, game_pk: int) -> list[dict]:
     rows = []
     for play in pbp.get("allPlays", []):
         ab = int(play.get("about", {}).get("atBatIndex", -1)) + 1               # Statcast at_bat_number is 1-based
-        last_pitch = None
+        last_pitch, last_pid = None, None
         for ev in play.get("playEvents", []):
             det = ev.get("details", {}) or {}
             if ev.get("isPitch"):
                 last_pitch = ev.get("pitchNumber")
+                last_pid = ev.get("playId")
                 rd = ev.get("reviewDetails")
                 if _is_review(rd) or det.get("hasReview"):
                     rd = rd or {}
@@ -50,7 +52,8 @@ def parse(pbp: dict, game_pk: int) -> list[dict]:
                                  "overturned": bool(rd.get("isOverturned")),
                                  "challenger": (rd.get("player") or {}).get("id"),
                                  "team": rd.get("challengeTeamId"), "review_type": rd.get("reviewType"),
-                                 "feed_call": (det.get("call") or {}).get("code") or det.get("code")})
+                                 "feed_call": (det.get("call") or {}).get("code") or det.get("code"),
+                                 "play_id": ev.get("playId")})
             else:                                   # some feeds log the challenge as its own event after the pitch
                 text = f"{det.get('event', '')} {det.get('description', '')}".lower()
                 rd = ev.get("reviewDetails")
@@ -61,7 +64,7 @@ def parse(pbp: dict, game_pk: int) -> list[dict]:
                                  "overturned": bool(rd.get("isOverturned")) or "overturn" in text,
                                  "challenger": (rd.get("player") or {}).get("id") or (ev.get("player") or {}).get("id"),
                                  "team": rd.get("challengeTeamId"), "review_type": rd.get("reviewType"),
-                                 "feed_call": None})
+                                 "feed_call": None, "play_id": last_pid})
     return rows
 
 
@@ -126,9 +129,10 @@ def call_that_stood(df: pd.DataFrame) -> pd.Series:
     return out.reindex(df.index)
 
 
-def original_calls(df: pd.DataFrame, fetch: bool = True) -> pd.DataFrame:
+def original_calls(df: pd.DataFrame, fetch: bool = True, challenges: pd.DataFrame | None = None) -> pd.DataFrame:
     """Statcast pitches -> same rows with description set to the ORIGINAL call on challenged takes,
-    plus abs_challenged / abs_overturned / abs_challenger columns. Seasons before 2026 pass straight through."""
+    plus abs_challenged / abs_overturned / abs_challenger columns. Seasons before 2026 pass straight through.
+    `challenges` (parse() rows, e.g. from one game's feed) is used instead of the season file when given."""
     if df is None or df.empty or "game_date" not in df or not {"game_pk", "at_bat_number", "pitch_number"} <= set(df):
         return df
     yrs = pd.to_datetime(df["game_date"]).dt.year
@@ -137,7 +141,7 @@ def original_calls(df: pd.DataFrame, fetch: bool = True) -> pd.DataFrame:
     for y in sorted(yrs[yrs >= ABS_FIRST].unique()):
         m = yrs == y
         games = pd.to_numeric(df.loc[m, "game_pk"], errors="coerce").dropna().astype(int).unique().tolist()
-        ch = season_challenges(int(y), games) if fetch else (
+        ch = challenges if challenges is not None else season_challenges(int(y), games) if fetch else (
             pd.read_csv(RAW / f"abs_{y}.csv.gz") if (RAW / f"abs_{y}.csv.gz").exists() else pd.DataFrame(columns=COLS))
         if ch.empty:
             continue

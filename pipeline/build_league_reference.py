@@ -133,6 +133,12 @@ def main(argv: list[str]) -> None:
         ev_path = RAW_DIR / f"events_{season}.csv.gz"           # wild pitches / steals (pipeline.fetch_events)
         events = pd.read_csv(ev_path) if ev_path.exists() else None
         league_ref.save_fielding(fielding.daily_table(hm.clean(raw), events=events), season)
+        try:                                            # ABS challenges by player (2026+)
+            if season >= 2026:
+                from core import abs_stats
+                abs_stats.save(hm.clean(raw), season)
+        except Exception as e:
+            print(f"[{season}] ABS table skipped: {type(e).__name__}: {e}", flush=True)
         last_game = str(pd.to_datetime(raw["game_date"]).max().date()) if "game_date" in raw else None
         path = league_ref.save(ref, season, last_game)
         print(f"[{season}] saved {path} ({len(ref):,} rows) in {time.time() - t:.0f}s", flush=True)

@@ -161,4 +161,19 @@ def summary_tabs(primary: str, games: dict[str, int], career_pa: int, career_pit
         tabs.append("Baserunning")
     if pitcher and "Pitching" not in tabs:
         tabs.append("Pitching")
+    tabs.append("ABS")
     return tabs
+
+
+def abs_roles(primary: str, games: dict[str, int], career_pa: int, career_pitch_g: int = 0) -> list[str]:
+    """The ABS tab's sub-tabs: Hitting (anyone who hits), Catching (catchers), Pitching (pitchers only)."""
+    pitcher = primary in ("P", "TWP") or career_pitch_g > 0 or games.get("P", 0) > 0
+    hitter = primary != "P" or career_pa > 0
+    out = []
+    if hitter:
+        out.append("Hitting")
+    if primary == "C" or games.get("C", 0) > 0:
+        out.append("Catching")
+    if pitcher:
+        out.append("Pitching")
+    return out

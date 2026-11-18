@@ -105,14 +105,36 @@ def refresh_weather() -> None:
         print(f"Weather refresh skipped: {e}", flush=True)
 
 
+def refresh_abs() -> None:
+    """ABS challenge tables (2026+): build any season whose table is missing or older than its raw season file,
+    so the profile's ABS tab gets data without waiting for a full league rebuild. Staged for the push."""
+    try:
+        import pandas as pd
+        from core import abs_stats
+        from pipeline import build_league_reference as bl
+        for f in sorted(bl.RAW_DIR.glob("statcast_20[2-9][0-9].csv.gz")):
+            season = int(f.stem.split("_")[1].split(".")[0])
+            if season < 2026:
+                continue
+            out = abs_stats.paths(season)["tab"]
+            if out.exists() and out.stat().st_mtime >= f.stat().st_mtime and not abs_stats.stale(season):
+                continue
+            print(f"ABS {season}: building the challenge table…", flush=True)
+            abs_stats.save(pd.read_csv(f, low_memory=False), season)
+            _git("add", "data/league")
+    except Exception as e:
+        print(f"ABS refresh skipped: {type(e).__name__}: {e}", flush=True)
+
+
 def main(argv: list[str]) -> None:
     if "--check" not in argv:
         refresh_stance()
         refresh_weather()
+        refresh_abs()
     todo = plan()
     if not todo:
         if "--no-push" not in argv and "--check" not in argv and _git("diff", "--cached", "--quiet") != 0:
-            _git("commit", "-m", "Data update: stance board")
+            _git("commit", "-m", "Data update: stance board / weather / ABS")
             _git("push")
         print("Everything is up to date. Nothing to do.")
         return

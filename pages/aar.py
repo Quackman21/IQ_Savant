@@ -3,7 +3,8 @@
 Hitter AAR: header, then ONE interactive panel -- box line, Last 30 PA / Season / MLB season tiles (pick the
 metric), zone / spray / point-of-contact charts, and a single pitch table grouped by plate appearance (every PA
 starts collapsed). Click pitches on any chart or in the table and they light up everywhere; select as many as you
-want. Pitcher / Catcher / Fielder AARs will reuse the same pieces (core/aar.py, ui/aar.py)."""
+want. Report picker (top left): Hitting / Catching / Infield / Outfield -- only the ones he played in this game.
+Catching AAR: core/catch_aar.py + ui/catch_aar.py (every pitch he received, balls in play left out)."""
 from __future__ import annotations
 
 from datetime import date
@@ -29,6 +30,30 @@ def feed(pk: int) -> dict:
 def statcast(pid: int, start: str, end: str) -> pd.DataFrame:
     import pybaseball as pb
     return clean(pb.statcast_batter(start, end, pid))
+
+
+@st.cache_data(ttl=6 * 3600, show_spinner="Pulling the game's pitches…")
+def game_statcast(pk: int, day: str) -> pd.DataFrame:
+    """Every pitch of the game (both teams) -- the catcher's view needs the other team's pitchers' pitches."""
+    import pybaseball as pb
+    df = None
+    try:
+        df = pb.statcast_single_game(pk)
+    except Exception:
+        df = None
+    if df is None or len(df) == 0:
+        try:
+            df = pb.statcast(day, day)
+            df = df[pd.to_numeric(df["game_pk"], errors="coerce").eq(pk)] if df is not None and len(df) else df
+        except Exception:
+            df = None
+    return clean(df) if df is not None else pd.DataFrame()
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def catch_comps(season: int, pid: int, day: str) -> dict:
+    from core import catch_aar
+    return catch_aar.comps(season, pid, day)
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
@@ -86,6 +111,79 @@ team = teams.get(line.get("team_id"), {}).get("name", "") if line else ""
 gm = {**hd, "abbr_away": teams.get(hd["away"], {}).get("abbr", ""),
       "abbr_home": teams.get(hd["home"], {}).get("abbr", ""),
       "date": f"{int(gday[5:7])}/{int(gday[8:10])}/{gday[:4]}"}
+
+# ---- which report (top left): only the ones he played in this game
+from core import catch_aar
+reports = catch_aar.available(f, pid)
+if not reports:
+    show(aar_ui.header_html(pid, who, team, gm, "Player"))
+    st.info("He didn't bat or play the field in this game.")
+    st.stop()
+want = st.query_params.get("view", "")
+view = want if want in reports else reports[0]
+
+
+def _view_changed():
+    st.query_params["view"] = st.session_state.get("aar_view") or view
+
+
+pick_col, _ = st.columns([2, 5])
+with pick_col:
+    if hasattr(st, "segmented_control"):
+        st.segmented_control("Report", reports, default=view, key="aar_view", label_visibility="collapsed",
+                             on_change=_view_changed)
+    else:
+        st.radio("Report", reports, index=reports.index(view), horizontal=True, key="aar_view",
+                 label_visibility="collapsed", on_change=_view_changed)
+view = st.session_state.get("aar_view") or view
+if not team:
+    for side in ("away", "home"):
+        if f"ID{pid}" in f.get("liveData", {}).get("boxscore", {}).get("teams", {}).get(side, {}).get("players", {}):
+            team = teams.get(hd[side], {}).get("name", "")
+
+if view == "Catching":
+    from ui import catch_aar as catch_ui
+    head = aar_ui.header_html(pid, who, team, gm, "Catcher")
+    full = game_statcast(pk, gday)
+    if full.empty or "fielder_2" not in full:
+        show(head)
+        st.info("Statcast hasn't posted this game's pitches yet -- they usually appear within an hour or two of the "
+                "final out.")
+        st.stop()
+    events = catch_aar.runner_events(f, pk)
+    mine = catch_aar.caught(full, pid)
+    cp = catch_aar.pitches(full, f, pid, events)
+    if cp.empty:
+        show(head)
+        st.info("No pitches caught by him in Statcast for this game.")
+        st.stop()
+    from models import catching as cm
+    from models import decisions_iq as dq
+    has_model = cm.load() is not None and dq.load() is not None
+    sc3 = catch_aar.scenes(cp)
+    try:
+        cmp = catch_comps(season, pid, gday)
+    except Exception:
+        cmp = {}
+    components.html(catch_ui.component_html(cp, catch_aar.line(cp, events, mine), header=head, scenes3d=sc3,
+                                            has_model=has_model, comps=cmp),
+                    height=catch_ui.estimate_height(len(cp)), scrolling=True)
+    st.caption("Every pitch he received (balls in play left out). Strike % = an average umpire's chance it's called "
+               "a strike if taken; Framing Runs = (called strike or not - that chance) x what a strike is worth in "
+               "the count (2026+: the umpire's original call, before any ABS challenge). WP/PB % = an average "
+               "catcher's chance a blocking chance (runner on) gets by; Blocking Runs = (that chance - what happened) "
+               "x what a WP/PB costs in that base/out state. Throwing Runs = (caught - CS chance) x the run swing. "
+               "Zone = Statcast's 1-14 zone named from the catcher's side -- arm side = his right (1B side), glove side "
+               "= his left (11-14 are outside the zone); Region = Savant's Heart / Shadow / Chase / Waste + which "
+               "edge, same sides. The cube opens the pitch's flight in "
+               "3D, to the dirt or 3 ft past the middle of the plate.")
+    st.stop()
+
+if view in ("Infield", "Outfield"):
+    show(aar_ui.header_html(pid, who, team, gm, view))
+    st.info(f"The {view} AAR is next on the list -- he played the {view.lower()} in this game, so it'll show "
+            f"up here once it's built.")
+    st.stop()
 
 head = aar_ui.header_html(pid, who, team, gm)
 if not line:

@@ -49,16 +49,19 @@ def test_summary_tabs_by_position():
               {"season": "2020", "position": {"abbreviation": "LF"}, "stat": {"gamesPlayed": 40}}]
     g = position_games(splits, since=2024)
     assert g == {"C": 90, "1B": 12}                      # 2020 LF too old
-    assert summary_tabs("C", g, 2000) == ["Hitting", "Bat Path", "Core 4", "Defense", "Baserunning"]
-    assert summary_tabs("CF", {"CF": 150}, 600) == ["Hitting", "Bat Path", "Core 4", "Defense", "Baserunning"]
+    assert summary_tabs("C", g, 2000) == ["Hitting", "Bat Path", "Core 4", "Defense", "Baserunning", "ABS"]
+    assert summary_tabs("CF", {"CF": 150}, 600) == ["Hitting", "Bat Path", "Core 4", "Defense", "Baserunning", "ABS"]
     from core.defense import defense_tabs
     assert defense_tabs("C", g) == ["Catching", "Infield"]
     assert defense_tabs("SS", {"SS": 100, "2B": 30, "LF": 15}) == ["Infield", "Outfield"]
     assert defense_tabs("CF", {"CF": 150}) == ["Outfield"]
-    assert summary_tabs("P", {"P": 60}, 0) == ["Pitching"]                     # never hit
+    assert summary_tabs("P", {"P": 60}, 0) == ["Pitching", "ABS"]              # never hit
     assert summary_tabs("P", {"P": 60}, 3)[0] == "Pitching" and "Hitting" in summary_tabs("P", {"P": 60}, 3)
     assert "Pitching" not in summary_tabs("SS", {"SS": 100}, 500, 0)            # never pitched
-    assert summary_tabs("SS", {"SS": 100}, 500, 1)[-1] == "Pitching"
+    assert summary_tabs("SS", {"SS": 100}, 500, 1)[-2:] == ["Pitching", "ABS"]
     assert summary_tabs("TWP", {"P": 20}, 1500, 20)[0] == "Pitching"
     assert "Hitting" in summary_tabs("TWP", {"P": 20}, 1500)
-    assert summary_tabs("DH", {}, 600) == ["Hitting", "Bat Path", "Core 4", "Baserunning"]
+    assert summary_tabs("DH", {}, 600) == ["Hitting", "Bat Path", "Core 4", "Baserunning", "ABS"]
+    from core.player import abs_roles
+    assert abs_roles("C", g, 2000) == ["Hitting", "Catching"] and abs_roles("P", {"P": 60}, 0) == ["Pitching"]
+    assert abs_roles("SS", {"SS": 100}, 500) == ["Hitting"]
