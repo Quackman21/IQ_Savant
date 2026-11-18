@@ -381,7 +381,8 @@ def missed_calls(orig: pd.DataFrame, re: dict | None, st: pd.DataFrame | None, t
     if not tab.empty:
         cc = tab[key + ["role", "overturned"]].rename(columns={"role": "challenged_role"}).drop_duplicates(key)
         out = out.drop(columns=["challenged_role", "overturned"], errors="ignore").merge(cc, on=key, how="left")
-    out["overturned"] = out.get("overturned", pd.Series(False, index=out.index)).fillna(False).astype(bool)
+    ov = out["overturned"] if "overturned" in out else pd.Series(False, index=out.index)
+    out["overturned"] = ov.map(lambda v: bool(v) if v is not None and v == v else False).astype(bool)
     out["challenged_role"] = out.get("challenged_role", pd.Series("", index=out.index)).fillna("")
     out["game_date"] = out["game_date"].astype(str).str[:10] if "game_date" in out else ""
     for c in MISS_COLS:
@@ -585,7 +586,7 @@ def save(raw: pd.DataFrame, season: int, ch: pd.DataFrame | None = None) -> dict
     values = count_values(raw)
     re = re288(raw)
     try:
-        orig = abs_calls.original_calls(raw, challenges=ch)          # the umpire's calls, before any overturn
+        orig = abs_calls.original_calls_from(raw, ch)          # the umpire's calls, before any overturn
     except Exception:
         orig = raw
     tab = table(raw, ch, re, values)

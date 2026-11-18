@@ -75,7 +75,7 @@ def test_missed_calls_capture_and_above_average():
     t, st = ab.attach_left(ab.table(raw, CH), raw)
     t = ab.add_cost(t, {2: 0.001, 1: 0.003})
     from core import abs_calls
-    mc = ab.missed_calls(abs_calls.original_calls(raw, challenges=CH), None, st, t)
+    mc = ab.missed_calls(abs_calls.original_calls_from(raw, CH), None, st, t)
     # the ball in the zone (pitch 4) is a missed call against the defense; pitch 1 isn't -- the umpire's ORIGINAL
     # call there was a strike (the hitter got it overturned to a ball, which the final data shows)
     assert mc["against"].tolist() == ["Defense"] and mc["challenged_role"].tolist() == [""]

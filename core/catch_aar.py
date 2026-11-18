@@ -222,7 +222,7 @@ def _abs(d: pd.DataFrame, ch: pd.DataFrame | None, pid: int) -> tuple[pd.DataFra
     dd = d
     try:
         from core import abs_calls
-        dd = abs_calls.original_calls(d, challenges=ch) if ch is not None else abs_calls.original_calls(d)
+        dd = abs_calls.original_calls_from(d, ch) if ch is not None else abs_calls.original_calls(d)
     except Exception:
         return d, out
     if "abs_challenged" not in dd:

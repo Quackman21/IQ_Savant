@@ -129,10 +129,43 @@ def call_that_stood(df: pd.DataFrame) -> pd.Series:
     return out.reindex(df.index)
 
 
-def original_calls(df: pd.DataFrame, fetch: bool = True, challenges: pd.DataFrame | None = None) -> pd.DataFrame:
+def original_calls(df: pd.DataFrame, fetch: bool = True) -> pd.DataFrame:
     """Statcast pitches -> same rows with description set to the ORIGINAL call on challenged takes,
-    plus abs_challenged / abs_overturned / abs_challenger columns. Seasons before 2026 pass straight through.
-    `challenges` (parse() rows, e.g. from one game's feed) is used instead of the season file when given."""
+    plus abs_challenged / abs_overturned / abs_challenger columns. Seasons before 2026 pass straight through."""
+    if df is None or df.empty or "game_date" not in df or not {"game_pk", "at_bat_number", "pitch_number"} <= set(df):
+        return df
+    yrs = pd.to_datetime(df["game_date"]).dt.year
+    out = df.copy()
+    out["abs_challenged"], out["abs_overturned"], out["abs_challenger"] = False, False, np.nan
+    for y in sorted(yrs[yrs >= ABS_FIRST].unique()):
+        m = yrs == y
+        games = pd.to_numeric(df.loc[m, "game_pk"], errors="coerce").dropna().astype(int).unique().tolist()
+        ch = season_challenges(int(y), games) if fetch else (
+            pd.read_csv(RAW / f"abs_{y}.csv.gz") if (RAW / f"abs_{y}.csv.gz").exists() else pd.DataFrame(columns=COLS))
+        if ch.empty:
+            continue
+        key = ["game_pk", "at_bat_number", "pitch_number"]
+        sub = df.loc[m, key].astype(int).reset_index().merge(ch.astype({k: int for k in key}), on=key, how="inner")
+        if sub.empty:
+            continue
+        idx = sub["index"].values
+        out.loc[idx, "abs_challenged"] = True
+        out.loc[idx, "abs_overturned"] = sub["overturned"].astype(bool).values
+        # numbers, not an object array: pandas 3 refuses object values in a float column (the v20.0 2026 crash)
+        out.loc[idx, "abs_challenger"] = pd.to_numeric(sub["challenger"], errors="coerce").astype(float).values
+        taken = out.loc[idx, "description"].isin(["called_strike", "ball", "blocked_ball"])
+        idx = idx[taken.values]
+        stood = call_that_stood(df.loc[m]).reindex(idx)
+        stood = stood.fillna(out.loc[idx, "description"].map({"called_strike": "S", "ball": "B", "blocked_ball": "B"}))
+        over = out.loc[idx, "abs_overturned"].astype(bool)
+        orig = np.where(over, stood.map({"S": "B", "B": "S"}), stood)
+        out.loc[idx, "description"] = pd.Series(orig, index=idx).map({"S": "called_strike", "B": "ball"}).values
+    return out
+
+
+def original_calls_from(df: pd.DataFrame, challenges: pd.DataFrame | None, fetch: bool = True) -> pd.DataFrame:
+    """original_calls() with the challenges handed in (e.g. one game's, from its feed) instead of the season file.
+    Kept separate so original_calls' source -- part of the league reference signature -- doesn't change."""
     if df is None or df.empty or "game_date" not in df or not {"game_pk", "at_bat_number", "pitch_number"} <= set(df):
         return df
     yrs = pd.to_datetime(df["game_date"]).dt.year
