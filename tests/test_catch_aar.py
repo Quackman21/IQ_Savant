@@ -98,3 +98,11 @@ def test_hover_comps_are_per_game_and_rates_pooled():
     assert dict(c["throwing"]["CS %"])["Season"] == "33%" and dict(c["blocking"]["Opportunities"])["Season"] == "8.0"
     assert dict(c["total"]["Catcher runs"])["Season"] == "0.00"
     assert dict(c["framing"]["_games"]) == {"Season": 2, "Last 30 days": 1}
+
+
+def test_framing_zone_split_matches_savant():
+    df = pd.DataFrame({"plate_x": [0.0, 0.0, 0.0, -0.75, 0.75, 0.75, -0.6, 1.6],
+                       "plate_z": [2.5, 3.5, 1.5, 2.5, 2.5, 3.6, 1.6, 2.5], "sz_top": 3.5, "sz_bot": 1.5})
+    assert ca.framing_zone(df).tolist() == ["Heart", "Shadow - Top", "Shadow - Bottom", "Shadow - Left",
+                                            "Shadow - Right", "Shadow - Top Right", "Shadow - Bottom Left",
+                                            "Chase / Waste"]

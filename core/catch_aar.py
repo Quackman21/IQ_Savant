@@ -124,6 +124,26 @@ def region(df: pd.DataFrame) -> pd.Series:
     return pd.Series(out, index=df.index)
 
 
+FRAME_ZONES = ["Heart", "Shadow - Top Left", "Shadow - Top", "Shadow - Top Right", "Shadow - Left", "Shadow - Right",
+               "Shadow - Bottom Left", "Shadow - Bottom", "Shadow - Bottom Right", "Chase / Waste"]
+
+
+def framing_zone(df: pd.DataFrame) -> pd.Series:
+    """Savant's catcher-framing split (catcher's view), with the Shadow band in eight pieces: the four edges and the
+    four corners (past the heart's edge both ways). Heart inside, Chase / Waste outside.
+    Left = the catcher's left (his glove side), Right = his right (arm side)."""
+    px, pz = _num(df, "plate_x"), _num(df, "plate_z")
+    top, bot = _num(df, "sz_top"), _num(df, "sz_bot")
+    xn = px / (17 / 24)
+    zn = (pz - (top + bot) / 2) / ((top - bot) / 2)
+    r = np.maximum(xn.abs(), zn.abs())
+    v = np.where(zn >= 0.67, "Top", np.where(zn <= -0.67, "Bottom", ""))
+    h = np.where(xn >= 0.67, "Right", np.where(xn <= -0.67, "Left", ""))
+    edge = ["Shadow - " + " ".join(p for p in (a, b) if p) for a, b in zip(v, h)]
+    out = np.select([r < 0.67, r < 1.33, r >= 1.33], ["Heart", np.array(edge, dtype=object), "Chase / Waste"], "")
+    return pd.Series(out, index=df.index)
+
+
 # ----------------------------------------------------------------------------- the ball's flight
 def _t_at(vy0, ay, y_ft):
     a, b, c = 0.5 * ay, vy0, 50 - y_ft
@@ -298,7 +318,7 @@ def pitches(sc: pd.DataFrame, feed: dict | None, pid: int, events: pd.DataFrame 
         "px": _num(d, "plate_x"), "pz": _num(d, "plate_z"), "sz_top": _num(d, "sz_top"), "sz_bot": _num(d, "sz_bot"),
         "gz": _num(d, "zone").astype("Int64"),
         "zone": [gameday_name(z, h) if pd.notna(z) else "" for z, h in zip(_num(d, "zone"), _txt(d, "p_throws"))],
-        "region": region(d), "take": desc.isin({"called_strike", "ball"}), "strike": desc.eq("called_strike"),
+        "region": region(d), "fzone": framing_zone(d), "take": desc.isin({"called_strike", "ball"}), "strike": desc.eq("called_strike"),
         "swing": desc.isin(hm.SWINGS),
         "on": on, "gx": gd["gx"], "gy": gd["gy"], "dirt": gd["dirt"].astype(bool),
     })
@@ -356,7 +376,7 @@ def _clean(v, nd=3):
 def _read(r: dict) -> dict:
     return {"ptype": r.get("ptype") or "", "velo": _clean(r.get("velo"), 1), "count": r.get("count"),
             "result": r.get("result") or "", "play": r.get("play") or "", "pitcher": r.get("pitcher") or "",
-            "batter": r.get("batter") or "", "zone": r.get("zone") or "", "region": r.get("region") or "",
+            "batter": r.get("batter") or "", "zone": r.get("zone") or "", "region": r.get("fzone") or "",
             "hb": _clean(r.get("hb"), 1), "ivb": _clean(r.get("ivb"), 1), "strike_prob": _clean(r.get("strike_prob")),
             "frame_runs": _clean(r.get("frame_runs")), "wp_chance": _clean(r.get("wp_chance")),
             "block_runs": _clean(r.get("block_runs")), "throw_runs": _clean(r.get("throw_runs")),

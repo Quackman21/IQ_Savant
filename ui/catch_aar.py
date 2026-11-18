@@ -152,7 +152,7 @@ def ground_svg(rows: list[dict]) -> str:
 
 # ----------------------------------------------------------------------------- the rows the table / tiles run on
 ROW_KEYS = ["n", "video", "inning", "inn", "count", "on", "pitcher", "p_throws", "batter", "result", "play", "ptype",
-            "pgroup", "velo", "hb", "ivb", "zone", "gz", "region", "strike_prob", "frame_runs", "extra", "take",
+            "pgroup", "velo", "hb", "ivb", "zone", "gz", "fzone", "fz", "region", "strike_prob", "frame_runs", "extra", "take",
             "strike", "swing", "opp", "dirt", "wp_chance", "got_by", "block_runs", "tier", "steal", "cs_chance", "cs",
             "throw_runs", "catch_runs", "px", "pz", "gx", "gy", "orig_call", "has3d"]
 
@@ -166,6 +166,9 @@ def rows(p: pd.DataFrame, scenes3d: dict | None = None) -> list[dict]:
             v = r.get(k)
             if k == "inn":
                 v = f'{r.get("half")}{r.get("inning")}'
+            elif k == "fz":
+                from core.catch_aar import FRAME_ZONES
+                v = FRAME_ZONES.index(r.get("fzone")) if r.get("fzone") in FRAME_ZONES else None
             elif k == "has3d":
                 v = int(r["n"]) in s3
             elif k in ("take", "strike", "swing", "opp", "dirt"):
@@ -224,6 +227,19 @@ tr.crow.sel td{{background:#fff4c7!important;box-shadow:inset 0 1px 0 #ffd34d,in
 .note{{font-size:11px;color:{MUTED};margin-top:6px;line-height:1.5}}
 td.rc{{font-variant-numeric:tabular-nums}}
 #tiles .tile{{cursor:help}} #tiles .tile:hover{{border-color:{TEAL}}}
+#zp svg{{width:170px;display:block;margin:2px auto 0}}
+#zp .zc polygon,#zp .zc rect{{fill:#eef1f3;stroke:#fff;stroke-width:2;cursor:pointer}}
+#zp .zc.on polygon,#zp .zc.on rect{{fill:{TEAL}}} #zp .zc:hover polygon,#zp .zc:hover rect{{stroke:{INK}}}
+#zp .zc.off polygon,#zp .zc.off rect{{fill:#f8f9fa;cursor:default}} #zp .zc.off{{pointer-events:none}}
+#zp text{{pointer-events:none;text-anchor:middle}} #zp .zn{{font:700 12px system-ui;fill:{INK}}}
+#zp .zk{{font:600 9.5px system-ui;fill:{MUTED}}} #zp .zc.on .zn{{fill:#fff}} #zp .zc.on .zk{{fill:#dbeef1}}
+#zp .zc.off .zn{{fill:#c4ccd2}} #zp .zc path{{fill:#eef1f3;stroke:#fff;stroke-width:2;cursor:pointer}}
+#zp .zc.on path{{fill:#e8a33d}} #zp .zc.on polygon,#zp .zc.on rect{{fill:#e8a33d}}
+#zp .zc.on .zk{{fill:#fff3df}} #zp .zc.off path{{fill:#f8f9fa}}
+#zp .zs{{display:flex;justify-content:space-between;font-size:10.5px;color:{MUTED};margin:4px 2px}}
+#zp .zb{{display:flex;gap:6px;justify-content:center}} #zp .zb button{{font:600 11.5px system-ui;border:1px solid {LINE};
+  background:#fff;border-radius:6px;padding:3px 9px;cursor:pointer}}
+tr.crow td{{user-select:none}}
 #ctip{{position:absolute;z-index:45;background:#fff;border:1px solid {LINE};border-radius:9px;padding:8px 10px;
   box-shadow:0 8px 24px rgba(0,0,0,.16);font:12.5px system-ui;min-width:210px;display:none;pointer-events:none}}
 #ctip.on{{display:block}} #ctip .th{{font:700 12.5px system-ui;margin-bottom:5px}}
@@ -250,8 +266,8 @@ const COLS = [
   {k: 'velo', l: 'Velo', t: 'num', a: 'r', f: 1},
   {k: 'hb', l: 'HB', t: 'num', a: 'r', f: 1},
   {k: 'ivb', l: 'IVB', t: 'num', a: 'r', f: 1},
-  {k: 'zone', l: 'Zone', t: 'cat', a: 'l', by: 'gz'},
-  {k: 'region', l: 'Region', t: 'cat', a: 'l'},
+  {k: 'fzone', l: 'Zone', t: 'cat', a: 'l', by: 'fz'},
+  {k: 'zone', l: 'Gameday Zone', t: 'cat', a: 'l', by: 'gz'},
   {k: 'strike_prob', l: 'Strike %', t: 'num', a: 'r', f: 'pct'},
   {k: 'frame_runs', l: 'Framing Runs', t: 'num', a: 'r', f: 'runs'},
   {k: 'wp_chance', l: 'WP/PB %', t: 'num', a: 'r', f: 'pct1'},
@@ -366,7 +382,7 @@ function tiles(live) {
   const t = [];
   const M = v => HAS_MODEL ? v : '–';
   if (m === 'framing') {
-    const tk = live.filter(r => r.take), sh = tk.filter(r => /shadow/i.test(r.region || ''));
+    const tk = live.filter(r => r.take), sh = tk.filter(r => String(r.fzone || '').startsWith('Shadow'));
     const k = tk.filter(r => r.strike).length, e = S(tk, 'strike_prob'), ex = S(tk, 'extra');
     const shk = sh.filter(r => r.strike).length, she = S(sh, 'strike_prob');
     t.push(['Takes', tk.length], ['Called strikes', k], ['Expected strikes', M(e.toFixed(1))], ['Extra strikes', M(signed(ex))],
@@ -429,6 +445,8 @@ function openMenu(th) {
       const ra = ROWS.find(r => disp(r, c.k) === a), rb = ROWS.find(r => disp(r, c.k) === b);
       const x = ra[c.by || c.k], y = rb[c.by || c.k]; return ok(x) && ok(y) && x !== y ? (x < y ? -1 : 1) : a.localeCompare(b); });
     const cur = filt[c.k];
+    if (c.k === 'zone') h += zonePicker(cnt);
+    if (c.k === 'fzone') h += framePicker(cnt);
     h += `<div class="sec"><input type="text" id="mq" placeholder="Search"><div class="vals"><label><input type="checkbox" id="mall"` +
          `${!cur ? ' checked' : ''}> <b>(Select all)</b></label>` + vals.map(v => `<label class="mv"><input type="checkbox" value="${v.replace(/"/g, '&quot;')}"` +
          `${!cur || cur.has(v) ? ' checked' : ''}> ${v.replace(/</g, '&lt;')}<span class="c">${cnt[v] || 0}</span></label>`).join('') + '</div></div>';
@@ -449,6 +467,18 @@ function openMenu(th) {
       menu.querySelector('#mall').checked = on.length === boxes().length; render(); };
     boxes().forEach(b => b.onchange = sync);
     menu.querySelector('#mall').onchange = e => { boxes().forEach(b => b.checked = e.target.checked); sync(); };
+    if (c.k === 'zone' || c.k === 'fzone') {
+      const box = v => boxes().find(b => b.value === v);
+      const paint = () => menu.querySelectorAll('#zp .zc').forEach(z => {
+        const b = box(z.dataset.v); z.classList.toggle('on', !!(b && b.checked)); });
+      menu.querySelectorAll('#zp .zc').forEach(z => z.onclick = () => {
+        const b = box(z.dataset.v); if (!b) return; b.checked = !b.checked; sync(); paint(); });
+      menu.querySelector('#zall').onclick = () => { boxes().forEach(b => b.checked = true); sync(); paint(); };
+      menu.querySelector('#znone').onclick = () => { boxes().forEach(b => b.checked = false); sync(); paint(); };
+      menu.querySelector('#mall').addEventListener('change', paint);
+      boxes().forEach(b => b.addEventListener('change', paint));
+      paint();
+    }
     menu.querySelector('#mq').oninput = e => { const q = e.target.value.toLowerCase();
       menu.querySelectorAll('label.mv').forEach(l => l.style.display = l.textContent.toLowerCase().includes(q) ? '' : 'none'); };
   } else {
@@ -459,17 +489,80 @@ function openMenu(th) {
   resize();
 }
 function closeMenu() { menu.classList.remove('on'); }
+// Statcast's zones as a picture (catcher's view): 1-9 the strike zone, 11-14 the four corners outside it
+// Savant's framing split as one picture (catcher's view): click a piece to show / hide it
+function framePicker(cnt) {
+  const R = (x, y, w, h) => `<rect x="${x}" y="${y}" width="${w}" height="${h}"/>`;
+  const P = {'Heart': [R(60, 60, 80, 80), 100, 98],
+    'Shadow - Top Left': [R(20, 20, 40, 40), 40, 38], 'Shadow - Top': [R(60, 20, 80, 40), 100, 38],
+    'Shadow - Top Right': [R(140, 20, 40, 40), 160, 38], 'Shadow - Left': [R(20, 60, 40, 80), 40, 98],
+    'Shadow - Right': [R(140, 60, 40, 80), 160, 98], 'Shadow - Bottom Left': [R(20, 140, 40, 40), 40, 158],
+    'Shadow - Bottom': [R(60, 140, 80, 40), 100, 158], 'Shadow - Bottom Right': [R(140, 140, 40, 40), 160, 158],
+    'Chase / Waste': ['<path fill-rule="evenodd" d="M0,0H200V200H0Z M20,20V180H180V20Z"/>', 100, 11]};
+  const short = {'Heart': 'Heart', 'Shadow - Top Left': 'Top L', 'Shadow - Top': 'Top', 'Shadow - Top Right': 'Top R',
+                 'Shadow - Left': 'Left', 'Shadow - Right': 'Right', 'Shadow - Bottom Left': 'Bot L',
+                 'Shadow - Bottom': 'Bottom', 'Shadow - Bottom Right': 'Bot R', 'Chase / Waste': 'Chase / Waste'};
+  const g = Object.entries(P).map(([v, [shape, x, y]]) => {
+    const n = cnt[v] || 0, has = ROWS.some(r => r.fzone === v);
+    return `<g class="zc${has ? '' : ' off'}" data-v="${v}"><title>${v} · ${n} pitch${n === 1 ? '' : 'es'}</title>${shape}` +
+      `` + (v === 'Chase / Waste' ? `<text x="${x}" y="${y + 3}" class="zn">Chase / Waste <tspan class="zk">${n}</tspan></text></g>`
+      : `<text x="${x}" y="${y}" class="zn">${short[v]}</text><text x="${x}" y="${y + 12}" class="zk">${n}</text></g>`);
+  }).join('');
+  return `<div class="sec" id="zp"><svg viewBox="-2 -2 204 204">${g}` +
+    `<rect x="78" y="196" width="44" height="3" fill="#c9d1d6"/></svg>` +
+    `<div class="zs"><span>← glove side</span><span>catcher's view</span><span>arm side →</span></div>` +
+    `<div class="zb"><button id="zall">Select all</button><button id="znone">Clear all</button></div></div>`;
+}
+function zonePicker(cnt) {
+  const name = {};
+  ROWS.forEach(r => { if (ok(r.gz)) name[r.gz] = disp(r, 'zone'); });
+  const cells = [];
+  const cell = (z, shape, lx, ly) => {
+    const v = name[z], n = v ? (cnt[v] || 0) : 0;
+    cells.push(`<g class="zc${v ? '' : ' off'}" data-v="${v ? v.replace(/"/g, '&quot;') : ''}"><title>${v || z + ' · no pitches'}</title>${shape}` +
+      `<text x="${lx}" y="${ly}" class="zn">${z}</text><text x="${lx}" y="${ly + 13}" class="zk">${n || ''}</text></g>`);
+  };
+  const poly = p => `<polygon points="${p}"/>`;
+  cell(11, poly('0,0 100,0 100,40 40,40 40,100 0,100'), 20, 22);
+  cell(12, poly('100,0 200,0 200,100 160,100 160,40 100,40'), 180, 22);
+  cell(13, poly('0,100 40,100 40,160 100,160 100,200 0,200'), 20, 180);
+  cell(14, poly('200,100 200,200 100,200 100,160 160,160 160,100'), 180, 180);
+  for (let z = 1; z <= 9; z++) {
+    const x = 40 + ((z - 1) % 3) * 40, y = 40 + Math.floor((z - 1) / 3) * 40;
+    cell(z, `<rect x="${x}" y="${y}" width="40" height="40"/>`, x + 20, y + 19);
+  }
+  return `<div class="sec" id="zp"><svg viewBox="-2 -2 204 204">${cells.join('')}</svg>` +
+    `<div class="zs"><span>← glove side</span><span>catcher's view</span><span>arm side →</span></div>` +
+    `<div class="zb"><button id="zall">Select all</button><button id="znone">Clear all</button></div></div>`;
+}
 document.addEventListener('click', e => { if (menu.classList.contains('on') && !menu.contains(e.target) && !e.target.closest('th')) closeMenu(); });
 function wire() {
   document.querySelectorAll('#tbl th').forEach(th => th.onclick = e => { e.stopPropagation();
     if (menu.classList.contains('on') && menu.dataset.k === th.dataset.k) closeMenu(); else openMenu(th); });
   document.querySelectorAll('tr.crow').forEach(tr => tr.onclick = e => {
     if (e.target.closest('a') || e.target.closest('button')) return;
-    const n = +tr.dataset.n; sel.has(n) ? sel.delete(n) : sel.add(n); render(); });
+    const n = +tr.dataset.n; sel.has(n) ? sel.delete(n) : sel.add(n); paintSel(); });
   document.querySelectorAll('button.s3d').forEach(b => b.onclick = e => { e.stopPropagation(); open3d(b.dataset.n, b); });
 }
-document.querySelectorAll('g.pt').forEach(g => g.addEventListener('click', () => {
-  const n = +g.dataset.n; sel.has(n) ? sel.delete(n) : sel.add(n); render(); }));
+document.querySelectorAll('g.pt').forEach(g => {
+  g.addEventListener('click', () => { const n = +g.dataset.n; sel.has(n) ? sel.delete(n) : sel.add(n); paintSel(); });
+  g.addEventListener('dblclick', () => playVideo(+g.dataset.n));
+});
+function paintSel() {
+  document.querySelectorAll('tr.crow').forEach(tr => tr.classList.toggle('sel', sel.has(+tr.dataset.n)));
+  document.querySelectorAll('g.pt').forEach(g => g.classList.toggle('sel', sel.has(+g.dataset.n)));
+  root.classList.toggle('has-sel', sel.size > 0);
+  document.getElementById('seln').textContent = sel.size ? sel.size + ' selected' : '';
+}
+// double-click a pitch (row or chart dot): play its video
+function playVideo(n) {
+  const r = BYN[n]; if (!r || !r.video) return;
+  window.open('https://baseballsavant.mlb.com/sporty-videos?playId=' + r.video, '_blank', 'noopener');
+}
+document.getElementById('tbl').addEventListener('dblclick', e => {
+  if (e.target.closest('a') || e.target.closest('button') || e.target.closest('th')) return;
+  const tr = e.target.closest('tr.crow'); if (tr) { window.getSelection().removeAllRanges(); playVideo(+tr.dataset.n); }
+});
 document.querySelectorAll('.pchip').forEach(b => b.onclick = () => {
   const all = [...document.querySelectorAll('.pchip')].map(x => x.dataset.v);
   let cur = filt.pitcher ? new Set(filt.pitcher) : new Set(all);
@@ -665,7 +758,7 @@ def component_html(p: pd.DataFrame, line: dict, header: str = "", scenes3d: dict
            f'<div class="qf"><span class="lab">Pitchers</span>{pch}<span class="sep"></span>'
            f'<span class="lab">Show</span>{show}<span class="sep"></span><span id="fls"></span></div>'
            '<div class="qf"><span class="faint">Click any column header to sort it or filter it by its values '
-           '(Zone, Result, Pitcher …) or a range (Velo, Strike %, runs …). Balls in play are left out.</span></div>')
+           '(Zone, Result, Pitcher …) or a range (Velo, Strike %, runs …). Double-click a pitch to play its video. Balls in play are left out.</span></div>')
     data = json.dumps(rs).replace("</", "<\\/")
     s3 = json.dumps({str(k): v for k, v in scenes3d.items()}).replace("</", "<\\/")
     cj = json.dumps(comps or {}).replace("</", "<\\/")
