@@ -768,6 +768,18 @@ def bat_path_view(sc: pd.DataFrame, season: int, poc: pd.DataFrame | None = None
         show(compare_html(scenes))
 
 
+@st.cache_data(ttl=3600, show_spinner=False)
+def abs_load(season: int):
+    from core import abs_stats
+    return abs_stats.load(season)
+
+
+@st.cache_data(ttl=7 * 24 * 3600, show_spinner="Finding the videos…")
+def abs_play_ids(rows: pd.DataFrame) -> pd.DataFrame:
+    from core import abs_stats, mlb_api
+    return abs_stats.fill_play_ids(rows, mlb_api.get_play_by_play)
+
+
 main = seg("Section", ["Summary", "Stats", "Game Log", "Sandbox"], default="Summary",
            key="pp_main", collapsed=True) or "Summary"
 
@@ -1342,6 +1354,50 @@ if main == "Summary":
         st.caption("Command and miss distance need the intended location (video); spin efficiency and seam-shifted "
                    "movement need seam orientation (video). Grades, expected rates and clusters fill in once "
                    "pipeline.train_pitch_models has run.")
+
+    # ---------------------------------------------------------------- ABS
+    elif sub == "ABS":
+        from core import abs_stats
+        from core.player import abs_roles
+        from ui import abs_view
+        roles = abs_roles(primary, games_at, career_pa, career_pitch_g)
+        abs_years = abs_stats.seasons()
+        if not abs_years:
+            st.info("No ABS challenge data built yet. On the computer with the season files, run "
+                    "`python -m core.abs_stats 2026` (the league build does it too), then sync.")
+        else:
+            cc = st.columns([1.3, 5])
+            with cc[0]:
+                abs_season = st.selectbox("Season", list(reversed(abs_years)), key="abs_season")
+            all_ = {y: abs_load(y) for y in abs_years}
+            tab_, pl_, _ = all_[abs_season]
+            tabs = st.tabs(roles)
+            for tb, role in zip(tabs, roles):
+                with tb:
+                    rows = []
+                    for y in abs_years:
+                        t_y, pl_y, _ = all_[y]
+                        mine_y = t_y[pd.to_numeric(t_y["challenger"], errors="coerce").eq(pid) & t_y["role"].eq(role)] \
+                            if not t_y.empty else t_y
+                        g_y = pl_y[pd.to_numeric(pl_y["player"], errors="coerce").eq(pid) & pl_y["role"].eq(role)] \
+                            if not pl_y.empty else pl_y
+                        games_y = float(g_y["games"].sum()) if not g_y.empty else 0.0
+                        if games_y or not mine_y.empty:
+                            rows.append((str(y), abs_stats.summarize(games_y, mine_y)))
+                    ref = abs_stats.league(pl_).get(role, {})
+                    if not rows:
+                        st.caption(f"No {role.lower()} games in the ABS seasons.")
+                        continue
+                    show(abs_view.summary_html(rows, ref, role))
+                    mine = tab_[pd.to_numeric(tab_["challenger"], errors="coerce").eq(pid) & tab_["role"].eq(role)] \
+                        if not tab_.empty else tab_
+                    if mine.empty:
+                        st.caption(f"No {role.lower()} challenges in {abs_season}.")
+                        continue
+                    mine = abs_play_ids(mine)
+                    import streamlit.components.v1 as components
+                    components.html(abs_view.zone_html(mine, role, "pitcher" if role == "Pitching" else "catcher"),
+                                    height=560, scrolling=False)
 
 # =============================================================================
 # STATS

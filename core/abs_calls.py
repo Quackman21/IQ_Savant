@@ -26,7 +26,8 @@ import pandas as pd
 ABS_FIRST = 2026
 RAW = Path(__file__).resolve().parent.parent / "data" / "raw"
 WORKERS = 6
-COLS = ["game_pk", "at_bat_number", "pitch_number", "overturned", "challenger", "team", "review_type", "feed_call"]
+COLS = ["game_pk", "at_bat_number", "pitch_number", "overturned", "challenger", "team", "review_type", "feed_call",
+        "play_id"]
 
 
 def _is_review(obj) -> bool:
@@ -38,11 +39,12 @@ def parse(pbp: dict, game_pk: int) -> list[dict]:
     rows = []
     for play in pbp.get("allPlays", []):
         ab = int(play.get("about", {}).get("atBatIndex", -1)) + 1               # Statcast at_bat_number is 1-based
-        last_pitch = None
+        last_pitch, last_pid = None, None
         for ev in play.get("playEvents", []):
             det = ev.get("details", {}) or {}
             if ev.get("isPitch"):
                 last_pitch = ev.get("pitchNumber")
+                last_pid = ev.get("playId")
                 rd = ev.get("reviewDetails")
                 if _is_review(rd) or det.get("hasReview"):
                     rd = rd or {}
@@ -50,7 +52,8 @@ def parse(pbp: dict, game_pk: int) -> list[dict]:
                                  "overturned": bool(rd.get("isOverturned")),
                                  "challenger": (rd.get("player") or {}).get("id"),
                                  "team": rd.get("challengeTeamId"), "review_type": rd.get("reviewType"),
-                                 "feed_call": (det.get("call") or {}).get("code") or det.get("code")})
+                                 "feed_call": (det.get("call") or {}).get("code") or det.get("code"),
+                                 "play_id": ev.get("playId")})
             else:                                   # some feeds log the challenge as its own event after the pitch
                 text = f"{det.get('event', '')} {det.get('description', '')}".lower()
                 rd = ev.get("reviewDetails")
@@ -61,7 +64,7 @@ def parse(pbp: dict, game_pk: int) -> list[dict]:
                                  "overturned": bool(rd.get("isOverturned")) or "overturn" in text,
                                  "challenger": (rd.get("player") or {}).get("id") or (ev.get("player") or {}).get("id"),
                                  "team": rd.get("challengeTeamId"), "review_type": rd.get("reviewType"),
-                                 "feed_call": None})
+                                 "feed_call": None, "play_id": last_pid})
     return rows
 
 

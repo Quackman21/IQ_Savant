@@ -217,7 +217,8 @@ def challenges(feed: dict | None, pk: int) -> pd.DataFrame:
 def _abs(d: pd.DataFrame, ch: pd.DataFrame | None, pid: int) -> tuple[pd.DataFrame, pd.DataFrame]:
     """(pitches with the umpire's ORIGINAL call on challenged takes, per pitch: abs = Successful / Failed on HIS
     challenges, abs_by = who challenged, orig_call = the call before an overturn)."""
-    out = pd.DataFrame({"abs": "", "abs_by": "", "orig_call": ""}, index=d.index)
+    out = pd.DataFrame({"abs": "", "abs_by": "", "orig_call": "", "abs_runs": np.nan, "abs_cost": np.nan,
+                        "abs_net": np.nan}, index=d.index)
     dd = d
     try:
         from core import abs_calls
@@ -233,6 +234,28 @@ def _abs(d: pd.DataFrame, ch: pd.DataFrame | None, pid: int) -> tuple[pd.DataFra
     out["abs_by"] = np.select([c & who.eq(pid), c & who.eq(bat), c & who.eq(pit), c], ["Catcher", "Batter", "Pitcher",
                                                                                          "Challenged"], "")
     out["abs"] = np.where(c & who.eq(pid), np.where(over, "Successful", "Failed"), "")
+    try:                                    # what his overturns were worth (count value of a ball vs a strike)
+        from core import abs_stats
+        season = int(pd.to_datetime(d["game_date"]).dt.year.max())
+        meta = abs_stats.load(season)[2] if abs_stats.paths(season)["meta"].exists() else {}
+        val = abs_stats.value_of(_num(d, "balls"), _num(d, "strikes"), meta.get("values")).values
+        out["abs_runs"] = np.where(out["abs"].eq("Successful"), val, np.where(out["abs"].eq("Failed"), 0.0, np.nan))
+        # a failed challenge costs this game's average missed call against his team (balls in the zone his
+        # pitchers didn't get), blended toward the season's average; free on the game's last pitch
+        top = _txt(d, "inning_topbot").eq("Top")
+        mine_team = pd.Series(np.where(top, _txt(d, "home_team"), _txt(d, "away_team")), index=d.index)
+        team = mine_team.mode().iloc[0] if mine_team.ne("").any() else ""
+        mc = abs_stats.missed_calls(dd, meta.get("values"))
+        mc = mc[mc["against"].astype(str).eq(team)] if not mc.empty else mc
+        avg = meta.get("avg_miss") or float(np.mean(list(abs_stats.DEFAULT_VALUES.values())))
+        k = meta.get("shrink_k") or abs_stats.SHRINK_K
+        game_cost = (float(mc["value"].sum()) + k * avg) / (len(mc) + k)
+        order = _num(d, "at_bat_number") * 1000 + _num(d, "pitch_number")
+        last = order.eq(order.max()) & _num(d, "inning").ge(9)
+        out["abs_cost"] = np.where(out["abs"].eq("Failed") & ~last, game_cost, np.where(out["abs"].ne(""), 0.0, np.nan))
+        out["abs_net"] = out["abs_runs"] - out["abs_cost"]
+    except Exception:
+        out["abs_runs"] = np.nan
     out["orig_call"] = np.where(c & over, dd["description"].map(RESULT).fillna(""), "")
     return dd, out
 
@@ -478,7 +501,7 @@ def comp_values(fr: pd.DataFrame, fl: pd.DataFrame) -> dict:
 
 # how each tile's comp reads: count per game, signed per game, or a rate
 _PCT = {"Success %", "Shadow strike %", "Expected", "Tough blocks", "CS %", "Expected CS %"}
-_SIGNED = {"Extra strikes", "Framing runs", "Blocks above avg", "Blocking runs", "CS above exp", "Throwing runs",
+_SIGNED = {"ABS runs", "Challenge cost", "Net ABS runs", "Extra strikes", "Framing runs", "Blocks above avg", "Blocking runs", "CS above exp", "Throwing runs",
            "Catcher runs"}
 
 
@@ -494,7 +517,11 @@ def _show(label: str, v) -> str:
 
 
 def _abs_file(season: int) -> pd.DataFrame:
-    from core import abs_calls
+    """The season's challenges: the built ABS table (has runs + what counts) if it's there, else the raw file."""
+    from core import abs_calls, abs_stats
+    t = abs_stats.load(season)[0]
+    if not t.empty:
+        return t[t["counted"]]
     f = abs_calls.RAW / f"abs_{season}.csv.gz"
     return pd.read_csv(f) if f.exists() else pd.DataFrame()
 
@@ -511,13 +538,18 @@ def abs_values(fl: pd.DataFrame | None, ab: pd.DataFrame | None, pid: int | None
     if games.empty:
         return {}
     a = ab.assign(challenger=pd.to_numeric(ab["challenger"], errors="coerce"))
+    if "role" in a:
+        a = a[a["role"].eq("Catching")]
     a = a.merge(games, left_on=["game_pk", "challenger"], right_on=["game_pk", "player"], how="inner")
     if pid is not None:
         a = a[a["challenger"].eq(pid)]
     g, n = len(games), len(a)
     s = int(a["overturned"].astype(bool).sum()) if n else 0
+    tot = lambda c: float(pd.to_numeric(a[c], errors="coerce").fillna(0).sum()) / g if c in a else np.nan
+    runs, cost = tot("runs"), tot("cost")
     return {"abs": {"Challenges": n / g, "Successful": s / g, "Failed": (n - s) / g,
-                    "Success %": s / n if n else np.nan, "_games": g}}
+                    "Success %": s / n if n else np.nan, "ABS runs": runs, "Challenge cost": -cost,
+                    "Net ABS runs": runs - cost, "_games": g}}
 
 
 def comps(season: int, pid: int, day: str, fr: pd.DataFrame | None = None, fl: pd.DataFrame | None = None,

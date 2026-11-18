@@ -154,7 +154,7 @@ def ground_svg(rows: list[dict]) -> str:
 ROW_KEYS = ["n", "video", "inning", "inn", "count", "on", "pitcher", "p_throws", "batter", "result", "play", "ptype",
             "pgroup", "velo", "hb", "ivb", "zone", "gz", "fzone", "fz", "region", "strike_prob", "frame_runs", "extra", "take",
             "strike", "swing", "opp", "dirt", "wp_chance", "got_by", "block_runs", "tier", "steal", "cs_chance", "cs",
-            "throw_runs", "catch_runs", "px", "pz", "gx", "gy", "orig_call", "abs", "abs_by", "has3d"]
+            "throw_runs", "catch_runs", "px", "pz", "gx", "gy", "orig_call", "abs", "abs_by", "abs_runs", "abs_cost", "abs_net", "has3d"]
 
 
 def rows(p: pd.DataFrame, scenes3d: dict | None = None) -> list[dict]:
@@ -411,7 +411,8 @@ function tiles(live) {
   } else if (m === 'abs') {
     const a = live.filter(r => r.abs), s = a.filter(r => r.abs === 'Successful').length;
     t.push(['Challenges', a.length], ['Successful', s], ['Failed', a.length - s],
-           ['Success %', a.length ? Math.round(100 * s / a.length) + '%' : '–']);
+           ['Success %', a.length ? Math.round(100 * s / a.length) + '%' : '–'], ['ABS runs', signed(S(a, 'abs_runs'), 2)],
+           ['Challenge cost', signed(-S(a, 'abs_cost'), 2)], ['Net ABS runs', signed(S(a, 'abs_net'), 2)]);
   } else {
     const f = S(live, 'frame_runs'), b = S(live, 'block_runs'), th = S(live, 'throw_runs');
     t.push(['Framing runs', M(signed(f, 2))], ['Blocking runs', M(signed(b, 2))], ['Throwing runs', M(signed(th, 2))],

@@ -130,6 +130,7 @@ def test_catcher_abs_challenges_successful_or_failed():
     assert p["abs_by"].tolist() == ["Catcher", "Catcher", "Batter", ""]
     assert p["orig_call"].tolist() == ["Ball", "", "", ""]          # overturned: the umpire had called it a ball
     assert ca.line(p, None)["ABS"] == "1/2"
+    assert p["abs_cost"].iloc[0] == 0 and p["abs_cost"].iloc[1] > 0 and p["abs_net"].iloc[1] < 0
     fl = pd.DataFrame({"game_date": ["2026-06-01", "2026-06-01"], "game_pk": [1, 1], "player": [7, 8], "pos": 2})
     ab = pd.DataFrame({"game_pk": [1, 1, 1], "challenger": [7, 7, 5], "overturned": [True, False, False]})
     v = ca.abs_values(fl, ab, 7)["abs"]
