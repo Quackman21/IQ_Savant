@@ -207,23 +207,45 @@ def flight(row: dict | pd.Series, step: float = 0.004) -> list[list[float]] | No
 
 
 # ----------------------------------------------------------------------------- the models, per pitch
-def _framing(d: pd.DataFrame) -> pd.DataFrame:
-    """strike_prob (every pitch) + framing runs / extra strike (takes) -- NaN until the decision model is trained."""
-    out = pd.DataFrame({"strike_prob": np.nan, "extra": np.nan, "frame_runs": np.nan, "orig_call": ""},
-                       index=d.index)
+def challenges(feed: dict | None, pk: int) -> pd.DataFrame:
+    """This game's ABS challenges, straight from the game feed (no season file needed)."""
+    from core import abs_calls
+    rows = abs_calls.parse((feed or {}).get("liveData", {}).get("plays", {}) or {}, pk)
+    return pd.DataFrame(rows, columns=abs_calls.COLS)
+
+
+def _abs(d: pd.DataFrame, ch: pd.DataFrame | None, pid: int) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """(pitches with the umpire's ORIGINAL call on challenged takes, per pitch: abs = Successful / Failed on HIS
+    challenges, abs_by = who challenged, orig_call = the call before an overturn)."""
+    out = pd.DataFrame({"abs": "", "abs_by": "", "orig_call": ""}, index=d.index)
+    dd = d
+    try:
+        from core import abs_calls
+        dd = abs_calls.original_calls(d, challenges=ch) if ch is not None else abs_calls.original_calls(d)
+    except Exception:
+        return d, out
+    if "abs_challenged" not in dd:
+        return dd, out
+    c = dd["abs_challenged"].fillna(False).astype(bool)
+    over = dd["abs_overturned"].fillna(False).astype(bool)
+    who = pd.to_numeric(dd["abs_challenger"], errors="coerce")
+    bat, pit = _num(d, "batter"), _num(d, "pitcher")
+    out["abs_by"] = np.select([c & who.eq(pid), c & who.eq(bat), c & who.eq(pit), c], ["Catcher", "Batter", "Pitcher",
+                                                                                         "Challenged"], "")
+    out["abs"] = np.where(c & who.eq(pid), np.where(over, "Successful", "Failed"), "")
+    out["orig_call"] = np.where(c & over, dd["description"].map(RESULT).fillna(""), "")
+    return dd, out
+
+
+def _framing(d: pd.DataFrame, dd: pd.DataFrame | None = None) -> pd.DataFrame:
+    """strike_prob (every pitch) + framing runs / extra strike (takes) -- NaN until the decision model is trained.
+    dd = the same pitches on the umpire's original calls (ABS)."""
+    out = pd.DataFrame({"strike_prob": np.nan, "extra": np.nan, "frame_runs": np.nan}, index=d.index)
+    dd = d if dd is None else dd
     try:
         from models import decisions_iq as dq
         if dq.load() is None:
             return out
-        dd = d
-        try:
-            from core import abs_calls
-            dd = abs_calls.original_calls(d)
-            if "abs_overturned" in dd:
-                out["orig_call"] = np.where(dd["abs_overturned"].fillna(False).astype(bool),
-                                            dd["description"].map(RESULT).fillna(""), "")
-        except Exception:
-            pass
         out["strike_prob"] = dq.called_strike_chance(dd).values
         take = dd["description"].astype(str).isin({"called_strike", "ball"})
         val = dq.strike_value(dd).fillna(0.125)
@@ -287,7 +309,8 @@ def caught(sc: pd.DataFrame, pid: int) -> pd.DataFrame:
     return sc[_num(sc, "fielder_2").eq(pid)]
 
 
-def pitches(sc: pd.DataFrame, feed: dict | None, pid: int, events: pd.DataFrame | None = None) -> pd.DataFrame:
+def pitches(sc: pd.DataFrame, feed: dict | None, pid: int, events: pd.DataFrame | None = None,
+            abs_rows: pd.DataFrame | None = None) -> pd.DataFrame:
     """One row per pitch he received, in order, balls in play left out -- every field the Catching AAR shows."""
     d = caught(sc, pid)
     if d.empty:
@@ -322,7 +345,10 @@ def pitches(sc: pd.DataFrame, feed: dict | None, pid: int, events: pd.DataFrame 
         "swing": desc.isin(hm.SWINGS),
         "on": on, "gx": gd["gx"], "gy": gd["gy"], "dirt": gd["dirt"].astype(bool),
     })
-    out = out.join(_framing(d)).join(_catching(d, events))
+    if abs_rows is None and feed:
+        abs_rows = challenges(feed, int(_num(d, "game_pk").dropna().iloc[0])) if _num(d, "game_pk").notna().any() else None
+    dd, ab = _abs(d, abs_rows, pid)
+    out = out.join(_framing(d, dd)).join(_catching(d, events)).join(ab)
     # what happened on the play: the PA's result on its last pitch + any runner event on this pitch
     ev_txt = pd.Series("", index=d.index)
     if events is not None and not events.empty:
@@ -383,7 +409,8 @@ def _read(r: dict) -> dict:
             "cs_chance": _clean(r.get("cs_chance")), "steal": r.get("steal") or "", "opp": bool(r.get("opp")),
             "got_by": bool(r.get("got_by")), "on": r.get("on") or "", "gx": _clean(r.get("gx"), 2),
             "gy": _clean(r.get("gy"), 2), "dirt": bool(r.get("dirt")), "video": r.get("video") or "",
-            "inning": f'{r.get("half")}{r.get("inning")}'}
+            "inning": f'{r.get("half")}{r.get("inning")}', "abs": r.get("abs") or "",
+            "abs_by": r.get("abs_by") or ""}
 
 
 def line(p: pd.DataFrame, events: pd.DataFrame | None, pid_pitches: pd.DataFrame | None = None) -> dict:
@@ -396,7 +423,9 @@ def line(p: pd.DataFrame, events: pd.DataFrame | None, pid_pitches: pd.DataFrame
     cnt = lambda s: int(ev.str.contains(s, regex=False).sum())
     return {"Pitches": int(len(d)) if not d.empty else int(len(p)), "Innings": len(inn),
             "Pitchers": int(p["pitcher_id"].nunique()) if "pitcher_id" in p else 0,
-            "SB": cnt("SB "), "CS": cnt("CS "), "WP": cnt("Wild pitch"), "PB": cnt("Passed ball")}
+            "SB": cnt("SB "), "CS": cnt("CS "), "WP": cnt("Wild pitch"), "PB": cnt("Passed ball"),
+            "ABS": (f'{int(p["abs"].eq("Successful").sum())}/{int(p["abs"].ne("").sum())}'
+                    if "abs" in p and p["abs"].ne("").any() else "0")}
 
 
 # ----------------------------------------------------------------------------- hover comps for the game-stat tiles
@@ -448,7 +477,7 @@ def comp_values(fr: pd.DataFrame, fl: pd.DataFrame) -> dict:
 
 
 # how each tile's comp reads: count per game, signed per game, or a rate
-_PCT = {"Shadow strike %", "Expected", "Tough blocks", "CS %", "Expected CS %"}
+_PCT = {"Success %", "Shadow strike %", "Expected", "Tough blocks", "CS %", "Expected CS %"}
 _SIGNED = {"Extra strikes", "Framing runs", "Blocks above avg", "Blocking runs", "CS above exp", "Throwing runs",
            "Catcher runs"}
 
@@ -464,7 +493,35 @@ def _show(label: str, v) -> str:
     return f"{v:.1f}"
 
 
-def comps(season: int, pid: int, day: str, fr: pd.DataFrame | None = None, fl: pd.DataFrame | None = None) -> dict:
+def _abs_file(season: int) -> pd.DataFrame:
+    from core import abs_calls
+    f = abs_calls.RAW / f"abs_{season}.csv.gz"
+    return pd.read_csv(f) if f.exists() else pd.DataFrame()
+
+
+def abs_values(fl: pd.DataFrame | None, ab: pd.DataFrame | None, pid: int | None) -> dict:
+    """ABS challenges made BY the catcher, per game caught (pid None = every MLB catcher; games from the fielding
+    file, pos 2)."""
+    if fl is None or fl.empty or ab is None or ab.empty or "challenger" not in ab:
+        return {}
+    w = fl[fl["pos"].eq(2)] if "pos" in fl else fl
+    games = w[["game_pk", "player"]].drop_duplicates()
+    if pid is not None:
+        games = games[pd.to_numeric(games["player"], errors="coerce").eq(pid)]
+    if games.empty:
+        return {}
+    a = ab.assign(challenger=pd.to_numeric(ab["challenger"], errors="coerce"))
+    a = a.merge(games, left_on=["game_pk", "challenger"], right_on=["game_pk", "player"], how="inner")
+    if pid is not None:
+        a = a[a["challenger"].eq(pid)]
+    g, n = len(games), len(a)
+    s = int(a["overturned"].astype(bool).sum()) if n else 0
+    return {"abs": {"Challenges": n / g, "Successful": s / g, "Failed": (n - s) / g,
+                    "Success %": s / n if n else np.nan, "_games": g}}
+
+
+def comps(season: int, pid: int, day: str, fr: pd.DataFrame | None = None, fl: pd.DataFrame | None = None,
+          ab: pd.DataFrame | None = None) -> dict:
     """metric -> tile label -> [[who, value], ...] for Season / Last 30 days / MLB (per game caught; rates pooled).
     Through this game's date; MLB = every catcher, whole season file."""
     from core import league_ref
@@ -481,11 +538,14 @@ def comps(season: int, pid: int, day: str, fr: pd.DataFrame | None = None, fl: p
         if who is not None and who in df:
             m &= pd.to_numeric(df[who], errors="coerce").eq(pid)
         return df[m]
-    sets = [("Season", comp_values(cut(fr, "catcher", "0000"), cut(fl, "player", "0000"))),
-            ("Last 30 days", comp_values(cut(fr, "catcher", d30), cut(fl, "player", d30))),
-            ("MLB avg", comp_values(fr, fl))]
+    ab = _abs_file(season) if ab is None else ab
+    sets = [("Season", {**comp_values(cut(fr, "catcher", "0000"), cut(fl, "player", "0000")),
+                        **abs_values(cut(fl, "player", "0000"), ab, pid)}),
+            ("Last 30 days", {**comp_values(cut(fr, "catcher", d30), cut(fl, "player", d30)),
+                              **abs_values(cut(fl, "player", d30), ab, pid)}),
+            ("MLB avg", {**comp_values(fr, fl), **abs_values(fl, ab, None)})]
     out = {}
-    for metric in ("framing", "blocking", "throwing", "total"):
+    for metric in ("framing", "blocking", "throwing", "total", "abs"):
         labels = {k for _, s in sets for k in s.get(metric, {}) if not k.startswith("_")}
         out[metric] = {lab: [[who, _show(lab, s.get(metric, {}).get(lab))] for who, s in sets] for lab in labels}
         out[metric]["_games"] = [[who, int(s.get(metric, {}).get("_games") or 0)] for who, s in sets[:2]]

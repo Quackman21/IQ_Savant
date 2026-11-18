@@ -106,3 +106,31 @@ def test_framing_zone_split_matches_savant():
     assert ca.framing_zone(df).tolist() == ["Heart", "Shadow - Top", "Shadow - Bottom", "Shadow - Left",
                                             "Shadow - Right", "Shadow - Top Right", "Shadow - Bottom Left",
                                             "Chase / Waste"]
+
+
+def test_catcher_abs_challenges_successful_or_failed():
+    plays = {"allPlays": [{"about": {"atBatIndex": 0}, "playEvents": [
+        {"isPitch": True, "pitchNumber": 1, "index": 0, "details": {"call": {"code": "C"}},
+         "reviewDetails": {"isOverturned": True, "player": {"id": 7}, "reviewType": "MJ"}},
+        {"isPitch": True, "pitchNumber": 2, "index": 1, "details": {"call": {"code": "B"}},
+         "reviewDetails": {"isOverturned": False, "player": {"id": 7}}},
+        {"isPitch": True, "pitchNumber": 3, "index": 2, "details": {"call": {"code": "B"}},
+         "reviewDetails": {"isOverturned": False, "player": {"id": 5}}},
+        {"isPitch": True, "pitchNumber": 4, "index": 3}]}]}
+    feed = {"liveData": {"plays": plays}, "gameData": {"players": {}}}
+    rows = []
+    for pn, desc, b, s in ((1, "called_strike", 0, 0), (2, "ball", 0, 1), (3, "ball", 1, 1), (4, "ball", 2, 1)):
+        rows.append({**_kin(), "game_pk": 1, "game_date": "2026-06-01", "at_bat_number": 1, "pitch_number": pn,
+                     "description": desc, "type": "S" if desc == "called_strike" else "B", "fielder_2": 7,
+                     "pitcher": 99, "batter": 5, "p_throws": "R", "stand": "R", "pitch_type": "FF", "balls": b,
+                     "strikes": s, "inning": 1, "inning_topbot": "Top", "sz_top": 3.4, "sz_bot": 1.6, "zone": 5,
+                     "on_1b": np.nan, "on_2b": np.nan, "on_3b": np.nan, "events": None})
+    p = ca.pitches(pd.DataFrame(rows), feed, 7, ca.runner_events(feed, 1))
+    assert p["abs"].tolist() == ["Successful", "Failed", "", ""]
+    assert p["abs_by"].tolist() == ["Catcher", "Catcher", "Batter", ""]
+    assert p["orig_call"].tolist() == ["Ball", "", "", ""]          # overturned: the umpire had called it a ball
+    assert ca.line(p, None)["ABS"] == "1/2"
+    fl = pd.DataFrame({"game_date": ["2026-06-01", "2026-06-01"], "game_pk": [1, 1], "player": [7, 8], "pos": 2})
+    ab = pd.DataFrame({"game_pk": [1, 1, 1], "challenger": [7, 7, 5], "overturned": [True, False, False]})
+    v = ca.abs_values(fl, ab, 7)["abs"]
+    assert v["Challenges"] == 2 and v["Success %"] == 0.5 and ca.abs_values(fl, ab, None)["abs"]["Challenges"] == 1

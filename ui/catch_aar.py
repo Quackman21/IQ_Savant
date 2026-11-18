@@ -154,7 +154,7 @@ def ground_svg(rows: list[dict]) -> str:
 ROW_KEYS = ["n", "video", "inning", "inn", "count", "on", "pitcher", "p_throws", "batter", "result", "play", "ptype",
             "pgroup", "velo", "hb", "ivb", "zone", "gz", "fzone", "fz", "region", "strike_prob", "frame_runs", "extra", "take",
             "strike", "swing", "opp", "dirt", "wp_chance", "got_by", "block_runs", "tier", "steal", "cs_chance", "cs",
-            "throw_runs", "catch_runs", "px", "pz", "gx", "gy", "orig_call", "has3d"]
+            "throw_runs", "catch_runs", "px", "pz", "gx", "gy", "orig_call", "abs", "abs_by", "has3d"]
 
 
 def rows(p: pd.DataFrame, scenes3d: dict | None = None) -> list[dict]:
@@ -188,9 +188,12 @@ def rows(p: pd.DataFrame, scenes3d: dict | None = None) -> list[dict]:
     return out
 
 
+TIPS = {"ABS": "His ABS challenges: successful / made", "Innings": "Innings he caught at least one pitch"}
+
+
 def line_html(line: dict) -> str:
-    cols = ["Pitches", "Innings", "Pitchers", "SB", "CS", "WP", "PB"]
-    return ('<table class="line"><tr>' + "".join(f"<th>{c}</th>" for c in cols) + "</tr><tr>"
+    cols = ["Pitches", "Innings", "Pitchers", "SB", "CS", "WP", "PB", "ABS"]
+    return ('<table class="line"><tr>' + "".join(f'<th title="{TIPS.get(c, "")}">{c}</th>' for c in cols) + "</tr><tr>"
             + "".join(f"<td>{line.get(c, '–')}</td>" for c in cols) + "</tr></table>")
 
 
@@ -262,6 +265,7 @@ const COLS = [
   {k: 'batter', l: 'Batter', t: 'cat', a: 'l'},
   {k: 'result', l: 'Pitch Result', t: 'cat', a: 'l'},
   {k: 'play', l: 'Play Result', t: 'cat', a: 'l'},
+  {k: 'abs', l: 'ABS', t: 'cat', a: 'c'},
   {k: 'ptype', l: 'Type', t: 'cat', a: 'c'},
   {k: 'velo', l: 'Velo', t: 'num', a: 'r', f: 1},
   {k: 'hb', l: 'HB', t: 'num', a: 'r', f: 1},
@@ -303,6 +307,7 @@ function passShow(r) {
   if (show === 'opp') return r.opp;
   if (show === 'dirt') return r.dirt;
   if (show === 'steal') return !!r.steal;
+  if (show === 'abs') return !!r.abs;
   if (show === 'swing') return r.swing;
   return true;
 }
@@ -333,6 +338,8 @@ function cell(r, c) {
   }
   if (c.k === 'ptype') return `<b style="color:${PT[v] || '#16202b'}">${v || '–'}</b>`;
   if (c.k === 'result' && r.orig_call) return `${v} <span class="tag x" title="ABS challenge overturned the umpire's call; framing uses his original call">ABS: was ${r.orig_call}</span>`;
+  if (c.k === 'abs') return v ? `<span class="chip" style="background:${v === 'Successful' ? '#cdebd6;color:#14532d' : '#f6d3d0;color:#7a1f1a'}">${v}</span>`
+    : (r.abs_by ? `<span class="faint" title="Challenged by the ${r.abs_by.toLowerCase()}">${r.abs_by}</span>` : '–');
   if (c.k === 'play' && r.got_by) return `<b style="color:#c0392b">${v}</b>`;
   if (c.t === 'num') return fmt(v, c.f);
   return ok(v) && v !== '' ? String(v).replace(/</g, '&lt;') : '–';
@@ -401,6 +408,10 @@ function tiles(live) {
     t.push(['Steal attempts', a.length], ['Caught', cs], ['Stolen', a.length - cs], ['Expected CS', M(e.toFixed(2))],
            ['CS above exp', M(signed(cs - e, 2))], ['Throwing runs', M(signed(S(a, 'throw_runs'), 2))],
            ['CS %', a.length ? Math.round(100 * cs / a.length) + '%' : '–'], ['Expected CS %', a.length ? M(Math.round(100 * e / a.length) + '%') : '–']);
+  } else if (m === 'abs') {
+    const a = live.filter(r => r.abs), s = a.filter(r => r.abs === 'Successful').length;
+    t.push(['Challenges', a.length], ['Successful', s], ['Failed', a.length - s],
+           ['Success %', a.length ? Math.round(100 * s / a.length) + '%' : '–']);
   } else {
     const f = S(live, 'frame_runs'), b = S(live, 'block_runs'), th = S(live, 'throw_runs');
     t.push(['Framing runs', M(signed(f, 2))], ['Blocking runs', M(signed(b, 2))], ['Throwing runs', M(signed(th, 2))],
@@ -416,7 +427,7 @@ function tiles(live) {
 // ---- hover a tile: his season / last 30 days / MLB average (per game caught; rates pooled)
 const COMPS = JSON.parse(document.getElementById('comps-data').textContent);
 const tip = document.getElementById('ctip');
-const RATE = new Set(['Shadow strike %', 'Expected', 'Tough blocks', 'CS %', 'Expected CS %']);
+const RATE = new Set(['Success %', 'Shadow strike %', 'Expected', 'Tough blocks', 'CS %', 'Expected CS %']);
 function showTip(el, m) {
   const l = el.dataset.l, c = (COMPS[m] || {})[l], g = (COMPS[m] || {})._games || [];
   const gm = Object.fromEntries(g);
@@ -627,6 +638,8 @@ function readouts(sc) {
     '<h5>Catcher models</h5><table>' + row('Strike chance (avg umpire)', pc(r.strike_prob)) +
     (ok(r.frame_runs) ? row('Framing runs', fmt(r.frame_runs, 'runs')) : '') +
     (r.opp ? row('Chance it gets by', ok(r.wp_chance) ? (r.wp_chance * 100).toFixed(1) + '%' : '–') + row('Blocking runs', fmt(r.block_runs, 'runs')) : row('Blocking chance', 'no -- bases empty')) +
+    (r.abs ? row('His ABS challenge', `<b style="color:${r.abs === 'Successful' ? '#2e9d5b' : '#c0392b'}">${r.abs}</b>`) :
+      r.abs_by ? row('ABS challenge', 'by the ' + r.abs_by.toLowerCase()) : '') +
     (r.steal ? row('Steal of ' + r.steal + ' · CS chance', pc(r.cs_chance)) + row('Throwing runs', fmt(r.throw_runs, 'runs')) : '') + '</table>' +
     '<div class="lg"><i style="color:#e07b24">━</i> measured flight (Statcast release speed + movement, anchored where it crossed the plate), ' +
     'from release to ' + (r.dirt ? 'where it reaches the dirt <i style="color:#c0392b">◯</i>' : '3 ft past the middle of the plate') +
@@ -727,7 +740,8 @@ ovl.addEventListener('click', e => { if (e.target === ovl) close3d(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (ovl.classList.contains('on')) close3d(); closeMenu(); } });
 """
 
-METRICS = {"framing": "Framing", "blocking": "Blocking", "throwing": "Throwing", "total": "Total"}
+METRICS = {"framing": "Framing", "blocking": "Blocking", "throwing": "Throwing", "abs": "ABS challenges",
+           "total": "Total"}
 
 
 def component_html(p: pd.DataFrame, line: dict, header: str = "", scenes3d: dict | None = None,
@@ -751,7 +765,7 @@ def component_html(p: pd.DataFrame, line: dict, header: str = "", scenes3d: dict
     show = ('<div class="seg" id="show">' + "".join(
         f'<button data-v="{k}"{" class=on" if k == "all" else ""}>{v}</button>' for k, v in
         (("all", "All"), ("take", "Takes"), ("swing", "Swings"), ("opp", "Blocking chances"), ("dirt", "In the dirt"),
-         ("steal", "Steal attempts"))) + '</div>')
+         ("steal", "Steal attempts"), ("abs", "ABS challenges"))) + '</div>')
     bar = ('<div class="bar"><span class="ttl">Pitches received</span><span class="sel-n" id="seln"></span>'
            '<span class="faint" id="shown"></span><button id="reset">Clear filters + sort</button>'
            '<button id="clear">Clear selection</button></div>'

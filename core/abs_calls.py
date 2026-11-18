@@ -126,9 +126,10 @@ def call_that_stood(df: pd.DataFrame) -> pd.Series:
     return out.reindex(df.index)
 
 
-def original_calls(df: pd.DataFrame, fetch: bool = True) -> pd.DataFrame:
+def original_calls(df: pd.DataFrame, fetch: bool = True, challenges: pd.DataFrame | None = None) -> pd.DataFrame:
     """Statcast pitches -> same rows with description set to the ORIGINAL call on challenged takes,
-    plus abs_challenged / abs_overturned / abs_challenger columns. Seasons before 2026 pass straight through."""
+    plus abs_challenged / abs_overturned / abs_challenger columns. Seasons before 2026 pass straight through.
+    `challenges` (parse() rows, e.g. from one game's feed) is used instead of the season file when given."""
     if df is None or df.empty or "game_date" not in df or not {"game_pk", "at_bat_number", "pitch_number"} <= set(df):
         return df
     yrs = pd.to_datetime(df["game_date"]).dt.year
@@ -137,7 +138,7 @@ def original_calls(df: pd.DataFrame, fetch: bool = True) -> pd.DataFrame:
     for y in sorted(yrs[yrs >= ABS_FIRST].unique()):
         m = yrs == y
         games = pd.to_numeric(df.loc[m, "game_pk"], errors="coerce").dropna().astype(int).unique().tolist()
-        ch = season_challenges(int(y), games) if fetch else (
+        ch = challenges if challenges is not None else season_challenges(int(y), games) if fetch else (
             pd.read_csv(RAW / f"abs_{y}.csv.gz") if (RAW / f"abs_{y}.csv.gz").exists() else pd.DataFrame(columns=COLS))
         if ch.empty:
             continue
