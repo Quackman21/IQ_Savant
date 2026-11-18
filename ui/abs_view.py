@@ -124,9 +124,50 @@ def summary_html(rows: list[tuple[str, dict]], ref: dict, role: str, who: str = 
 
 
 # ----------------------------------------------------------------------------- the zone
+ABS_ZONES = ["Heart", "Shadow - Top", "Shadow - Top 3B side", "Shadow - Top 1B side", "Shadow - 3B side",
+             "Shadow - 1B side", "Shadow - Bottom", "Shadow - Bottom 3B side", "Shadow - Bottom 1B side", "Chase / Waste"]
+_SIDE = {"Left": "3B side", "Right": "1B side"}
+
+
+def abs_zone(t: pd.DataFrame) -> pd.Series:
+    """Savant's framing split (Heart / Shadow edges + corners / Chase-Waste), sides named by base (3B / 1B) so they
+    read the same from the catcher's or the pitcher's view."""
+    from core.catch_aar import framing_zone
+    if t.empty:
+        return pd.Series(dtype=object)
+    z = framing_zone(t).astype(str)
+    for a, b in _SIDE.items():
+        z = z.str.replace(f"Top {a}", f"Top {b}").str.replace(f"Bottom {a}", f"Bottom {b}").str.replace(f"- {a}", f"- {b}")
+    return z
+
+
+def _zone_stats(t: pd.DataFrame) -> dict:
+    """zone -> (challenges, share of all, overturn %, net runs per challenge), counted challenges only."""
+    c = t[t["counted"].astype(bool)] if not t.empty else t
+    if c.empty:
+        return {}
+    z = abs_zone(c)
+    net = pd.to_numeric(c["net"] if "net" in c else c["runs"], errors="coerce").fillna(0)
+    over = c["overturned"].astype(bool)
+    out = {}
+    for name in ABS_ZONES + ["All"]:
+        m = z.eq(name) if name != "All" else pd.Series(True, index=c.index)
+        n = int(m.sum())
+        out[name] = {"n": n, "share": n / len(c), "ovt": float(over[m].mean()) if n else None,
+                     "net": float(net[m].mean()) if n else None}
+    return out
+
+
+def zone_summary(mine: pd.DataFrame, league_t: pd.DataFrame | None) -> list[dict]:
+    me, lg = _zone_stats(mine), _zone_stats(league_t if league_t is not None else pd.DataFrame())
+    return [{"zone": z, **{k: (me.get(z) or {}).get(k) for k in ("n", "share", "ovt", "net")},
+             **{"lg_" + k: (lg.get(z) or {}).get(k) for k in ("share", "ovt", "net")}} for z in ABS_ZONES + ["All"]]
+
+
 def zone_rows(t: pd.DataFrame) -> list[dict]:
     from core.hit_metrics import pitch_group
     out = []
+    zn = abs_zone(t) if not t.empty else pd.Series(dtype=object)
     pg = pitch_group(t) if not t.empty else pd.Series(dtype=object)
     for i, r in enumerate(t.to_dict("records")):
         g = lambda k: (None if r.get(k) is None or (isinstance(r.get(k), float) and math.isnan(r.get(k))) else r.get(k))
@@ -138,6 +179,7 @@ def zone_rows(t: pd.DataFrame) -> list[dict]:
                     "px": g("plate_x"), "pz": g("plate_z"), "top": g("sz_top"), "bot": g("sz_bot"),
                     "res": res, "from": g("from_call") or "", "to": g("to_call") or "", "margin": g("margin_in"),
                     "runs": g("runs"), "cost": g("cost"), "net": g("net"), "final": bool(r.get("final_pitch")),
+                    "zone": zn.iloc[i] if len(zn) else "",
                     "video": (str(r.get("play_id")) if g("play_id") and str(r.get("play_id")) not in ("nan", "None") else "")})
     return out
 
@@ -146,13 +188,27 @@ JS = r"""
 const R = JSON.parse(document.getElementById('d').textContent);
 const PT = JSON.parse(document.getElementById('pt').textContent);
 const on = {Successful: true, Failed: true, 'Not counted': false};
-let view = 'catcher', mode = 'heat', sel = null;
+let view = 'catcher', mode = 'heat', sel = null, zf = null;
+const ZS = JSON.parse(document.getElementById('zs').textContent);
 const COL = {Successful: '#2e9d5b', Failed: '#c0392b', 'Not counted': '#9aa5ae'};
 const ok = v => v !== null && v !== undefined && v === v;
 const med = a => { const s = a.filter(ok).sort((x, y) => x - y); return s.length ? s[Math.floor(s.length / 2)] : null; };
 const TOP = med(R.map(r => r.top)) || 3.4, BOT = med(R.map(r => r.bot)) || 1.6;
 const W = 360, H = 400, X = x => W / 2 + (view === 'pitcher' ? -x : x) * 70, Z = z => 340 - (z - 0.5) * 70;
-function vis() { return R.filter(r => on[r.res] && ok(r.px) && ok(r.pz)); }
+function vis() { return R.filter(r => on[r.res] && (!zf || r.zone === zf) && ok(r.px) && ok(r.pz)); }
+const pc = v => ok(v) ? Math.round(v * 100) + '%' : '–';
+const rv = v => ok(v) ? (v > 0.0005 ? '+' : '') + v.toFixed(3) : '–';
+function zsum() {
+  const short = z => z.replace('Shadow - ', 'Shadow ').replace('Chase / Waste', 'Chase / Waste');
+  const diff = (a, b, s) => ok(a) && ok(b) ? (a - b) * s : null;
+  const tint = d => d === null ? '' : `background:${d > 0 ? 'rgba(46,157,91,' : 'rgba(192,57,43,'}${Math.min(0.55, Math.abs(d) * 2.2).toFixed(2)})`;
+  document.getElementById('zsb').innerHTML = ZS.map(z => `<tr class="${z.zone === 'All' ? 'tot' : 'zr'}${zf === z.zone ? ' on' : ''}" data-z="${z.zone}">` +
+    `<td>${short(z.zone)}</td><td>${z.n || 0}</td><td>${pc(z.share)}</td><td class="lg">${pc(z.lg_share)}</td>` +
+    `<td style="${z.n >= 3 ? tint(diff(z.ovt, z.lg_ovt, 1)) : ''}">${pc(z.ovt)}</td><td class="lg">${pc(z.lg_ovt)}</td>` +
+    `<td style="${z.n >= 3 ? tint(diff(z.net, z.lg_net, 3)) : ''}">${rv(z.net)}</td><td class="lg">${rv(z.lg_net)}</td></tr>`).join('');
+  document.querySelectorAll('#zsb tr.zr').forEach(tr => tr.onclick = () => { zf = zf === tr.dataset.z ? null : tr.dataset.z; draw(); });
+  document.getElementById('zfl').textContent = zf ? 'Showing: ' + zf + ' (click it again to clear)' : 'Click a zone to show only its challenges';
+}
 function shape(r, x, y, s) {
   const st = r.res === 'Not counted' ? `fill="#fff" stroke="${COL[r.res]}" stroke-width="2"` : `fill="${COL[r.res]}" stroke="#fff" stroke-width="1"`;
   if (r.grp === 'Breaking') return `<polygon points="${x},${y - s * 1.15} ${x - s},${y + s * .8} ${x + s},${y + s * .8}" ${st}/>`;
@@ -192,11 +248,11 @@ function draw() {
   document.querySelectorAll('g.pt').forEach(g => { g.onclick = () => pick(+g.dataset.i); g.ondblclick = () => play(+g.dataset.i); });
   const n = pts.length, sc = pts.filter(r => r.res === 'Successful').length, f = pts.filter(r => r.res === 'Failed').length;
   document.getElementById('cnt').textContent = `${n} shown · ${sc} successful · ${f} failed`;
-  table();
+  zsum(); table();
 }
 function fmtRuns(v) { return ok(v) ? (v > 0.0005 ? '+' : '') + v.toFixed(3) : '–'; }
 function table() {
-  const rows = R.filter(r => on[r.res]);
+  const rows = R.filter(r => on[r.res] && (!zf || r.zone === zf));
   document.getElementById('tb').innerHTML = rows.map(r => `<tr data-i="${r.i}" class="${sel === r.i ? 'sel' : ''}"><td>${r.i}</td>` +
     `<td>${r.video ? `<a href="https://baseballsavant.mlb.com/sporty-videos?playId=${r.video}" target="_blank" rel="noopener">▶</a>` : '–'}</td>` +
     `<td>${r.date}</td><td>${r.game}</td><td>${r.inn}</td><td>${r.count}</td><td><b style="color:${PT[r.pt] || '#16202b'}">${r.pt}</b></td>` +
@@ -208,10 +264,14 @@ function table() {
     tr.ondblclick = e => { if (e.target.closest('a')) return; window.getSelection().removeAllRanges(); play(+tr.dataset.i); }; });
 }
 function pick(i) { sel = sel === i ? null : i; if (sel && mode === 'heat') setMode('points'); else draw();
+  if (sel) openList(true);
   const tr = document.querySelector(`#tb tr[data-i="${sel}"]`); if (tr) tr.scrollIntoView({block: 'nearest'}); }
 function play(i) { const r = R.find(x => x.i === i); if (r && r.video) window.open('https://baseballsavant.mlb.com/sporty-videos?playId=' + r.video, '_blank', 'noopener'); }
 function setMode(m) { mode = m; document.querySelectorAll('#mode button').forEach(b => b.classList.toggle('on', b.dataset.v === m)); draw(); }
 document.querySelectorAll('#mode button').forEach(b => b.onclick = () => setMode(b.dataset.v));
+function openList(v) { const w = document.getElementById('lw'); w.classList.toggle('closed', !v);
+  document.getElementById('lt').textContent = (v ? '▾ Hide' : '▸ Show') + ' every challenge'; }
+document.getElementById('lt').onclick = () => openList(document.getElementById('lw').classList.contains('closed'));
 document.querySelectorAll('#view button').forEach(b => b.onclick = () => { view = b.dataset.v;
   document.querySelectorAll('#view button').forEach(x => x.classList.toggle('on', x === b)); draw(); });
 document.querySelectorAll('.rc').forEach(b => b.onclick = () => { on[b.dataset.v] = !on[b.dataset.v]; b.classList.toggle('on', on[b.dataset.v]); draw(); });
@@ -219,13 +279,21 @@ draw();
 """
 
 
-def zone_html(t: pd.DataFrame, role: str, default_view: str = "catcher") -> str:
+def zone_html(t: pd.DataFrame, role: str, default_view: str = "catcher", league_t: pd.DataFrame | None = None) -> str:
     rows = zone_rows(t)
     data = json.dumps(rows).replace("</", "<\\/")
     nc = sum(r["res"] == "Not counted" for r in rows)
     css = f"""
 *{{box-sizing:border-box}} body{{margin:0;font:13px system-ui,sans-serif;color:{INK}}}
-.wrap{{display:grid;grid-template-columns:380px 1fr;gap:14px;align-items:start}}
+.wrap{{display:grid;grid-template-columns:minmax(420px,560px) 1fr;gap:14px;align-items:start}}
+.zsum table td,.zsum table th{{text-align:right;font-family:ui-monospace,Menlo,monospace}}
+.zsum table td:first-child,.zsum table th:first-child{{text-align:left;font-family:system-ui}}
+.zsum th.g{{text-align:center;border-bottom:1px solid {LINE};font-family:system-ui}}
+.zsum td.lg{{color:{MUTED};font-style:italic}} .zsum tr.zr{{cursor:pointer}} .zsum tr.zr:hover td{{background:#f2f7f8}}
+.zsum tr.on td{{box-shadow:inset 0 -2px 0 {TEAL};font-weight:700}} .zsum tr.tot td{{border-top:1.5px solid {TEAL};font-weight:700}}
+#lt{{font:600 13px system-ui;border:1px solid {LINE};background:#fff;border-radius:8px;padding:6px 12px;cursor:pointer;
+  margin:12px 0 6px}} #lt:hover{{border-color:{TEAL};color:{TEAL}}} #lw.closed{{display:none}}
+.zt{{font:700 14px system-ui;margin-bottom:6px}}
 .card{{background:#fff;border:1px solid {LINE};border-radius:10px;padding:10px 12px}}
 .ctl{{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:6px}}
 .seg{{display:inline-flex;border:1px solid {LINE};border-radius:8px;overflow:hidden}}
@@ -238,7 +306,7 @@ svg text.n{{font:700 7.5px system-ui;fill:#fff;text-anchor:middle;pointer-events
 g.pt{{cursor:pointer}} g.pt.sel circle,g.pt.sel rect,g.pt.sel polygon{{stroke:#111;stroke-width:2.4;
   filter:drop-shadow(0 0 4px rgba(255,196,0,.95))}}
 .faint{{color:{MUTED};font-weight:400}} #cnt{{font-size:11.5px;color:{MUTED};margin-top:4px}}
-.tw{{max-height:470px;overflow:auto}}
+.tw{{max-height:460px;overflow:auto}}
 table{{border-collapse:collapse;width:100%;white-space:nowrap}}
 th{{font:600 11px system-ui;color:{MUTED};padding:6px;border-bottom:1.5px solid {TEAL};text-align:left;position:sticky;top:0;background:#fff}}
 td{{font:12.5px ui-monospace,Menlo,monospace;padding:5px 6px;border-bottom:1px solid {LINE}}}
@@ -258,13 +326,23 @@ td a{{color:{TEAL};text-decoration:none;font-weight:700}}
            f'<button class="rc" data-v="Not counted" style="--c:#7d8890">Not counted ({nc})</button></div>')
     left = (f'<div class="card">{ctl}<svg viewBox="0 0 360 400" id="z"></svg><div id="cnt"></div>'
             '<div class="hint">Heat map: where he challenges (hot = most). Pitches: green = overturned, red = stood, '
-            'hollow = not counted; ● FB ▲ BB ■ OS. Click to find it in the list, double-click to play the video.'
+            'hollow = not counted; ● FB ▲ BB ■ OS. Click a pitch to find it in the list, double-click to play the video.'
             '</div></div>')
+    summ = ('<div class="card zsum"><div class="zt">By zone <span class="faint">· counted challenges · '
+            'italic = MLB average for ' + {"Hitting": "hitters", "Catching": "catchers", "Pitching": "pitchers"}[role] +
+            '</span></div><table><thead><tr><th></th><th></th><th class="g" colspan="2">Share of challenges</th>'
+            '<th class="g" colspan="2">Overturn %</th><th class="g" colspan="2">Net runs / challenge</th></tr>'
+            '<tr><th>Zone</th><th>#</th><th>His</th><th>MLB</th><th>His</th><th>MLB</th><th>His</th><th>MLB</th></tr>'
+            '</thead><tbody id="zsb"></tbody></table><div class="hint" id="zfl"></div>'
+            '<div class="hint">Shadow sides are named by base (3B / 1B side) so they read the same from either view. '
+            'Green / red = better / worse than MLB (3+ challenges in the zone).</div></div>')
     right = ('<div class="card tw"><table><thead><tr><th>#</th><th>Video</th><th>Date</th><th>Game</th><th>Inn</th>'
              '<th>Count</th><th>Type</th><th>Velo</th><th>Call</th><th>Result</th><th>Zone</th><th>ABS Runs</th><th>Cost</th><th>Net</th></tr>'
              '</thead><tbody id="tb"></tbody></table></div>')
     script = JS.replace("let view = 'catcher'", f"let view = '{default_view}'")
+    zs = json.dumps(zone_summary(t, league_t)).replace("</", "<\\/")
     return (f'<!doctype html><html><head><meta charset="utf-8"><style>{css}</style></head><body>'
-            f'<div class="wrap">{left}{right}</div><script type="application/json" id="d">{data}</script>'
+            f'<div class="wrap">{left}{summ}</div><button id="lt">▾ Hide every challenge</button>'
+            f'<div id="lw">{right}</div><script type="application/json" id="zs">{zs}</script><script type="application/json" id="d">{data}</script>'
             f'<script type="application/json" id="pt">{json.dumps(PT_COLOR)}</script><script>{script}</script>'
             '</body></html>')

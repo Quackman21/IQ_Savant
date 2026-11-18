@@ -1402,8 +1402,9 @@ if main == "Summary":
                         continue
                     mine = abs_play_ids(mine)
                     import streamlit.components.v1 as components
-                    components.html(abs_view.zone_html(mine, role, "pitcher" if role == "Pitching" else "catcher"),
-                                    height=560, scrolling=False)
+                    lg_t = tab_[tab_["role"].eq(role)] if not tab_.empty else tab_
+                    components.html(abs_view.zone_html(mine, role, "pitcher" if role == "Pitching" else "catcher",
+                                                       lg_t), height=1260, scrolling=True)
 
 # =============================================================================
 # STATS
