@@ -485,6 +485,7 @@ def model_scene(sw: pd.DataFrame, types=None, hand: str = "All", count: str = "A
     if sc is None:
         return None
     sc["read"].update({"ptype": ptype, "count": "", "result": "", "video": ""})
+    sc["season"] = season_of(me)                           # -> that season's calibration files
     try:
         sc = fit_path(sc, me, stand, pz, px, pr)
     except Exception:
@@ -497,20 +498,26 @@ def model_scene(sw: pd.DataFrame, types=None, hand: str = "All", count: str = "A
 _LEAGUE_RATES: dict = {}
 
 
-def _league_rates() -> dict:
-    """The newest season's league path rates (core.path_fit), cached."""
-    if "lr" not in _LEAGUE_RATES:
+def _league_rates(season: int | None = None) -> dict:
+    """League path rates (core.path_fit) for this season -- the nearest season built when it isn't; the newest
+    when no season is given. Cached."""
+    key = season or "newest"
+    if key not in _LEAGUE_RATES:
         from core import path_fit
-        lr = {}
-        for f in sorted(path_fit.OUT.glob("path_fit_*.json"), reverse=True):
-            try:
-                lr = json.loads(f.read_text()).get("league") or {}
-            except Exception:
-                lr = {}
-            if lr:
-                break
-        _LEAGUE_RATES["lr"] = lr
-    return _LEAGUE_RATES["lr"]
+        try:
+            _LEAGUE_RATES[key] = path_fit.load(season).get("league") or {}
+        except Exception:
+            _LEAGUE_RATES[key] = {}
+    return _LEAGUE_RATES[key]
+
+
+def season_of(sw: pd.DataFrame | None) -> int | None:
+    """The season these swings are from (the most common year)."""
+    try:
+        y = pd.to_datetime(sw["date"], errors="coerce").dt.year.dropna()
+        return int(y.mode().iloc[0]) if len(y) else None
+    except Exception:
+        return None
 
 
 def fit_path(sc: dict, me: pd.DataFrame, stand: str, pz: float, px: float, pr: dict) -> dict:
@@ -528,7 +535,7 @@ def fit_path(sc: dict, me: pd.DataFrame, stand: str, pz: float, px: float, pr: d
                         ).dropna() if len(rows) else pd.DataFrame()
     target = {"swing_path_tilt": pr.get("swing_path_tilt"), "bat_speed": pr.get("bat_speed"), "plate_z": pz,
               "xh": px * (-1 if stand == "L" else 1)}
-    cur = path_fit.hitter_curve(rows, target, _league_rates()) if len(rows) else None
+    cur = path_fit.hitter_curve(rows, target, _league_rates(sc.get("season"))) if len(rows) else None
     if not cur:
         sc["path_src"] = {"kind": "circle", "why": "too few contact swings to measure his path"}
         return sc
@@ -539,7 +546,7 @@ def league_curve(sc: dict) -> dict | None:
     """The MLB-average path shape (league turning / rising / speeding-up rates for his swing tilt) around this
     scene's contact point, in path_fit's curve format; None without the league file."""
     from core import path_fit
-    lr = _league_rates()
+    lr = _league_rates(sc.get("season"))
     if not lr:
         return None
     L = path_fit._league_for(lr, float(sc["read"].get("tilt") or 34))
@@ -659,7 +666,7 @@ def group_scenes(sw: pd.DataFrame, groups: list[dict], stand: str, depth_for, st
             if not any(o is not None for o in out):          # the simulator layers, for the first group shown
                 try:
                     from core import swing_sim
-                    sc["layers"] = swing_sim.layers(sc, sw, stand)
+                    sc["layers"] = swing_sim.layers(sc, sw, stand, sc.get("season"))
                 except Exception:
                     sc["layers"] = None
         out.append(sc)

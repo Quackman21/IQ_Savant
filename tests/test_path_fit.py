@@ -114,3 +114,20 @@ def test_lead_in_is_his_swing_length_and_starts_at_his_swing_time():
     # the follow-through stops at about a quarter turn: it never comes back round to the lead-in
     post = a[i0:, :3]
     assert np.linalg.norm(post[-1] - post[0]) > 30
+
+
+def test_calibration_files_fall_back_to_the_nearest_season(tmp_path):
+    from core import path_fit as pf
+    for y in (2025, 2026):
+        (tmp_path / f"path_fit_{y}.json").write_text("{}")
+    assert pf.nearest("path_fit", 2026, tmp_path).name == "path_fit_2026.json"
+    assert pf.nearest("path_fit", 2023, tmp_path).name == "path_fit_2025.json"     # before tracking files: nearest
+    assert pf.nearest("path_fit", None, tmp_path).name == "path_fit_2026.json"     # no season: the newest
+    assert pf.nearest("collision", 2024, tmp_path) is None
+
+
+def test_scene_season_comes_from_its_swings():
+    import pandas as pd
+    from core import bat_path as bp
+    assert bp.season_of(pd.DataFrame({"date": ["2024-05-01", "2024-06-01", "2025-04-01"]})) == 2024
+    assert bp.season_of(pd.DataFrame()) is None

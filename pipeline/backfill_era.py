@@ -12,6 +12,10 @@ Per season, in order (each step skips itself when its output already exists, so 
   4. hip-position fallback for hitters not on the stance board -> data/hip_group_<season>.json
   5. weather: every park (location, elevation, field bearing, roof) + every game's reported weather + hourly history
      -> data/weather/; then a check that it explains carry (tailwind -> longer, thinner air -> longer)
+  6. Bat Path norms (fast swings) + 7. the bat cube (every competitive swing)
+  8. the bat path through the zone by contact depth -> path_fit_<season>.json
+  9. bat-ball collision calibration -> collision_<season>.json
+  (the swing simulator's spray model is one file, trained on the newest season: python -m core.swing_sim <season>)
 Then the regular data update (league reference + grades for every season that needs it) and one commit + push.
 A log of the whole run goes to data/calibration/backfill_log.txt.
 """
@@ -111,6 +115,30 @@ def season_steps(season: int, force: bool) -> None:
             bat_cube.run(season)
         except Exception as e:
             log(f"bat cube skipped: {type(e).__name__}: {e}")
+    # 8 the bat path through the zone (league + per-hitter rates by contact depth) -> data/calibration/path_fit_<season>
+    pf = CAL / f"path_fit_{season}.json"
+    if force or not pf.exists():
+        try:
+            from core import path_fit
+            r = path_fit.run(season)
+            a = (r.get("league") or {}).get("all") or {}
+            log(f"bat path rates: attack angle {a.get('attack_angle', {}).get('slope', float('nan')):+.3f} deg/in, "
+                f"direction {a.get('attack_direction', {}).get('slope', float('nan')):+.3f} deg/in")
+        except Exception as e:
+            log(f"bat path rates skipped: {type(e).__name__}: {e}")
+    else:
+        log("bat path rates: already have them")
+    # 9 bat-ball collision calibration (needs 8) -> data/calibration/collision_<season>.json
+    cf = CAL / f"collision_{season}.json"
+    if force or not cf.exists():
+        try:
+            from core import collision
+            r = collision.run(season)
+            log(f"collision: q {(r.get('measured') or {}).get('q', float('nan')):.3f} on {r.get('balls', 0):,} balls")
+        except Exception as e:
+            log(f"collision skipped: {type(e).__name__}: {e}")
+    else:
+        log("collision: already have it")
     # 4 hip fallback
     if force or not (ROOT / "data" / f"hip_group_{season}.json").exists():
         hip_group.main([str(lg_file)])

@@ -396,9 +396,26 @@ def run(season: int, max_hitters: int | None = None) -> dict:
     return out
 
 
-def load(season: int) -> dict:
-    f = OUT / f"path_fit_{season}.json"
-    return json.loads(f.read_text()) if f.exists() else {}
+def nearest(prefix: str, season: int | None, folder: Path | None = None) -> Path | None:
+    """<prefix>_<season>.json if it's built, else the nearest season that is (ties -> the later one); None if none."""
+    folder = folder or OUT
+    have = {}
+    for f in folder.glob(f"{prefix}_*.json"):
+        try:
+            have[int(f.stem.rsplit("_", 1)[1])] = f
+        except ValueError:
+            pass
+    if not have:
+        return None
+    if season is None:
+        return have[max(have)]
+    return have[min(have, key=lambda y: (abs(y - int(season)), -y))]
+
+
+def load(season: int | None) -> dict:
+    """This season's path rates -- or the nearest season's when it isn't built (e.g. before 2025)."""
+    f = nearest("path_fit", season)
+    return json.loads(f.read_text()) if f is not None else {}
 
 
 def report(out: dict) -> None:

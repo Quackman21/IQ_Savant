@@ -7,6 +7,7 @@ import json
 import math
 from html import escape
 
+import numpy as np
 import pandas as pd
 
 from core.aar import SAVANT_VIDEO
@@ -51,6 +52,8 @@ CSS_EXTRA = """
 #fa .det td:last-child{text-align:right;font-family:ui-monospace,Menlo,monospace}
 #fa .det a{color:#4a8b96;font-weight:600;text-decoration:none}
 #fa svg .pt{cursor:pointer}
+#fa svg text.pn{font:800 13px system-ui;fill:#16202b;stroke:#fff;stroke-width:3px;paint-order:stroke}
+#fa svg text.fd{font:500 13px system-ui;fill:#6a7681;stroke:none}
 @media (max-width:900px){#fa .top,#fa .charts,#fa .two{grid-template-columns:1fr}}
 """
 
@@ -117,37 +120,58 @@ def tiles_html(line: dict, view: str, comps: dict | None) -> str:
     return "".join(common + t + tail)
 
 
-def field_svg(view: str, dims: dict | None) -> str:
-    """The empty field (home at the bottom); points are drawn by the page's script. viewBox in feet."""
-    if view == "Outfield":
-        d = dims or {}
-        L, C, R = d.get("leftLine", 330), d.get("center", 400), d.get("rightLine", 325)
-        LC, RC = d.get("leftCenter", (L + C) / 2 + 15), d.get("rightCenter", (R + C) / 2 + 15)
-        fence = [(-45, L), (-22.5, LC), (0, C), (22.5, RC), (45, R)]
-        pts = []
-        for i in range(len(fence) - 1):
-            (a0, d0), (a1, d1) = fence[i], fence[i + 1]
-            for k in range(10):
-                a, dd = a0 + (a1 - a0) * k / 10, d0 + (d1 - d0) * k / 10
-                pts.append((dd * math.sin(math.radians(a)), dd * math.cos(math.radians(a))))
-        pts.append((R * math.sin(math.radians(45)), R * math.cos(math.radians(45))))
-        poly = " ".join(f"{x:.1f},{-y:.1f}" for x, y in [(0, 0)] + pts)
-        span, top = max(L, R) * 0.75 + 20, max(C, LC, RC) + 20
-        vb = f"{-span:.0f} {-top:.0f} {2 * span:.0f} {top + 12:.0f}"
-        grass = f'<polygon points="{poly}" fill="#eef5ef" stroke="#c9d8cc" stroke-width="1.5"/>'
+def field_svg(view: str, dims: dict | None, outline: dict | None = None, park: str = "") -> str:
+    """The park the game was played in (home at the bottom; feet): the traced wall, dirt and grass when the outline
+    matches this venue (core.aar.park_outline, same as the hitter's spray chart), otherwise straight lines between
+    the published fence distances. Points are drawn by the page's script."""
+    from ui.aar import LINE_ANGLES, _around_center, _by_spray
+    segs = (outline or {}).get("segments") or {}
+    P = lambda x, y: f"{x:.1f},{-y:.1f}"
+    g, note = [], ""
+    if segs:
+        fx, fy = _by_spray(*segs["outfield_outer"])
+        g.append(f'<polygon points="0,0 {" ".join(P(a, c) for a, c in zip(fx, fy))}" fill="#eef5ef" stroke="#5f8f96" '
+                 f'stroke-width="1.6" stroke-linejoin="round"/>')
+        if "infield_outer" in segs:
+            ix, iy = _by_spray(*segs["infield_outer"])
+            g.append(f'<polygon points="0,0 {" ".join(P(a, c) for a, c in zip(ix, iy))}" fill="#f3ece2" stroke="#c9b48f" stroke-width=".8"/>')
+        if "infield_inner" in segs:
+            ix, iy = _around_center(*segs["infield_inner"])
+            g.append(f'<polygon points="{" ".join(P(a, c) for a, c in zip(ix, iy))}" fill="#eef5ef" stroke="#c9b48f" stroke-width=".8"/>')
+        for a_, c_ in ((fx[0], fy[0]), (fx[-1], fy[-1])):
+            g.append(f'<line x1="0" y1="0" x2="{a_:.1f}" y2="{-c_:.1f}" stroke="#b9c7cb" stroke-width="1"/>')
+        deep, wide = float(np.max(fy)), float(np.max(np.abs(fx)))
+        dist = np.hypot(fx, fy)
+        labels = [(fx[0], fy[0], "start", 6, (dims or {}).get("leftLine")), (fx[-1], fy[-1], "end", -6, (dims or {}).get("rightLine")),
+                  (fx[int(np.argmax(dist))], fy[int(np.argmax(dist))], "middle", 0, (dims or {}).get("center"))]
     else:
-        arc = " ".join(f"{160 * math.sin(math.radians(a)):.1f},{-160 * math.cos(math.radians(a)):.1f}" for a in range(-45, 46, 3))
-        grass = f'<polygon points="0,0 {arc}" fill="#f3ece2" stroke="#ddd2c2"/>'
-        vb = "-125 -185 250 197"
+        d = dims or {"leftLine": 330, "left": 365, "leftCenter": 385, "center": 400, "rightCenter": 385, "right": 365,
+                     "rightLine": 325}
+        pts = [(d[k] * math.sin(math.radians(a)), d[k] * math.cos(math.radians(a))) for k, a in LINE_ANGLES.items() if k in d]
+        g.append(f'<polygon points="0,0 {" ".join(P(a, c) for a, c in pts)}" fill="#eef5ef" stroke="#7fa3a9" '
+                 f'stroke-width="1.3" stroke-dasharray="6 4"/>')
+        arc = " ".join(P(95 * math.sin(math.radians(a)), 95 * math.cos(math.radians(a)) + 60.5) for a in range(-75, 76, 5))
+        g.append(f'<polygon points="0,0 {arc}" fill="#f3ece2" stroke="#ddd2c2" opacity=".9"/>')
+        for a_, c_ in (pts[0], pts[-1]):
+            g.append(f'<line x1="0" y1="0" x2="{a_:.1f}" y2="{-c_:.1f}" stroke="#b9c7cb"/>')
+        deep, wide = max(c for _, c in pts), max(abs(a) for a, _ in pts)
+        labels = [(pts[0][0], pts[0][1], "start", 6, d.get("leftLine")), (pts[-1][0], pts[-1][1], "end", -6, d.get("rightLine")),
+                  (0, d.get("center", deep), "middle", 0, d.get("center"))]
+        note = " (approximate fence -- published distances)"
     dia = "0,0 -63.6,-63.6 0,-127.3 63.6,-63.6"
-    bases = "".join(f'<rect x="{x - 2:.1f}" y="{y - 2:.1f}" width="4" height="4" fill="#fff" stroke="#9aa5ae" '
-                    f'stroke-width=".6" transform="rotate(45 {x:.1f} {y:.1f})"/>'
-                    for x, y in ((-63.6, -63.6), (0, -127.3), (63.6, -63.6)))
-    lines = (f'<line x1="0" y1="0" x2="{-330 * .7071:.0f}" y2="{-330 * .7071:.0f}" stroke="#c9d8cc"/>'
-             f'<line x1="0" y1="0" x2="{330 * .7071:.0f}" y2="{-330 * .7071:.0f}" stroke="#c9d8cc"/>')
-    return (f'<svg id="fld" viewBox="{vb}" width="100%" preserveAspectRatio="xMidYMax meet">{grass}'
-            f'<polygon points="{dia}" fill="{"#f3ece2" if view == "Outfield" else "#eef5ef"}" stroke="#ddd2c2"/>'
-            f'{lines}{bases}<g id="pts"></g></svg>')
+    g.append(f'<polygon points="{dia}" fill="none" stroke="#c9b48f" stroke-width=".8"/>')
+    g += [f'<rect x="{x - 2:.1f}" y="{y - 2:.1f}" width="4" height="4" fill="#fff" stroke="#9aa5ae" stroke-width=".6" '
+          f'transform="rotate(45 {x:.1f} {y:.1f})"/>' for x, y in ((-63.6, -63.6), (0, -127.3), (63.6, -63.6))]
+    if view == "Outfield":
+        for x, y, anchor, dx, v in labels:
+            if v:
+                g.append(f'<text class="fd" x="{x + dx:.1f}" y="{-y - 7:.1f}" text-anchor="{anchor}">{v:.0f}</text>')
+        vb = f"{-wide - 20:.0f} {-deep - 26:.0f} {2 * wide + 40:.0f} {deep + 38:.0f}"
+    else:
+        vb = "-125 -185 250 197"
+    cap = f'<div class="s" style="margin:2px 0 0">{escape(park + note)}</div>' if (park or note) else ""
+    return (f'<svg id="fld" viewBox="{vb}" width="100%" preserveAspectRatio="xMidYMax meet">{"".join(g)}'
+            f'<g id="pts"></g></svg>{cap}')
 
 
 JS = r"""
@@ -212,7 +236,7 @@ function points() {
     const mark = r.made ? `<circle cx="${x}" cy="${y}" r="${R}" fill="${c}" stroke="#16202b" stroke-width="${s ? w * 2.4 : w}"/>`
       : `<g stroke="${c}" stroke-width="${R * 0.45}"><line x1="${x - R}" y1="${y - R}" x2="${x + R}" y2="${y + R}"/><line x1="${x - R}" y1="${y + R}" x2="${x + R}" y2="${y - R}"/></g>` +
         (s ? `<circle cx="${x}" cy="${y}" r="${R * 1.5}" fill="none" stroke="#16202b" stroke-width="${w * 1.6}"/>` : '');
-    return `<g class="pt" data-n="${r.n}">${mark}<text x="${x + R * 1.2}" y="${y - R * 0.9}" font-size="${R * 1.9}" fill="#16202b" stroke="#fff" stroke-width="${R * 0.45}" paint-order="stroke" font-weight="700">${r.n}</text></g>`;
+    return `<g class="pt" data-n="${r.n}">${mark}<text class="pn" x="${x + R * 1.2}" y="${y - R * 0.9}" style="font-size:${R * 1.9}px;stroke-width:${R * 0.32}px">${r.n}</text></g>`;
   }).join('');
   g.querySelectorAll('.pt').forEach(e => { e.onclick = () => pick(+e.dataset.n);
     e.ondblclick = () => { const r = P.find(x => x.n === +e.dataset.n); if (r && r.video) window.open(VID + r.video, '_blank'); }; });
@@ -280,7 +304,7 @@ def _side_table(view: str, dp: pd.DataFrame | None, arm: pd.DataFrame | None) ->
 
 
 def component_html(c: dict, line: dict, view: str, header: str = "", comps: dict | None = None,
-                   dims: dict | None = None, has_model: bool = True) -> str:
+                   dims: dict | None = None, has_model: bool = True, outline: dict | None = None, park: str = "") -> str:
     from ui.aar import CSS
     plays = _rows(c.get("plays"), ROW_KEYS)
     chips = "".join(f'<span class="chip{" on" if k == "all" else ""}" data-f="{k}">{v}</span>' for k, v in
@@ -295,7 +319,7 @@ def component_html(c: dict, line: dict, view: str, header: str = "", comps: dict
     title = "Every ball that was his" if view == "Outfield" else "Every ball that was his (infield)"
     charts = (f'<div class="card"><div class="charts"><div><h4>{title}</h4><div class="s">Where each ball landed or was '
               f'picked up. ● out he made · ✕ a hit or error that was partly his -- coloured by how often MLB makes the out. '
-              f'Click a play (here or in the table); double-click for the video.</div>{field_svg(view, dims)}'
+              f'Click a play (here or in the table); double-click for the video.</div>{field_svg(view, dims, outline, park)}'
               f'<div class="leg"><span>hard</span><span class="gbar"></span><span>routine</span></div></div>'
               f'<div class="det" id="det"></div></div></div>')
     bar = (f'<div class="tbar"><span class="ttl">Plays</span><span id="fchips">{chips}</span>'

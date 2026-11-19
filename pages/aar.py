@@ -205,8 +205,15 @@ if view in ("Infield", "Outfield"):
     except Exception:
         fcmp = {}
     dims = aar.field_dims(f) or venue_dims(int(f.get("gameData", {}).get("venue", {}).get("id") or 0))
+    home_name = (teams.get(hd["home"], {}).get("name", "")
+                 or f.get("gameData", {}).get("teams", {}).get("home", {}).get("name", ""))
+    try:                                           # the park this game was played in (same outline as the spray chart)
+        outline = park_outline(home_name, tuple(sorted(dims.items())), hd["venue"] or "")
+    except Exception:
+        outline = None
     n = 0 if fc["plays"] is None or fc["plays"].empty else len(fc["plays"])
-    components.html(field_ui.component_html(fc, fl, view, header=head, comps=fcmp, dims=dims, has_model=has_model),
+    components.html(field_ui.component_html(fc, fl, view, header=head, comps=fcmp, dims=dims, has_model=has_model,
+                                            outline=outline, park=hd["venue"] or ""),
                     height=field_ui.estimate_height(n), scrolling=True)
     st.caption("Every ball in play that was his, judged by the ball alone (exit velo, launch angle, direction, flight "
                "distance, batter side) with the IQ fielding model -- the same one behind the profile's Defense tab. "

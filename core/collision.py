@@ -208,9 +208,11 @@ def run(season: int, sample: int = 60000) -> dict:
     return out
 
 
-def load(season: int) -> dict:
-    f = OUT / f"collision_{season}.json"
-    return json.loads(f.read_text()) if f.exists() else {}
+def load(season: int | None) -> dict:
+    """This season's collision calibration -- or the nearest season's when it isn't built."""
+    from core.path_fit import nearest
+    f = nearest("collision", season, OUT)
+    return json.loads(f.read_text()) if f is not None else {}
 
 
 def report(o: dict) -> None:

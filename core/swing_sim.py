@@ -408,7 +408,8 @@ def cal(season: int = 2026) -> dict:
     key = ("cal", season)
     if key not in _cache:
         p = dict(CAL_DEFAULT)
-        f = OUT / f"swing_cal_{season}.json"
+        from core.path_fit import nearest
+        f = nearest("swing_cal", season, OUT) or OUT / f"swing_cal_{season}.json"
         try:
             p.update(json.loads(f.read_text()).get("params", {}))
             p["fitted"] = True
@@ -716,8 +717,10 @@ def bat_heat(sc: dict, ref: dict, stand: str, q: float, t_from: float = -0.045, 
             "f": np.round(F, 3).tolist(), "s": np.round(Sv, 3).tolist()}
 
 
-def layers(sc: dict, sw: pd.DataFrame | None, stand: str, season: int = 2026) -> dict:
-    """Contact + timing + arsenal for a Bat Path scene (its modeled pitch + his measured path)."""
+def layers(sc: dict, sw: pd.DataFrame | None, stand: str, season: int | None = None) -> dict:
+    """Contact + timing + arsenal for a Bat Path scene (its modeled pitch + his measured path). season: the scene's
+    (its swings' year) -> that season's calibration files, or the nearest built."""
+    season = season or sc.get("season")
     from core import path_fit
     from core.bat_path import synth_pitch
     m = sc.get("model") or {}
