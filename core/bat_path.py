@@ -506,7 +506,7 @@ def fit_path(sc: dict, me: pd.DataFrame, stand: str, pz: float, px: float, pr: d
     """Swap the assumed circle for his MEASURED path (core.path_fit) where his swings back it: his contact swings
     with the same kind of plane / speed / pitch location, lined up by contact depth, give how fast the path turns,
     rises and speeds up through the zone. Inside the depths those swings reach: measured (flag 3; Statcast's own
-    window stays flag 1); beyond: keeps turning at the last measured rate (flag 2, drawn see-through)."""
+    window stays flag 1); beyond: carries on round the measured curve (flag 2, drawn see-through)."""
     from core import path_fit
     rows = me[me["pf"].notna()] if "pf" in me else me.iloc[0:0]
     rows = pd.DataFrame({"pf": rows.get("pf"), "plate_z": (rows.get("pz_in") / 12.0).fillna(pz),
@@ -525,7 +525,7 @@ def fit_path(sc: dict, me: pd.DataFrame, stand: str, pz: float, px: float, pr: d
     v = float(pr.get("bat_speed") or sc["read"]["bat_speed"]) * 17.6
     pre_len, post_len = max(-arc[0][4] * v, 6.0), max(arc[-1][4] * v, 6.0)
     r = path_fit.rebuild(sc["contact"], float(sc["read"]["attack_angle"]), float(sc["read"]["attack_direction"]),
-                         float(sc["read"]["bat_speed"]), stand, cur, pre_len, post_len)
+                         float(sc["read"]["bat_speed"]), stand, cur, pre_len, post_len, center=sc.get("O"))
     pts, hands = r["arc"], r["hands"]
     for p in pts:                                            # Statcast's measured window keeps its own flag
         if p[3] == 3 and -0.040 <= p[4] <= 0:

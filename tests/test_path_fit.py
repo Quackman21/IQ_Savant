@@ -75,3 +75,23 @@ def test_time_curves_follow_the_measured_rates():
     assert cv["attack_angle"][0, later] > 8.0 + 3 and cv["attack_direction"][0, later] < -5   # rising, turning pull
     assert -60 < cv["vba"][0, j0] < -10                               # barrel below the hands
     assert np.isnan(cv["attack_angle"][0, 0]) or TGRID[0] > -70       # drawn back only to his swing length
+
+
+def test_path_beyond_the_measured_span_arcs_round_the_swing_centre_not_a_vertical_loop():
+    import numpy as np
+    from core import path_fit as pf
+    # a hitter whose attack angle climbs fast with depth but whose direction barely turns (the old spiral case)
+    curve = {"center": 5.0, "lo": -5.0, "hi": 15.0,
+             "attack_angle": {"slope": 1.6, "curve": 0.0}, "attack_direction": {"slope": -0.3, "curve": 0.0},
+             "bat_speed": {"slope": 0.2, "curve": 0.0}}
+    C, O = [0.0, 5.0, 30.0], [-35.0, -1.0, 51.0]
+    r = pf.rebuild(C, 10.0, 0.0, 72.0, "R", curve, 70.0, 60.0, center=O)
+    a = np.array(r["arc"])
+    assert a[:, 2].max() < 75 and a[:, 0].min() < -20          # turns round his body instead of straight up
+    d = np.linalg.norm(a[1:, :3] - a[:-1, :3], axis=1)
+    assert d.max() < 0.6                                         # one smooth line, no jumps
+    H = np.array(r["hands"])
+    assert np.allclose(np.linalg.norm(H, axis=1), 1, atol=1e-3)
+    # the bat points toward the swing's centre (positive component along P -> O)
+    toO = np.array(O)[None, :] - a[:, :3]
+    assert ((H * toO).sum(1) > 0).mean() > 0.95

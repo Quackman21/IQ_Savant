@@ -1054,12 +1054,41 @@ function showArsenal() {
     <div class="tiles" style="grid-template-columns:1fr 1fr 1fr"><div class="tile"><div>In play / foul / whiff</div><div>${c.fair || 0} / ${c.foul || 0} / ${c.whiff || 0}</div></div>
     <div class="tile"><div>Path robustness (runs / 100)</div><div>${sgn(A.runs100, 1)}</div></div>
     <div class="tile"><div>MLB-average path shape</div><div>${A.mlb_runs100 === null || A.mlb_runs100 === undefined ? '–' : sgn(A.mlb_runs100, 1)}</div></div></div></div></div>`;
-  const g = overlay(); if (!g) return; atContact();
-  A.rows.forEach(r => {
+  const g = overlay(); if (!g) return;
+  // every pitch flies in on the scene clock: a ball in its pitch colour from release, its trail drawn from the commit
+  // point on, and -- when it reaches his bat -- the outcome ball (green in play / orange foul / grey whiff)
+  const tc = A.t_commit ?? -0.17;
+  const P = A.rows.map(r => {
     const col = new THREE.Color(PC[r.type] || '#555');
-    g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(r.line.map(V)), new THREE.LineBasicMaterial({color: col, transparent: true, opacity: .28})));
-    g.add(ball(r.at, new THREE.Color(OUTC[r.result]), 1.45, .95));
+    const fly = r.fly || r.line.map((q, i) => [...q, tc + i * 0.01]);
+    const trailPts = fly.filter(q => q[3] >= tc);
+    const geo = new THREE.BufferGeometry().setFromPoints(trailPts.map(V));
+    const trail = new THREE.Line(geo, new THREE.LineBasicMaterial({color: col, transparent: true, opacity: .3}));
+    const pb = ball(fly[0], col, 1.45, 1), out = ball(r.at, new THREE.Color(OUTC[r.result]), 1.45, .95);
+    out.visible = false; g.add(trail, pb, out);
+    const hit = r.result !== 'whiff';
+    return {fly, trailPts, geo, pb, out, hit, tm: r.t};
   });
+  const tok = OVL;
+  function step() {
+    if (OVL !== tok || !R3) return;
+    const t = R3.time();
+    P.forEach(p => {
+      const f = p.fly, end = p.hit ? Math.min(p.tm, f[f.length - 1][3]) : f[f.length - 1][3];
+      if (t < f[0][3] || t > end + (p.hit ? 0 : 0.02)) p.pb.visible = false;
+      else {
+        let k = 1; while (k < f.length - 1 && f[k][3] < t) k++;
+        const a = f[k - 1], c = f[k], u = Math.max(0, Math.min(1, (t - a[3]) / ((c[3] - a[3]) || 1)));
+        p.pb.position.copy(V([a[0] + (c[0] - a[0]) * u, a[1] + (c[1] - a[1]) * u, a[2] + (c[2] - a[2]) * u]));
+        p.pb.visible = true;
+      }
+      p.out.visible = t >= p.tm;
+      let n = 0; while (n < p.trailPts.length && p.trailPts[n][3] <= t) n++;
+      p.geo.setDrawRange(0, n);
+    });
+    requestAnimationFrame(step);
+  }
+  step();
   const mk = ball(A.commit, 0x16202b, 0.5, .5); g.add(mk);
   document.getElementById('cpl').onclick = () => { mk.visible = true; R3.preset('Open side'); };
   document.getElementById('ccm').onclick = () => { R3.look(A.eye || [A.commit[0], A.commit[1] + 150, A.commit[2] + 10], SC.contact, 9); };

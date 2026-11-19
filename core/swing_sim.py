@@ -431,7 +431,9 @@ def arsenal_layer(sc: dict, ref: dict, stand: str, hand: str, q: float, n: int =
         ts, xyz, v = _pitch_samples(d, tc, _t_front(d, -40.0), 1400)
         m = meet(bat, xyz, ts - tc - tau, v, stand, q, defer=True)
         line = _traj(d, np.linspace(tc, _t_front(d, -12.0), 24)).round(1).tolist()
-        rows.append({"type": k, "velo": round(float(velo), 1), "line": line, **m})
+        tf = np.linspace(_t_front(d, (d["release_pos_y"] - FRONT_FT) * 12), _t_front(d, -12.0), 32)
+        fly = np.column_stack([_traj(d, tf), tf - tc - tau]).round(4).tolist()     # release -> plate, scene clock
+        rows.append({"type": k, "velo": round(float(velo), 1), "line": line, "fly": fly, **m})
     rows = finish(rows, stand)
     df = pd.DataFrame(rows)
     by = []
@@ -442,7 +444,7 @@ def arsenal_layer(sc: dict, ref: dict, stand: str, hand: str, q: float, n: int =
                    "fair": round(float((g["result"] == "fair").mean()), 3), "runs": round(float(g["runs"].mean()), 3)})
     by.sort(key=lambda r: -r["n"])
     eye = _traj(ref, [t_ref_commit - 0.09])[0] + np.array([0.0, 0.0, 3.0])   # behind the commit point, along the pitch
-    return {"rows": rows, "by_type": by, "commit": commit.round(1).tolist(), "eye": eye.round(1).tolist(),
+    return {"rows": rows, "by_type": by, "commit": commit.round(1).tolist(), "eye": eye.round(1).tolist(), "t_commit": round(float(-tau), 4),
             "commit_ms": int(COMMIT_S * 1000),
             "counts": {k: int(v) for k, v in df["result"].value_counts().items()}, "runs100": round(float(df["runs"].mean() * 100), 2)}
 
@@ -490,7 +492,7 @@ def layers(sc: dict, sw: pd.DataFrame | None, stand: str, season: int = 2026) ->
                   for k in ("attack_angle", "attack_direction", "bat_speed")}}
         v = float(sc["read"]["bat_speed"]) * 17.6
         rb = path_fit.rebuild(sc["contact"], float(sc["read"]["attack_angle"]), float(sc["read"]["attack_direction"]),
-                              float(sc["read"]["bat_speed"]), stand, cur, -sc["arc"][0][4] * v, sc["arc"][-1][4] * v)
+                              float(sc["read"]["bat_speed"]), stand, cur, -sc["arc"][0][4] * v, sc["arc"][-1][4] * v, center=sc.get("O"))
         avg = arsenal_layer(sc, ref, stand, hand, q, bat_sc={"arc": rb["arc"], "hands": rb["hands"], "O": sc["O"]})
         ar["mlb_runs100"] = avg["runs100"]
     except Exception:

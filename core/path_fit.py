@@ -245,13 +245,52 @@ def _dir(aa: float, ad: float, side: str) -> np.ndarray:
     return np.array([math.sin(h) * math.cos(a), math.cos(h) * math.cos(a), math.sin(a)])
 
 
+R_MIN, R_MAX = 24.0, 60.0          # sweet-spot turning radius allowed beyond the measured span (in)
+MAX_TURN_PRE, MAX_TURN_POST = 150.0, 110.0     # degrees of arc drawn before / after the measured span
+
+
+def _extend(P: np.ndarray, T: np.ndarray, kvec: np.ndarray, sign: int, total: float, step: float,
+            center=None) -> list:
+    """Past what his swings cover: carry on round a circle in the swing's plane -- bending toward `center` (the
+    swing's centre of rotation, from his tilt) at the measured path's own curvature at the edge of the span (radius
+    kept to R_MIN..R_MAX), so the path turns smoothly instead of spiralling. No centre: the measured curve's own
+    plane; no curvature either: straight."""
+    T = T / np.linalg.norm(T)
+    k = float(np.linalg.norm(kvec))
+    N = None
+    if center is not None:                     # the swing's own plane: bend toward its centre of rotation
+        N = np.asarray(center, float) - P
+        N = N - (N @ T) * T
+        if k <= 1e-4:
+            k = 1.0 / max(float(np.linalg.norm(N)), 1e-6)
+    elif k > 1e-4:
+        N = kvec - (kvec @ T) * T
+    if N is not None and np.linalg.norm(N) > 1e-9:
+        N = N / np.linalg.norm(N)
+        R = float(np.clip(1.0 / max(k, 1e-9), R_MIN, R_MAX))
+        total = min(total, math.radians(MAX_TURN_PRE if sign < 0 else MAX_TURN_POST) * R)
+    else:
+        N, R = None, None
+    out, s = [], 0.0
+    while s + step <= total + 1e-9:
+        s += step
+        if N is None:
+            Q = P + sign * T * s
+        else:
+            th = s / R
+            Q = P + R * N * (1 - math.cos(th)) + sign * R * T * math.sin(th)
+        out.append((Q, s))
+    return out
+
+
 def rebuild(C, aa0: float, ad0: float, bs0: float, side: str, curve: dict, pre_len: float, post_len: float,
-            step: float = 0.25) -> dict:
+            step: float = 0.25, center=None) -> dict:
     """The sweet spot's path from his measured rates. C = contact point (in; y = inches in front of the plate),
     aa0 / ad0 / bs0 = the swing's angles + speed at contact. Steps along by depth while inside lo..hi (each step
-    pointing the way his swings point at that depth); past that, keeps turning at the last measured rate (per inch
-    travelled) out to pre_len / post_len inches of path. Returns points [x, y, z, fitted?, t], and the bat's
-    direction (sweet spot -> hands) at each: toward the centre of the path's curve."""
+    pointing the way his swings point at that depth); past that, carries on round the measured curve (a circle in its
+    own plane) out to pre_len / post_len inches of path. Returns points [x, y, z, fitted?, t], and the bat's
+    direction (sweet spot -> hands) at each: toward the centre of the path's curve. center = the swing's centre of
+    rotation (only used when the measured span gives no curvature to carry on)."""
     C = np.asarray(C, float)
     pf0 = float(C[1])
     lo, hi = min(curve["lo"], pf0), max(curve["hi"], pf0)
@@ -284,11 +323,12 @@ def rebuild(C, aa0: float, ad0: float, bs0: float, side: str, curve: dict, pre_l
                 P, s, aa, ad, bs = Pn, s + ds, a2, d2, b2
                 pts.append((P.copy(), s, aa, ad, bs, True))
                 continue
-            aa += rate[0] * step                                       # past what his swings cover: same turn rate
-            ad += rate[1] * step
-            P = P + sign * _dir(aa, ad, side) * step
-            s += step
-            pts.append((P.copy(), s, aa, ad, bs, False))
+            # past what his swings cover: a smooth arc continuing the measured curve (see _extend)
+            T = _dir(aa, ad, side)
+            kvec = sign * (_dir(aa + rate[0], ad + rate[1], side) - T)       # forward curvature, per inch
+            for Q, e in _extend(P, T, kvec, sign, total - s, step, center):
+                pts.append((Q, s + e, aa, ad, bs, False))
+            break
         return pts
 
     back, fwd = walk(-1, pre_len), walk(1, post_len)
@@ -314,6 +354,12 @@ def rebuild(C, aa0: float, ad0: float, bs0: float, side: str, curve: dict, pre_l
     if (~good).any():
         N[~good] = np.nan
         N = pd.DataFrame(N).ffill().bfill().fillna(0).to_numpy()
+    if center is not None:          # the bat lies in his swing plane, pointing at its centre of rotation
+        Nc = np.asarray(center, float)[None, :] - P
+        Nc = Nc - (Nc * T).sum(1, keepdims=True) * T
+        nc = np.linalg.norm(Nc, axis=1)
+        okc = nc > 1e-6
+        N[okc] = Nc[okc] / nc[okc, None]
     pts = [[round(float(x), 2) for x in P[i]] + [3 if seq[i][5] else 2, round(float(t[i]), 5)] for i in range(len(seq))]
     return {"arc": pts, "hands": [[round(float(x), 3) for x in N[i]] for i in range(len(seq))],
             "speed0": round(v0, 1), "range": [round(lo, 1), round(hi, 1)]}
