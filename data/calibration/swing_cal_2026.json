@@ -1,0 +1,149 @@
+{
+ "season": 2026,
+ "params": {
+  "decide_s": 0.04,
+  "w_speed": 1.0,
+  "reach_max": 1.5,
+  "reach_frac": 0.25,
+  "adj_ms": 24.0,
+  "r_tip": 2.6,
+  "r_foul": 0.9,
+  "aim_sd": 3.0,
+  "time_sd_ms": 3.0,
+  "league_pf_sd": 8.449371843040526
+ },
+ "hitters": 120,
+ "swings": 30000,
+ "error": 0.014488,
+ "report": {
+  "by_type": [
+   {
+    "type": "CH",
+    "n": 3579,
+    "act_whiff": 0.29,
+    "act_foul": 0.321,
+    "act_fair": 0.389,
+    "sim_whiff": 0.24,
+    "sim_foul": 0.395,
+    "sim_fair": 0.365
+   },
+   {
+    "type": "CU",
+    "n": 1670,
+    "act_whiff": 0.257,
+    "act_foul": 0.366,
+    "act_fair": 0.377,
+    "sim_whiff": 0.559,
+    "sim_foul": 0.26,
+    "sim_fair": 0.181
+   },
+   {
+    "type": "FC",
+    "n": 2530,
+    "act_whiff": 0.206,
+    "act_foul": 0.413,
+    "act_fair": 0.381,
+    "sim_whiff": 0.227,
+    "sim_foul": 0.384,
+    "sim_fair": 0.389
+   },
+   {
+    "type": "FF",
+    "n": 9267,
+    "act_whiff": 0.216,
+    "act_foul": 0.442,
+    "act_fair": 0.342,
+    "sim_whiff": 0.141,
+    "sim_foul": 0.371,
+    "sim_fair": 0.488
+   },
+   {
+    "type": "FS",
+    "n": 1124,
+    "act_whiff": 0.324,
+    "act_foul": 0.327,
+    "act_fair": 0.35,
+    "sim_whiff": 0.277,
+    "sim_foul": 0.383,
+    "sim_fair": 0.341
+   },
+   {
+    "type": "KC",
+    "n": 494,
+    "act_whiff": 0.243,
+    "act_foul": 0.342,
+    "act_fair": 0.415,
+    "sim_whiff": 0.551,
+    "sim_foul": 0.265,
+    "sim_fair": 0.184
+   },
+   {
+    "type": "SI",
+    "n": 4888,
+    "act_whiff": 0.126,
+    "act_foul": 0.404,
+    "act_fair": 0.471,
+    "sim_whiff": 0.234,
+    "sim_foul": 0.383,
+    "sim_fair": 0.383
+   },
+   {
+    "type": "SL",
+    "n": 3880,
+    "act_whiff": 0.287,
+    "act_foul": 0.341,
+    "act_fair": 0.371,
+    "sim_whiff": 0.301,
+    "sim_foul": 0.359,
+    "sim_fair": 0.341
+   },
+   {
+    "type": "ST",
+    "n": 2366,
+    "act_whiff": 0.264,
+    "act_foul": 0.361,
+    "act_fair": 0.375,
+    "sim_whiff": 0.278,
+    "sim_foul": 0.295,
+    "sim_fair": 0.427
+   },
+   {
+    "type": "SV",
+    "n": 108,
+    "act_whiff": 0.287,
+    "act_foul": 0.287,
+    "act_fair": 0.426,
+    "sim_whiff": 0.398,
+    "sim_foul": 0.324,
+    "sim_fair": 0.278
+   }
+  ],
+  "hitters": {
+   "whiff": {
+    "corr": -0.196,
+    "mae": 0.077,
+    "bias": 0.014
+   },
+   "foul": {
+    "corr": 0.003,
+    "mae": 0.058,
+    "bias": -0.026
+   },
+   "fair": {
+    "corr": -0.199,
+    "mae": 0.095,
+    "bias": 0.013
+   },
+   "ev": {
+    "corr": 0.485,
+    "mae": 3.378,
+    "bias": 0.925
+   },
+   "pull": {
+    "corr": 0.202,
+    "mae": 0.12,
+    "bias": 0.088
+   }
+  }
+ }
+}
