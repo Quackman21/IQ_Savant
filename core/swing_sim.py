@@ -602,10 +602,13 @@ def _mix_sample(hand: str, n: int, rng, mix: dict | None = None) -> list:
 
 def arsenal_layer(sc: dict, ref: dict, stand: str, hand: str, q: float, n: int = 160, seed: int = 11,
                   bat_sc: dict | None = None, p: dict | None = None, mix: dict | None = None, cons: float = 1.0,
-                  actual: dict | None = None) -> dict:
-    """The same swing vs pitches that look like the modeled one at HIS commit point: each sampled pitch (his own mix
-    when we have it) is lined up through the modeled pitch's commit-point position (+ a little scatter), then breaks
-    on its own; he aims + times each off what he sees at commit (the commit model), with his own spread."""
+                  actual: dict | None = None, robust: bool = True) -> dict:
+    """The same swing vs pitches that look like the modeled one at HIS commit point: each sampled pitch is lined up
+    through the modeled pitch's commit-point position (+ a little scatter), then breaks on its own.
+    robust (the page): path robustness -- one fixed swing, timed for the modeled pitch, vs the same MLB mix for every
+        hitter, strict contact (the ball must meet the barrel) -> how forgiving his path is, comparable across hitters.
+    robust=False: the commit model (he aims + times each off what he sees at commit, with adjustment + spread) -- kept
+        for prediction work; its calibration (core.swing_cal) doesn't separate hitters yet."""
     from core.bat_path import synth_pitch
     p = p or CAL_DEFAULT
     rng = np.random.default_rng(seed)
@@ -627,16 +630,22 @@ def arsenal_layer(sc: dict, ref: dict, stand: str, hand: str, q: float, n: int =
         off = (commit - _traj(d, [tc])[0]) / 12 + np.array([rng.normal(0, 1.5), 0, rng.normal(0, 1.5)]) / 12
         d = synth_pitch(velo, ivb, hb, hand, ref["plate_x"] + off[0], ref["plate_z"] + off[2])
         tc = _t_front(d, 0.0) - cs
-        A, th = aim(d, tc, yC, fb, p["w_speed"])
-        shift = (A - aim0) * np.array([1.0, 0.0, 1.0])                # he moves the swing to where he expects it
-        dt = th - th0                                                 # ... and times it for when
-        ts, xyz, v = _pitch_samples(d, tc + th - 0.06, tc + th + 0.06, 480)
-        raws.append(meet_raw(bat, xyz - shift, ts - tc - tau - dt, v))
+        if robust:                                                    # one fixed swing, timed for the modeled pitch
+            shift, dt = np.zeros(3), 0.0
+            ts, xyz, v = _pitch_samples(d, tc, _t_front(d, -40.0), 1400)
+            raws.append(meet(bat, xyz, ts - tc - tau, v, stand, q, defer=True))
+        else:
+            A, th = aim(d, tc, yC, fb, p["w_speed"])
+            shift = (A - aim0) * np.array([1.0, 0.0, 1.0])            # he moves the swing to where he expects it
+            dt = th - th0                                             # ... and times it for when
+            ts, xyz, v = _pitch_samples(d, tc + th - 0.06, tc + th + 0.06, 480)
+            raws.append(meet_raw(bat, xyz - shift, ts - tc - tau - dt, v))
         tf = np.linspace(_t_front(d, (d["release_pos_y"] - FRONT_FT) * 12), _t_front(d, -12.0), 32)
         fly = np.column_stack([_traj(d, tf), tf - tc - tau]).round(4).tolist()     # release -> plate, scene clock
         line = _traj(d, np.linspace(tc, _t_front(d, -12.0), 24)).round(1).tolist()
         meta.append({"type": k, "velo": round(float(velo), 1), "line": line, "fly": fly, "_shift": shift, "_dt": dt})
-    res = resolve(raws, p, stand, q, rng.standard_normal(n), rng.standard_normal(n), cons)
+    res = finish(raws, stand) if robust else \
+        resolve(raws, p, stand, q, rng.standard_normal(n), rng.standard_normal(n), cons)
     rows = []
     for m_, r in zip(meta, res):
         sh, dt = m_.pop("_shift"), m_.pop("_dt")
@@ -657,7 +666,7 @@ def arsenal_layer(sc: dict, ref: dict, stand: str, hand: str, q: float, n: int =
     eye = _traj(ref, [t_ref_commit - 0.09])[0] + np.array([0.0, 0.0, 3.0])   # behind the commit point, along the pitch
     return {"rows": rows, "by_type": by, "commit": commit.round(1).tolist(), "eye": eye.round(1).tolist(),
             "t_commit": round(float(-tau), 4), "commit_ms": int(round(cs * 1000)), "cons": round(float(cons), 2),
-            "mix_src": "his" if mix else "mlb", "fitted": bool(p.get("fitted")),
+            "mix_src": "his" if mix else "mlb", "fitted": bool(p.get("fitted")), "mode": "robust" if robust else "commit",
             "counts": {k: int(v) for k, v in df["result"].value_counts().items()},
             "runs100": round(float(df["runs"].mean() * 100), 2)}
 
@@ -741,9 +750,8 @@ def layers(sc: dict, sw: pd.DataFrame | None, stand: str, season: int = 2026) ->
     cl["dots"] = dots
     tl = timing_layer(sc, ref, stand, q)
     p = cal(season)
-    cons = consistency(sw, p)
-    mix = his_mix(sw, hand)
-    ar = arsenal_layer(sc, ref, stand, hand, q, p=p, mix=mix, cons=cons, actual=his_rates(sw, hand))
+    cons, mix = 1.0, None                     # path robustness: the same test (MLB mix, fixed swing) for every hitter
+    ar = arsenal_layer(sc, ref, stand, hand, q, p=p, mix=mix, cons=cons)
     # the same swing with an MLB-average path shape (league turning rates), for comparison
     try:
         lr = path_fit.load(season).get("league") or {}
