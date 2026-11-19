@@ -4,7 +4,8 @@ Hitter AAR: header, then ONE interactive panel -- box line, Last 30 PA / Season 
 metric), zone / spray / point-of-contact charts, and a single pitch table grouped by plate appearance (every PA
 starts collapsed). Click pitches on any chart or in the table and they light up everywhere; select as many as you
 want. Report picker (top left): Hitting / Catching / Infield / Outfield -- only the ones he played in this game.
-Catching AAR: core/catch_aar.py + ui/catch_aar.py (every pitch he received, balls in play left out)."""
+Catching AAR: core/catch_aar.py + ui/catch_aar.py (every pitch he received, balls in play left out).
+Infield / Outfield AARs: core/field_aar.py + ui/field_aar.py (every ball that was his, from the IQ fielding model)."""
 from __future__ import annotations
 
 from datetime import date
@@ -54,6 +55,12 @@ def game_statcast(pk: int, day: str) -> pd.DataFrame:
 def catch_comps(season: int, pid: int, day: str) -> dict:
     from core import catch_aar
     return catch_aar.comps(season, pid, day)
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def field_comps(season: int, pid: int, day: str, view: str) -> dict:
+    from core import field_aar
+    return field_aar.comps(season, pid, day, view)
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
@@ -180,9 +187,33 @@ if view == "Catching":
     st.stop()
 
 if view in ("Infield", "Outfield"):
-    show(aar_ui.header_html(pid, who, team, gm, view))
-    st.info(f"The {view} AAR is next on the list -- he played the {view.lower()} in this game, so it'll show "
-            f"up here once it's built.")
+    from core import field_aar
+    from models import fielding as fm
+    from ui import field_aar as field_ui
+    head = aar_ui.header_html(pid, who, team, gm, "Infielder" if view == "Infield" else "Outfielder")
+    full = game_statcast(pk, gday)
+    if full.empty or "fielder_3" not in full:
+        show(head)
+        st.info("Statcast hasn't posted this game's pitches yet -- they usually appear within an hour or two of the "
+                "final out.")
+        st.stop()
+    has_model = fm.load() is not None
+    fc = field_aar.attach(field_aar.credits(full, pid, view), f)
+    fl = field_aar.line(fc, view)
+    try:
+        fcmp = field_comps(season, pid, gday, view)
+    except Exception:
+        fcmp = {}
+    dims = aar.field_dims(f) or venue_dims(int(f.get("gameData", {}).get("venue", {}).get("id") or 0))
+    n = 0 if fc["plays"] is None or fc["plays"].empty else len(fc["plays"])
+    components.html(field_ui.component_html(fc, fl, view, header=head, comps=fcmp, dims=dims, has_model=has_model),
+                    height=field_ui.estimate_height(n), scrolling=True)
+    st.caption("Every ball in play that was his, judged by the ball alone (exit velo, launch angle, direction, flight "
+               "distance, batter side) with the IQ fielding model -- the same one behind the profile's Defense tab. "
+               "Out chance = how often an average defense makes the out on a ball like that; his share = how often "
+               "his position is the one that makes it (from the league, not from where he stood). Credit: out he made "
+               "= 1 - out chance; hit / error = -(out chance x his share). No starting spots or routes -- MLB doesn't "
+               "publish them.")
     st.stop()
 
 head = aar_ui.header_html(pid, who, team, gm)

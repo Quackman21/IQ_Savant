@@ -133,7 +133,8 @@ def _bundles(df: pd.DataFrame, b: dict):
 # Per-play credits
 # ----------------------------------------------------------------------------
 def play_credits(df: pd.DataFrame, b: dict) -> pd.DataFrame:
-    """One row per (ball in play, responsible position): player, pos, opa, runs, fpa, star bucket, ..."""
+    """One row per (ball in play, responsible position): player, pos, opa, runs, fpa, star bucket, ...
+    `row` = the ball's index in df (the game reports join the play's details back on it)."""
     rows = []
     for m, sub in _bundles(df, b):
         d = df[m & balls_in_play(df)]
@@ -177,7 +178,7 @@ def play_credits(df: pd.DataFrame, b: dict) -> pd.DataFrame:
                               "player": player, "pos": k, "opa": opa, "runs": opa * rv, "fpa": fpa,
                               "primary": primary.astype(float), "p_out": p_out, "out": out,
                               "made": mine.astype(float), "rng": opa - conv, "conv": conv, "sec": sec,
-                              "conv_n": fielded_me.astype(float)}, index=d.index)[keep]
+                              "conv_n": fielded_me.astype(float), "row": d.index}, index=d.index)[keep]
             rows.append(r)
         # double plays: grounders, runner on 1st, < 2 outs, fielded by an infielder
         dp_opp = (f["la"] < 10) & f["on1"].eq(1) & (f["outs"] < 2) & made_by.isin(INFIELD)
@@ -188,7 +189,8 @@ def play_credits(df: pd.DataFrame, b: dict) -> pd.DataFrame:
             rows.append(pd.DataFrame({"game_date": d.loc[dp_opp, "game_date"].astype(str).str[:10],
                                       "game_pk": d.loc[dp_opp, "game_pk"] if "game_pk" in d else 0, "player": pl,
                                       "pos": made_by[dp_opp], "dp_opps": 1.0,
-                                      "dp_runs": (got - p_dp) * sub["dp_value"]}))
+                                      "dp_runs": (got - p_dp) * sub["dp_value"], "p_dp": p_dp, "dp": got,
+                                      "row": d.index[dp_opp]}))
         # arm: balls fielded by an outfielder with runners on
         arm_opp = made_by.isin(OUTFIELD) & (f["on1"] + f["on2"] + f["on3"] > 0)
         if arm_opp.any() and sub.get("arm") is not None:
@@ -198,7 +200,8 @@ def play_credits(df: pd.DataFrame, b: dict) -> pd.DataFrame:
             rows.append(pd.DataFrame({"game_date": d.loc[arm_opp, "game_date"].astype(str).str[:10],
                                       "game_pk": d.loc[arm_opp, "game_pk"] if "game_pk" in d else 0, "player": pl,
                                       "pos": made_by[arm_opp], "arm_opps": 1.0,
-                                      "arm_runs": (exp - rvp).values}))
+                                      "arm_runs": (exp - rvp).values, "arm_exp": exp, "arm_act": rvp.values,
+                                      "row": d.index[arm_opp]}))
     if not rows:
         return pd.DataFrame()
     out = pd.concat(rows, ignore_index=True)
