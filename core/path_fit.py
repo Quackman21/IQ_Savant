@@ -246,7 +246,7 @@ def _dir(aa: float, ad: float, side: str) -> np.ndarray:
 
 
 R_MIN, R_MAX = 24.0, 60.0          # sweet-spot turning radius allowed beyond the measured span (in)
-MAX_TURN_PRE, MAX_TURN_POST = 150.0, 110.0     # degrees of arc drawn before / after the measured span
+MAX_TURN_PRE, MAX_TURN_POST = 180.0, 90.0      # degrees of arc drawn before (safety cap) / after (the finish) the zone
 
 
 def _extend(P: np.ndarray, T: np.ndarray, kvec: np.ndarray, sign: int, total: float, step: float,
@@ -283,15 +283,26 @@ def _extend(P: np.ndarray, T: np.ndarray, kvec: np.ndarray, sign: int, total: fl
     return out
 
 
+def swing_time(swing_len_in: float, bat_speed_mph: float) -> float:
+    """Seconds from the start of the swing to contact: the sweet spot travels his Statcast swing length, speeding up
+    evenly from rest to his bat speed (uniform acceleration -> t = 2 L / v). A 7.3 ft swing at 72 mph -> ~0.14 s."""
+    v = max(float(bat_speed_mph), 30.0) * 17.6
+    return 2.0 * max(float(swing_len_in), 1.0) / v
+
+
 def rebuild(C, aa0: float, ad0: float, bs0: float, side: str, curve: dict, pre_len: float, post_len: float,
-            step: float = 0.25, center=None) -> dict:
+            step: float = 0.25, center=None, swing_len: float | None = None) -> dict:
     """The sweet spot's path from his measured rates. C = contact point (in; y = inches in front of the plate),
     aa0 / ad0 / bs0 = the swing's angles + speed at contact. Steps along by depth while inside lo..hi (each step
     pointing the way his swings point at that depth); past that, carries on round the measured curve (a circle in its
     own plane) out to pre_len / post_len inches of path. Returns points [x, y, z, fitted?, t], and the bat's
     direction (sweet spot -> hands) at each: toward the centre of the path's curve. center = the swing's centre of
-    rotation (only used when the measured span gives no curvature to carry on)."""
+    rotation. swing_len = his Statcast swing length (in): when given, the lead-in is exactly that long and is timed
+    by even acceleration from rest (so the swing starts swing_time() before contact); the follow-through is a quarter
+    turn at most (MAX_TURN_POST) -- nothing after contact is measured."""
     C = np.asarray(C, float)
+    if swing_len and swing_len > 6:
+        pre_len = float(swing_len)
     pf0 = float(C[1])
     lo, hi = min(curve["lo"], pf0), max(curve["hi"], pf0)
     v0 = max(bs0, 30.0) * 17.6
@@ -341,8 +352,14 @@ def rebuild(C, aa0: float, ad0: float, bs0: float, side: str, curve: dict, pre_l
     t = np.zeros(len(seq))
     for i in range(i0 + 1, len(seq)):
         t[i] = t[i - 1] + (ss[i] - ss[i - 1]) / (0.5 * (vv[i] + vv[i - 1]))
-    for i in range(i0 - 1, -1, -1):
-        t[i] = t[i + 1] - (ss[i + 1] - ss[i]) / (0.5 * (vv[i] + vv[i + 1]))
+    if swing_len and swing_len > 6:                  # even acceleration from rest over the swing length
+        L = max(-ss[0], 1.0)
+        for i in range(i0 - 1, -1, -1):
+            u = min(-ss[i] / L, 1.0)
+            t[i] = -(2 * L / v0) * (1 - math.sqrt(1 - u))
+    else:
+        for i in range(i0 - 1, -1, -1):
+            t[i] = t[i + 1] - (ss[i + 1] - ss[i]) / (0.5 * (vv[i] + vv[i + 1]))
     P = np.array([q[0] for q in seq])
     # the bat's direction: toward the centre of the path's curve (the circle's rule, on the measured path)
     T = np.gradient(P, axis=0)

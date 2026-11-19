@@ -375,6 +375,14 @@ def time_band(curves: dict, min_n: int = 15) -> dict:
     return out
 
 
+def swing_result(sc: pd.DataFrame) -> pd.Series:
+    """whiff / foul / fair per pitch (Savant's convention: a foul tip is a whiff)."""
+    d = sc["description"].astype(str) if "description" in sc else pd.Series("", index=sc.index)
+    return pd.Series(np.select([d.isin(["swinging_strike", "swinging_strike_blocked", "foul_tip", "missed_bunt"]),
+                                d.isin(["foul", "foul_bunt"]), d.eq("hit_into_play")], ["whiff", "foul", "fair"], ""),
+                     index=sc.index)
+
+
 def swings(sc: pd.DataFrame, poc: pd.DataFrame | None = None, stance_x: dict | None = None) -> pd.DataFrame:
     """His competitive swings with what the view needs: group, zone, hand, the measured swing + contact."""
     from core import hit_metrics as hm
@@ -391,7 +399,10 @@ def swings(sc: pd.DataFrame, poc: pd.DataFrame | None = None, stance_x: dict | N
         "swing_path_tilt": num("swing_path_tilt"), "velo": num("release_speed"),
         "cy": num(aar.CONTACT_Y).where(made), "cx": num(aar.CONTACT_X).where(made),
         "sz_top": num("sz_top"), "sz_bot": num("sz_bot"), "px_in": 12 * num("plate_x"),
-        "pz_in": 12 * num("plate_z"), "ev": num("launch_speed").where(made), "la": num("launch_angle").where(made)},
+        "pz_in": 12 * num("plate_z"), "ev": num("launch_speed").where(made), "la": num("launch_angle").where(made),
+        # the pitch's shape (IVB, HB arm side; in) + what happened (Savant's whiff counts foul tips)
+        "ivb": 12 * num("pfx_z"), "hb": 12 * num("pfx_x") * np.where(sc["p_throws"].astype(str).eq("L"), 1, -1),
+        "result": swing_result(sc)},
         index=sc.index)
     # where he met it (MLB's contact point vs the plate, from the page's point-of-contact layer) + measured plane gaps
     out["pf"] = poc["pf"].reindex(sc.index) if poc is not None and "pf" in poc else np.nan
@@ -523,9 +534,12 @@ def fit_path(sc: dict, me: pd.DataFrame, stand: str, pz: float, px: float, pr: d
         return sc
     arc = sc["arc"]
     v = float(pr.get("bat_speed") or sc["read"]["bat_speed"]) * 17.6
-    pre_len, post_len = max(-arc[0][4] * v, 6.0), max(arc[-1][4] * v, 6.0)
+    pre_len = max(-arc[0][4] * v, 6.0)
+    sl = sc["read"].get("swing_length")
+    sl_in = float(sl) * 12 if sl is not None and np.isfinite(sl) and sl > 0 else None      # Statcast swing length
     r = path_fit.rebuild(sc["contact"], float(sc["read"]["attack_angle"]), float(sc["read"]["attack_direction"]),
-                         float(sc["read"]["bat_speed"]), stand, cur, pre_len, post_len, center=sc.get("O"))
+                         float(sc["read"]["bat_speed"]), stand, cur, pre_len, 400.0, center=sc.get("O"),
+                         swing_len=sl_in)
     pts, hands = r["arc"], r["hands"]
     for p in pts:                                            # Statcast's measured window keeps its own flag
         if p[3] == 3 and -0.040 <= p[4] <= 0:

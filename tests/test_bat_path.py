@@ -380,3 +380,9 @@ def test_scene_uses_his_measured_path_when_his_swings_back_it():
     assert all(b > a for a, b in zip(t, t[1:]))
     from ui.bat_path import path3d_html
     assert "arcRuns" in path3d_html(sc, "t", "s")
+
+
+def test_swing_result_follows_savant():
+    from core import bat_path as bp
+    sc = pd.DataFrame({"description": ["swinging_strike", "foul_tip", "foul", "hit_into_play", "ball"]})
+    assert bp.swing_result(sc).tolist() == ["whiff", "whiff", "foul", "fair", ""]

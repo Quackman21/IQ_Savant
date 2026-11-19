@@ -573,11 +573,45 @@ GRAPH_CSS = """
 #al{position:absolute;right:10px;bottom:10px;z-index:2;background:rgba(255,255,255,.93);border:1px solid #e6eaed;
   border-radius:8px;padding:6px 9px;font:11.5px system-ui;color:#33404c;line-height:1.5}
 #al[hidden]{display:none}
+#tl,#al{cursor:grab;touch-action:none;user-select:none} #tl.fdrag,#al.fdrag{cursor:grabbing;opacity:.85}
+.ftb{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:-2px -3px 3px;color:#9aa5ae;font-size:10px}
+.fgrip{letter-spacing:.5px} .fmin{border:1px solid #d9dee2;background:#fff;border-radius:5px;width:20px;height:18px;
+  line-height:14px;padding:0;font:700 12px system-ui;color:#33404c;cursor:pointer}
+.fmin-on .fb{display:none} .fmin-on .ftb{margin-bottom:-2px}
 #tv button{border:none!important;border-radius:0!important;padding:4px 9px} #tv button.on{background:#4a8b96;color:#fff}
 """
 
 # shared by the 3D window (trail colours) and the chart under it
 COMMON_JS = r"""
+// floating boxes over the 3D view: drag anywhere on the box to move it, "–" to tuck it away; remembered per viewer
+function fstore(id, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem('bp_float_' + id) || 'null');
+  localStorage.setItem('bp_float_' + id, JSON.stringify(v)); } catch (e) { return null; } }
+function fbody(el, title) {
+  if (el._fb) return el._fb;
+  el.innerHTML = '';
+  const tb = document.createElement('div'), body = document.createElement('div'), btn = document.createElement('button');
+  tb.className = 'ftb'; tb.innerHTML = `<span class="fgrip">⋮⋮ ${title}</span>`; btn.className = 'fmin'; btn.title = 'Minimize';
+  tb.appendChild(btn); body.className = 'fb'; el.append(tb, body); el._fb = body;
+  const st = fstore(el.id) || {};
+  const setMin = m => { el.classList.toggle('fmin-on', m); btn.textContent = m ? '+' : '–'; btn.title = m ? 'Show' : 'Minimize'; };
+  setMin(!!st.min);
+  if (st.x !== undefined) { el.style.left = st.x + 'px'; el.style.top = st.y + 'px'; el.style.right = 'auto'; el.style.bottom = 'auto'; }
+  btn.onclick = e => { e.stopPropagation(); const s = fstore(el.id) || {}; s.min = !el.classList.contains('fmin-on'); setMin(s.min); fstore(el.id, s); };
+  el.addEventListener('pointerdown', e => {
+    if (e.target === btn) return;
+    const host = el.offsetParent || el.parentElement, r0 = el.getBoundingClientRect(), h0 = host.getBoundingClientRect();
+    const ox = e.clientX - r0.left, oy = e.clientY - r0.top;
+    el.setPointerCapture(e.pointerId); el.classList.add('fdrag'); e.preventDefault(); e.stopPropagation();
+    const mv = ev => { const x = Math.max(0, Math.min(h0.width - 40, ev.clientX - h0.left - ox)),
+                             y = Math.max(0, Math.min(h0.height - 24, ev.clientY - h0.top - oy));
+      el.style.left = x + 'px'; el.style.top = y + 'px'; el.style.right = 'auto'; el.style.bottom = 'auto'; };
+    const up = ev => { el.removeEventListener('pointermove', mv); el.removeEventListener('pointerup', up); el.classList.remove('fdrag');
+      const s = fstore(el.id) || {}; s.x = parseFloat(el.style.left); s.y = parseFloat(el.style.top); fstore(el.id, s); };
+    el.addEventListener('pointermove', mv); el.addEventListener('pointerup', up);
+  });
+  return body;
+}
+
 const STOPS = [[-1, [215, 38, 61]], [-0.66, [244, 96, 54]], [-0.33, [249, 200, 14]], [0, [46, 157, 91]],
                [0.33, [27, 152, 224]], [0.66, [61, 52, 139]], [1, [123, 44, 191]]];
 function match(v, lim = 15) {          // green = on the pitch's plane -> yellow -> red = off it (by how far, either way)
@@ -666,7 +700,7 @@ function legendTrail() {
   const el = document.getElementById('tl');
   if (trailMode === 'group') { el.hidden = true; return; }
   const [name, lo, hi] = PLANE[trailMode];
-  el.innerHTML = `<b>${name}</b><div class="bar" style="background:linear-gradient(90deg,#2e9d5b,#f2c01e,#d63328)"></div>
+  fbody(el, 'Legend').innerHTML = `<b>${name}</b><div class="bar" style="background:linear-gradient(90deg,#2e9d5b,#f2c01e,#d63328)"></div>
     <div class="lab"><span>on the pitch's ${trailMode === 'gap_v' ? 'plane' : 'line'}</span><span>7.5° off</span><span>15°+ off</span></div>` +
     GSD.map((g, k) => { const w = onPlane(g, trailMode), L = `<b style="color:${g.color || '#2f5fb3'}">${g.name ? String.fromCharCode(65 + k) : ''}</b>`;
       if (!w.on) return `<div style="margin-top:3px">${L} not within 5° at contact (${w.gap > 0 ? '+' : ''}${w.gap.toFixed(0)}°)</div>`;
@@ -700,7 +734,9 @@ function arrowLoop() {
     lines.push(`<b style="color:${g.color || '#2f5fb3'}">${g.name ? String.fromCharCode(65 + k) : ''}</b> ➜ ${had >= 0 ? '+' : ''}${had.toFixed(0)}° ${had >= 0 ? 'oppo' : 'pull'} · ${Math.abs(gap).toFixed(0)}° off the pitch's line`);
   });
   box.hidden = !arrowOn || !lines.length;
-  box.innerHTML = `<b>Horizontal attack angle</b> (arrow on the barrel)<br>` + lines.join('<br>');
+  const html_ = `<b>Horizontal attack angle</b> (arrow on the barrel)<br>` + lines.join('<br>');
+  const fb_ = fbody(box, 'Arrow');
+  if (fb_._h !== html_) { fb_.innerHTML = html_; fb_._h = html_; }
 }
 document.getElementById('s3arrow').onclick = e => { arrowOn = !arrowOn; e.target.classList.toggle('on', arrowOn); };
 arrowLoop();
@@ -931,7 +967,7 @@ LAYERS_CSS = """
 #lay .bar{height:8px;width:180px;border-radius:4px;background:linear-gradient(90deg,#313695,#74add1,#ffffbf,#fdae61,#a50026)}
 #lay table{border-collapse:collapse;width:100%;margin-top:6px} #lay td,#lay th{padding:4px 6px;border-bottom:1px solid #eef1f3;
   text-align:right;font-size:12px} #lay td:first-child,#lay th:first-child{text-align:left} #lay th{color:#6a7681;font-size:10.5px}
-#lay .camb{display:flex;gap:6px;margin:4px 0} #lay .camb button{font:600 11.5px system-ui;border:1px solid #d9dee2;background:#fff;
+#lay .act{color:#9aa5ae;font-weight:400} #lay .camb{display:flex;gap:6px;margin:4px 0} #lay .camb button{font:600 11.5px system-ui;border:1px solid #d9dee2;background:#fff;
   border-radius:6px;padding:4px 9px;cursor:pointer} #lay .tip{font-size:11px;color:#6a7681;min-height:15px;margin-top:3px}
 """
 
@@ -982,31 +1018,16 @@ function showContact() {
   const his = (cl.dots || []).filter(([d, e]) => d >= cl.D[0] && d <= cl.D[cl.D.length - 1]);
   const val = his.length ? his.reduce((a, [d, e]) => a + lookupRuns(cl, d, Math.min(e, 1)), 0) / his.length : null;
   document.getElementById('lay').innerHTML = `<div class="h">Contact: every possible contact on the barrel, priced</div>
-    <div class="s">This swing vs this pitch. Each cell = where on the barrel it's hit (across: topped ← square → undercut; up: share of the sweet spot's exit velo) → exit velo, launch, spray → runs. White dots = his real balls in play.</div>
-    ${grid(cl, 520, 250, cl.dots)}${leg}<div class="tip" id="ltip">Hover a cell.</div>
+    <div class="camb"><button onclick="closeUp()">Bat close-up</button><button onclick="R3.preset('Catcher')">Catcher</button><button onclick="R3.preset('Open side')">Open side</button></div>
+    <div class="s">This swing vs this pitch. <b>The bat in 3D is painted live</b>: at every instant of the swing, each spot on the barrel coloured by what the pitch would be worth if it met that spot right then (the bat's own angle, direction and speed at that moment). Play or scrub the swing to watch the good part of the barrel grow and fade. The chart: the same thing at his contact point -- across: topped ← square → undercut; up: share of the sweet spot's exit velo. White dots = his real balls in play.</div>
+    <div class="tip" id="ptip"></div>${grid(cl, 520, 250, cl.dots)}${leg}<div class="tip" id="ltip">Hover a cell.</div>
     <div class="tiles"><div class="tile"><div>Best contact</div><div>${sgn(cl.D[bj], 1)}" · ${Math.round(cl.eff[bi] * 100)}%</div></div>
     <div class="tile"><div>→</div><div>${Math.round(cl.ev[bi][bj])} mph · ${Math.round(cl.la[bi][bj])}°</div></div>
     <div class="tile"><div>Best cell</div><div>${sgn(cl.runs[bi][bj])} runs</div></div>
     <div class="tile"><div>His contacts here (avg)</div><div>${val === null ? '–' : sgn(val)}</div></div></div>`;
   document.querySelectorAll('#lay rect[data-i]').forEach(r => r.onmouseenter = () => { const i = +r.dataset.i, j = +r.dataset.j;
     document.getElementById('ltip').textContent = `${sgn(cl.D[j], 1)}" ${cl.D[j] >= 0 ? 'under' : 'over'} · ${Math.round(cl.eff[i] * 100)}% efficiency → ${cl.ev[i][j]} mph, ${cl.la[i][j]}°, spray ${cl.spray[i][j]}° · ${sgn(cl.runs[i][j])} runs`; });
-  // 3D: the barrel painted with the map (around = offset, along = efficiency both sides of the sweet spot)
-  const g = overlay(); if (!g) return; atContact();
-  const cv = document.createElement('canvas'); cv.width = 64; cv.height = 128; const cx = cv.getContext('2d');
-  const nD = cl.D.length, nE = cl.eff.length;
-  for (let y = 0; y < 128; y++) for (let x = 0; x < 64; x++) {
-    const ang = (x / 64) * 2 * Math.PI, D = Math.sin(ang) * 2.68, lam = 10 - (y / 127) * 16;
-    const e = Math.max(0.5, 1 - 0.011 * lam * lam), v = lookupRuns(cl, D, e);
-    cx.fillStyle = rgb(heat(Math.cos(ang) > -0.2 ? v : -0.3)); cx.fillRect(x, y, 1, 1);
-  }
-  const tex = new THREE.CanvasTexture(cv);
-  const k0 = SC.arc.reduce((b, q, k) => Math.abs(q[4]) < Math.abs(SC.arc[b][4]) ? k : b, 0);
-  const hv = SC.hands ? SC.hands[k0] : [SC.O[0] - SC.contact[0], SC.O[1] - SC.contact[1], SC.O[2] - SC.contact[2]];
-  const u = new THREE.Vector3(hv[0], hv[2], -hv[1]).normalize();
-  const cyl = new THREE.Mesh(new THREE.CylinderGeometry(1.45, 1.45, 16, 32, 1, true), new THREE.MeshBasicMaterial({map: tex}));
-  cyl.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), u);
-  cyl.position.copy(V(SC.contact).add(u.clone().multiplyScalar(2)));
-  g.add(cyl);
+  overlay(); paintOn('contact');
 }
 // ---------- Timing
 function showTiming() {
@@ -1025,16 +1046,18 @@ function showTiming() {
     else s += `<circle cx="${x.toFixed(1)}" cy="${Y(Math.max(-1.5, Math.min(2, r.D))).toFixed(1)}" r="4" fill="${rgb(heat(r.runs))}" stroke="#16202b" stroke-width=".8"/>`;
     if (a % 2 === 0) s += `<text x="${x.toFixed(1)}" y="${H + 22}" font-size="10" fill="#6a7681" text-anchor="middle">${r.shift > 0 ? '+' : ''}${r.shift}</text>`; });
   [-1, 0, 1, 2].forEach(d => s += `<text x="34" y="${(Y(d) + 3).toFixed(1)}" font-size="10" fill="#6a7681" text-anchor="end">${sgn(d, 0)}"</text>`);
-  const strip = rows.map(r => `<td title="${r.shift} ms: ${r.result}${r.ev ? ', ' + r.ev + ' mph ' + r.la + '°' : ''} (${sgn(r.runs)})" style="background:${rgb(heat(r.runs))};padding:7px 0"></td>`).join('');
+  const strip = rows.map(r => `<td data-s="${r.shift}" title="${r.shift} ms: ${r.result}${r.ev ? ', ' + r.ev + ' mph ' + r.la + '°' : ''} (${sgn(r.runs)})" style="background:${rgb(heat(r.runs))};padding:7px 0"></td>`).join('');
   const by = sh => rows.find(r => r.shift === sh) || {runs: NaN};
   document.getElementById('lay').innerHTML = `<div class="h">Timing: every crossing of this pitch</div>
-    <div class="s">Same swing, same pitch, started earlier (+ ms) or later (−). Dots = where the ball meets the barrel at each timing (above = undercut), coloured by runs; × = a miss. Early = further along his measured path: higher and more pull.</div>
+    <div class="camb"><button onclick="closeUp()">Bat close-up</button><button onclick="R3.preset('Catcher')">Catcher</button><button onclick="R3.preset('Open side')">Open side</button></div>
+    <div class="s">Same swing, same pitch, started earlier (+ ms) or later (−). <b>In 3D, the bat at any moment is the bat this pitch meets if he's that many ms early</b> (scrub to −15 ms: that's 15 ms late) -- painted with what each barrel spot is worth, ● = where the ball actually lands on it. Chart: where it meets the barrel at each timing (above = undercut), coloured by runs; × = a miss. Early = further along his path: higher and more pull.</div><div class="tip" id="ptip"></div>
     <svg viewBox="0 0 ${W + 50} ${H + 40}" width="100%">${s}<text x="${40 + W / 2}" y="${H + 36}" font-size="10.5" text-anchor="middle">← late · ms vs on time · early →</text></svg>${leg}
-    <table><tr><td style="width:96px">Value by timing</td>${strip}</tr></table>
+    <table id="tstrip"><tr><td style="width:96px">Value by timing</td>${strip}</tr></table>
     <div class="tiles"><div class="tile"><div>On time</div><div>${sgn(by(0).runs)}</div></div><div class="tile"><div>15 ms late</div><div>${sgn(by(-15).runs)}</div></div>
     <div class="tile"><div>15 ms early</div><div>${sgn(by(15).runs)}</div></div><div class="tile"><div>Window above 0 runs</div><div>${T.window_ms} ms</div></div></div>`;
-  const g = overlay(); if (!g) return; atContact();
-  rows.forEach(r => g.add(ball(r.at, r.result === 'whiff' ? 0x9aa5ae : new THREE.Color(...heat(r.runs).map(c => c / 255)), 0.9, r.result === 'whiff' ? .5 : 1)));
+  const g = overlay(); if (!g) return;
+  rows.forEach(r => g.add(ball(r.at, r.result === 'whiff' ? 0x9aa5ae : new THREE.Color(...heat(r.runs).map(c => c / 255)), 0.45, r.result === 'whiff' ? .35 : 0.45)));
+  paintOn('timing');
 }
 // ---------- Arsenal
 function showArsenal() {
@@ -1044,13 +1067,15 @@ function showArsenal() {
   A.rows.forEach(r => { const c = PC[r.type] || '#555', x = X(r.at[0]).toFixed(1), y = Y(r.at[2]).toFixed(1);
     s += r.result === 'fair' ? `<circle cx="${x}" cy="${y}" r="3.4" fill="${c}"/>` : r.result === 'whiff' ? `<circle cx="${x}" cy="${y}" r="3.2" fill="none" stroke="${c}" stroke-width="1.5"/>`
       : `<rect x="${x - 3}" y="${y - 3}" width="6" height="6" fill="none" stroke="${c}" stroke-width="1.4"/>`; });
-  const rows = A.by_type.map(b => `<tr><td><b style="color:${PC[b.type] || '#555'}">${b.type}</b></td><td>${b.n}</td><td>${b.velo}</td><td>${Math.round(b.whiff * 100)}%</td><td>${Math.round(b.foul * 100)}%</td><td>${Math.round(b.fair * 100)}%</td><td style="background:${rgb(heat(b.runs, -0.15, 0.3))}">${sgn(b.runs)}</td></tr>`).join('');
+  const pct = v => v === null || v === undefined ? '–' : Math.round(v * 100) + '%';
+  const vs = (m, a) => `${pct(m)}<span class="act"> / ${pct(a)}</span>`;
+  const rows = A.by_type.map(b => `<tr><td><b style="color:${PC[b.type] || '#555'}">${b.type}</b></td><td>${b.n}</td><td>${b.velo}</td><td>${vs(b.whiff, b.act_whiff)}</td><td>${vs(b.foul, b.act_foul)}</td><td>${vs(b.fair, b.act_fair)}</td><td style="background:${rgb(heat(b.runs, -0.15, 0.3))}">${sgn(b.runs)}</td></tr>`).join('');
   const c = A.counts || {};
   document.getElementById('lay').innerHTML = `<div class="h">Arsenal: the same swing vs every pitch that looks the same at the commit point</div>
-    <div class="s">A typical MLB ${SC.model && SC.model.hand === 'L' ? 'LHP' : 'RHP'} pitch mix, every pitch lined up to pass the same spot at the commit point (${A.commit_ms} ms before the plate), then breaking on its own. His swing is timed for the modeled pitch; each one meets his measured path. Chart = where each pitch reached his bat (catcher's view): ● in play, ○ whiff, □ foul.</div>
+    <div class="s">${A.mix_src === 'his' ? 'The pitches he actually swings at' : 'A typical MLB'} ${SC.model && SC.model.hand === 'L' ? 'vs LHP' : 'vs RHP'}${A.mix_src === 'his' ? ' (his mix, velo + movement)' : ' pitch mix'}, every pitch lined up to pass the same spot at <b>his commit point: ${A.commit_ms} ms before the plate</b> (his swing time from his swing length + bat speed, + the decision). At that point he reads each pitch and aims + times his swing where a fastball with that look would arrive; after that he can only adjust a little, and each swing carries his own spread (${A.cons > 1.05 ? 'looser' : A.cons < 0.95 ? 'tighter' : 'about average'} than the league's). Chart = where each pitch reached his bat (catcher's view): ● in play, ○ whiff, □ foul.${A.fitted ? '' : ' <i>Model not yet calibrated to MLB swings (run the calibration on the Mac).</i>'}</div>
     <div class="camb"><button id="cpl">At the plate</button><button id="ccm">From the commit point</button></div>
     <div style="display:flex;gap:12px;align-items:flex-start"><svg viewBox="0 0 ${W} ${H}" width="44%">${s}</svg>
-    <div style="flex:1"><table><tr><th>Pitch</th><th>n</th><th>Velo</th><th>Whiff</th><th>Foul</th><th>In play</th><th>Runs / swing</th></tr>${rows}</table>
+    <div style="flex:1"><table><tr><th>Pitch</th><th>n</th><th>Velo</th><th>Whiff<br><span class="act">model / his</span></th><th>Foul<br><span class="act">model / his</span></th><th>In play<br><span class="act">model / his</span></th><th>Runs / swing</th></tr>${rows}</table>
     <div class="tiles" style="grid-template-columns:1fr 1fr 1fr"><div class="tile"><div>In play / foul / whiff</div><div>${c.fair || 0} / ${c.foul || 0} / ${c.whiff || 0}</div></div>
     <div class="tile"><div>Path robustness (runs / 100)</div><div>${sgn(A.runs100, 1)}</div></div>
     <div class="tile"><div>MLB-average path shape</div><div>${A.mlb_runs100 === null || A.mlb_runs100 === undefined ? '–' : sgn(A.mlb_runs100, 1)}</div></div></div></div></div>`;
@@ -1093,8 +1118,84 @@ function showArsenal() {
   document.getElementById('cpl').onclick = () => { mk.visible = true; R3.preset('Open side'); };
   document.getElementById('ccm').onclick = () => { R3.look(A.eye || [A.commit[0], A.commit[1] + 150, A.commit[2] + 10], SC.contact, 9); };
 }
+// ---------- the real bat, painted: at each instant, every spot on the barrel priced if the pitch met it right then
+let PAINT = null;
+const WOOD = [154, 123, 82];
+function paintOff() {
+  if (!PAINT) return;
+  const bt = PAINT.R && PAINT.R.bat;
+  if (bt) { bt.material.map = null; bt.material.color.set(0x9a7b52); bt.material.needsUpdate = true; }
+  if (PAINT.mk && PAINT.R) PAINT.R.scene.remove(PAINT.mk);
+  PAINT = null;
+}
+function paintOn(mode) {
+  paintOff(); atContact();
+  const HT = LY && LY.heat; if (!R3 || !R3.bat || !HT) return;
+  const cv = document.createElement('canvas'); cv.width = 64; cv.height = 128;
+  const ctx = cv.getContext('2d'), tex = new THREE.CanvasTexture(cv);
+  R3.bat.material.map = tex; R3.bat.material.color.set(0xffffff); R3.bat.material.needsUpdate = true;
+  let mk = null;
+  if (mode === 'timing') { mk = ball([0, 0, 0], 0xffffff, 1.5, 1); mk.material.color.set(0x16202b); mk.visible = false; R3.scene.add(mk); }
+  PAINT = {mode, tex, ctx, img: ctx.createImageData(64, 128), mk, last: -2, R: R3};
+  closeUp();
+  loopPaint();
+}
+function closeUp() {                                // the bat seen from the pitch's side, a little above, near contact
+  const HT = LY && LY.heat; if (!R3 || !HT) return;
+  const k = HT.t.reduce((b, x, i) => Math.abs(x) < Math.abs(HT.t[b]) ? i : b, 0), f = HT.f[k], C = SC.contact;
+  if (!f || !(f[0] || f[1] || f[2])) return;
+  R3.look([C[0] + f[0] * 60, C[1] + f[1] * 60, C[2] + f[2] * 60 + 20], [C[0], C[1], C[2] + 1], 26);
+}
+function paintAt(k) {
+  const P = PAINT, HT = LY.heat, d = P.img.data, R = k >= 0 ? HT.runs[k] : null;
+  let fl = null, sl = null;
+  const f = k >= 0 ? HT.f[k] : null;
+  if (R && f && (f[0] || f[1] || f[2])) {
+    const qi = P.R.bat.quaternion.clone().invert(), n2 = v => { const L = Math.hypot(v.x, v.z) || 1; return [v.x / L, v.z / L]; };
+    fl = n2(V(f).applyQuaternion(qi)); sl = n2(V(HT.s[k]).applyQuaternion(qi));
+  }
+  const L0 = HT.lam[0], L1 = HT.lam[HT.lam.length - 1], nD = HT.D.length;
+  for (let y = 0; y < 128; y++) {
+    const ly = 16.5 - (y + 0.5) / 128 * 33, lam = 10.5 - ly;          // local y (+ = tip) -> inches from the sweet spot
+    for (let x = 0; x < 64; x++) {
+      let c = WOOD;
+      if (fl && lam >= L0 - 0.5 && lam <= L1 + 0.5) {
+        const th = (x + 0.5) / 64 * 2 * Math.PI, dx = Math.sin(th), dz = Math.cos(th);
+        // height across the bat (above / below its centre line, as the ball sees it) sets the offset: the top of
+        // the barrel = undercut, the bottom = topped -- wrapped all the way round so it reads from any camera
+        const cs = dx * sl[0] + dz * sl[1];
+        const li = Math.max(0, Math.min(R.length - 1, Math.round(lam - L0)));
+        const fd = Math.max(0, Math.min(nD - 1.001, (2.68 * cs - HT.D[0]) / 0.2)), d0 = Math.floor(fd), w1 = fd - d0;
+        const a0 = R[li][d0], a1 = R[li][d0 + 1];
+        const v = a0 === null ? a1 : a1 === null ? a0 : a0 + (a1 - a0) * w1; c = v === null ? WOOD : heat(v);
+      }
+      const o = 4 * (y * 64 + x); d[o] = c[0]; d[o + 1] = c[1]; d[o + 2] = c[2]; d[o + 3] = 255;
+    }
+  }
+  P.ctx.putImageData(P.img, 0, 0); P.tex.needsUpdate = true;
+}
+function loopPaint() {
+  const P = PAINT; if (!P || P.R !== R3) return;
+  requestAnimationFrame(loopPaint);
+  const HT = LY.heat, t = R3.time(), n = HT.t.length;
+  let k = -1;
+  if (t >= HT.t[0] - 0.0015 && t <= HT.t[n - 1] + 0.0015) { k = Math.round((t - HT.t[0]) / (HT.t[1] - HT.t[0])); k = Math.max(0, Math.min(n - 1, k)); }
+  if (k !== P.last) { P.last = k; paintAt(k); }
+  const tip = document.getElementById('ptip');
+  if (P.mode === 'timing') {                       // the bat at time t = the bat this pitch meets if he's t ms early
+    const ms = t * 1000, rows = LY.timing.rows;
+    let r = null; rows.forEach(x => { if (Math.abs(x.shift - ms) <= 1.6) r = x; });
+    P.mk.visible = !!(r && r.result !== 'whiff'); if (r && r.result !== 'whiff') P.mk.position.copy(V(r.at));
+    document.querySelectorAll('#tstrip td[data-s]').forEach(td => td.style.outline = r && +td.dataset.s === r.shift ? '2px solid #16202b' : '');
+    if (tip) tip.textContent = Math.abs(ms) > 31 ? `Bat ${ms > 0 ? 'past' : 'before'} the timing window (${ms > 0 ? '+' : ''}${ms.toFixed(0)} ms) -- play or scrub the swing.`
+      : r ? `${r.shift > 0 ? r.shift + ' ms early' : r.shift < 0 ? -r.shift + ' ms late' : 'On time'}: ${r.result === 'whiff' ? 'misses it' : `${r.ev} mph, ${r.la}°, spray ${r.spray}° → ${sgn(r.runs)} runs`} (● on the bat)` : '';
+  } else if (tip) {
+    tip.textContent = k < 0 ? 'Bat outside the contact window -- play or scrub the swing to watch the barrel light up.'
+      : `${(t * 1000) > 0 ? '+' : ''}${(t * 1000).toFixed(0)} ms from his contact: the barrel as it is right now, priced if the pitch met each spot.`;
+  }
+}
 function setTab(t) {
-  TAB = t; if (R3 && t !== 'Arsenal') R3.preset('Catcher'); document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
+  TAB = t; paintOff(); if (R3) R3.preset('Catcher'); document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
   const lay = document.getElementById('lay'), lg = document.getElementById('lg');
   if (t === 'Swing' || !LY) { lay.hidden = true; if (lg) lg.hidden = false; clearOverlay(); fit(); return; }
   lay.hidden = false; if (lg) lg.hidden = true;

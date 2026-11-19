@@ -730,7 +730,7 @@ function build(sc) {
     S.playing = false; document.getElementById('s3p').textContent = '▶'; S.t = t0 + (t1 - t0) * e.target.value / 1000; };
   return {stop() { cancelAnimationFrame(S.raf); ren.dispose(); ren.domElement.remove(); },
           setOn(k, on) { if (!GR[k]) return; GR[k].on = on; GR[k].objs.forEach(o => { o.visible = on && !o.userData.off; }); },
-          scene, GR, time() { return S.t; },
+          scene, GR, bat, time() { return S.t; },
           cam, look(from, to, fov = 38) { custom = [V(from), V(to), fov]; place(); cams.querySelectorAll('button').forEach(x => x.classList.remove('on')); },
           preset(name) { const b = [...cams.querySelectorAll('button')].find(x => x.textContent === name); if (b) b.click(); }};
 }

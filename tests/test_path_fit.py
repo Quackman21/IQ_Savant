@@ -95,3 +95,22 @@ def test_path_beyond_the_measured_span_arcs_round_the_swing_centre_not_a_vertica
     # the bat points toward the swing's centre (positive component along P -> O)
     toO = np.array(O)[None, :] - a[:, :3]
     assert ((H * toO).sum(1) > 0).mean() > 0.95
+
+
+def test_lead_in_is_his_swing_length_and_starts_at_his_swing_time():
+    import numpy as np
+    from core import path_fit as pf
+    curve = {"center": 5.0, "lo": -5.0, "hi": 15.0,
+             "attack_angle": {"slope": 0.6, "curve": 0.0}, "attack_direction": {"slope": -1.2, "curve": 0.0},
+             "bat_speed": {"slope": 0.2, "curve": 0.0}}
+    C, O = [0.0, 5.0, 30.0], [-35.0, -1.0, 51.0]
+    r = pf.rebuild(C, 10.0, 0.0, 72.0, "R", curve, 30.0, 400.0, center=O, swing_len=7.2 * 12)
+    a = np.array(r["arc"])
+    i0 = int(np.argmin(np.abs(a[:, 4])))
+    lead = np.linalg.norm(np.diff(a[: i0 + 1, :3], axis=0), axis=1).sum()
+    assert abs(lead - 86.4) < 1.0                                   # exactly his swing length
+    assert abs(a[0, 4] + pf.swing_time(86.4, 72.0)) < 0.002         # starts 2L / v before contact (~0.136 s)
+    assert 0.12 < pf.swing_time(86.4, 72.0) < 0.15
+    # the follow-through stops at about a quarter turn: it never comes back round to the lead-in
+    post = a[i0:, :3]
+    assert np.linalg.norm(post[-1] - post[0]) > 30
