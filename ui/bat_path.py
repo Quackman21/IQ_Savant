@@ -659,7 +659,7 @@ const PLANE = {gap_v: ['Vertical Plane Match (bat path vs the pitch\'s VAA)', 'f
 """
 
 TRAIL_JS = r"""
-const GSD = [SC].concat(SC.extra || []);
+let GSD = typeof SC !== 'undefined' && SC ? [SC].concat(SC.extra || []) : [];   // the AAR sets it per swing
 let trailMode = 'group', rainbowBy = 'gap_v';
 function paint() {
   if (!R3 || !R3.GR) return;
@@ -706,7 +706,7 @@ function legendTrail() {
       if (!w.on) return `<div style="margin-top:3px">${L} not within 5° at contact (${w.gap > 0 ? '+' : ''}${w.gap.toFixed(0)}°)</div>`;
       const where = w.pct < 0.35 ? 'early in it' : w.pct > 0.65 ? 'late in it' : 'in the middle of it';
       return `<div style="margin-top:3px">${L} within 5° for ${w.ms.toFixed(0)} ms (${w.len.toFixed(0)}″ of path, ${w.y0.toFixed(0)}″ → ${w.y1.toFixed(0)}″ vs the plate); contact ${w.before.toFixed(0)} ms in, ${where}</div>`; }).join('') +
-    '<div style="margin-top:3px;color:#6a7681">Solid = measured last 40 ms · see-through = inferred (lead-in from bat parallel, follow-through past contact).</div>';
+    '<div style="margin-top:3px;color:#6a7681">Solid = measured last 40 ms · see-through = inferred (the lead-in and the follow-through past contact).</div>';
   el.hidden = false;
 }
 // ---- arrow on the barrel: where the sweet spot is heading, side to side (horizontal attack angle), live

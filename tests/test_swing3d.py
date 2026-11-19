@@ -67,6 +67,9 @@ def test_aar_puts_a_3d_button_on_contact_swings():
     html = aar_ui.component_html(p, aar.plate_appearances(p), {"AB": 4}, {k: [] for k in aar.GAME_METRICS},
                                  aar.GAME_METRICS, "", scenes3d=s3, header="<div id='hdr'>Hitter</div>")
     assert html.count('class="s3d"') == len(s3) and 'id="ovl"' in html and "id='hdr'" in html
+    # the profile's path display, per swing: plane-match colouring, on-plane read-out, arrow, legend boxes
+    assert 'id="tv"' in html and 'id="s3trail"' in html and 'id="s3arrow"' in html and 'id="tl"' in html
+    assert "function onPlane" in html and "function planeRows" in html and "function onBuilt" in html
 
 
 def test_bat_angle_and_bat_parallel_are_inferred_from_the_measured_plane():

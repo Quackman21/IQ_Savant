@@ -552,7 +552,7 @@ function readouts(sc) {
     (r.air_pct !== undefined && r.air_pct !== null ? row('Air vs 70°F sea level', (r.air_pct > 0 ? '+' : '') + fmt(r.air_pct) +
       '% ' + (r.air_pct < 0 ? 'thinner' : 'denser') + (r.temp_f ? ' · ' + fmt(r.temp_f, 0) + '°F' : ''), m) : '') +
     row('Coming down at', fmt(-r.vaa) + '°', m) + row('Swing vs pitch plane', (r.plane_gap > 0 ? '+' : '') + fmt(r.plane_gap) + '°',
-      '') + '</table>' +
+      '') + (typeof onPlane === 'function' ? planeRows(sc, row, i) : '') + '</table>' +
     (r.ev ? '<h5>Ball off the bat</h5><table>' + row('Exit velo', fmt(r.ev) + ' mph', m) + row('Launch angle', fmt(r.la, 0) + '°', m) +
       (sqp ? row('Squared-up', fmt(sqp, 0) + '% of max' + (sqp >= 80 ? ' ✓' : ''), m) : '') +
       (smash ? row('Smash factor', fmt(smash, 2), m) : '') +
@@ -754,7 +754,7 @@ function open3d(n, btn) {
   if (document.documentElement.scrollHeight < docH) document.body.style.minHeight = docH + 'px';
   resize();
   const msg = document.getElementById('s3msg'); msg.style.display = '';
-  loadThree(() => { msg.style.display = 'none'; if (R3) R3.stop(); R3 = build(sc); });
+  loadThree(() => { msg.style.display = 'none'; if (R3) R3.stop(); R3 = build(sc); if (typeof onBuilt === 'function') onBuilt(sc); });
 }
 function close3d() { ovl.classList.remove('on'); if (R3) { R3.stop(); R3 = null; } document.body.style.minHeight = ''; resize(); }
 document.querySelectorAll('button.s3d').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); open3d(b.dataset.n, b); }));
@@ -762,6 +762,22 @@ document.getElementById('s3x').onclick = close3d;
 ovl.addEventListener('click', e => { if (e.target === ovl) close3d(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && ovl.classList.contains('on')) close3d(); });
 """
+# the profile's Bat Path display, for one swing: Regular / Rainbow colouring (vertical + horizontal plane match), when he
+# was on the pitch's plane, the arrow on the barrel, draggable / minimisable legends -- same path as before
+AAR_TRAIL = r"""
+function planeRows(sc, row, tag) {
+  const out = [];
+  for (const [k, lab] of [['gap_v', 'On the pitch\'s plane (vertical)'], ['gap_h', 'On the pitch\'s line (horizontal)']]) {
+    let w; try { w = onPlane(sc, k); } catch (e) { continue; }
+    out.push(row(lab, w.on ? `${w.ms.toFixed(0)} ms within 5° (${w.len.toFixed(0)}″ of path); contact ${w.before.toFixed(0)} ms in, ` +
+      (w.pct < 0.35 ? 'early in it' : w.pct > 0.65 ? 'late in it' : 'in the middle of it')
+      : `not within 5° at contact (${w.gap > 0 ? '+' : ''}${w.gap.toFixed(0)}°)`, tag));
+  }
+  return out.join('');
+}
+function onBuilt(sc) { GSD = [sc]; arrowsFor = null; if (trailMode !== 'group') paint(); }
+"""
+
 S3D_JS = S3D_CORE + S3D_OPEN
 
 
@@ -792,12 +808,17 @@ def component_html(p: pd.DataFrame, pas: list[dict], line: dict, tiles: dict, me
     data = json.dumps(tiles).replace("</", "<\\/")
     s3 = json.dumps({str(k): v for k, v in scenes3d.items()}).replace("</", "<\\/")
     head = header.replace("<style>", "<style>", 1) if header else ""
-    return (f'<!doctype html><html><head><meta charset="utf-8"><style>{CSS}</style></head><body>'
+    from ui.bat_path import COMMON_JS, GRAPH_CSS, TRAIL_JS, graph_parts
+    overlay = (OVERLAY.replace('<div class="msg" id="s3msg">',
+                               '<div id="tl" hidden></div><div id="al" hidden></div><div class="msg" id="s3msg">')
+               .replace('<a id="s3v"', graph_parts()[0] + '<a id="s3v"'))
+    return (f'<!doctype html><html><head><meta charset="utf-8"><style>{CSS}{GRAPH_CSS}#ctl{{flex-wrap:wrap}}</style>'
+            f'</head><body>'
             f'<div id="aar">{head}<div class="top">{left}{charts}</div>{bar}'
-            f'<div class="wrap">{table_html(p, pas)}</div></div>{OVERLAY}'
+            f'<div class="wrap">{table_html(p, pas)}</div></div>{overlay}'
             f'<script type="application/json" id="tiles-data">{data}</script>'
             f'<script type="application/json" id="s3d-data">{s3}</script><script>{JS}</script>'
-            f'<script>const THREE_SRC = "{THREE_JS}";{S3D_JS}</script></body></html>')
+            f'<script>const THREE_SRC = "{THREE_JS}";{S3D_JS}{COMMON_JS}{TRAIL_JS}{AAR_TRAIL}</script></body></html>')
 
 
 def estimate_height(n_pas: int, n_pitches: int) -> int:

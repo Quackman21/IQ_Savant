@@ -532,18 +532,53 @@ def fit_path(sc: dict, me: pd.DataFrame, stand: str, pz: float, px: float, pr: d
     if not cur:
         sc["path_src"] = {"kind": "circle", "why": "too few contact swings to measure his path"}
         return sc
+    return apply_path(sc, cur, stand)
+
+
+def league_curve(sc: dict) -> dict | None:
+    """The MLB-average path shape (league turning / rising / speeding-up rates for his swing tilt) around this
+    scene's contact point, in path_fit's curve format; None without the league file."""
+    from core import path_fit
+    lr = _league_rates()
+    if not lr:
+        return None
+    L = path_fit._league_for(lr, float(sc["read"].get("tilt") or 34))
+    y = float(sc["contact"][1])
+    return {"center": y, "lo": y - 15, "hi": y + 15, "n_eff": 0,
+            **{k: {"slope": float((L.get(k) or {}).get("slope", 0.0)), "curve": float((L.get(k) or {}).get("curve", 0.0))}
+               for k in ("attack_angle", "attack_direction", "bat_speed")}}
+
+
+def league_path(sc: dict, stand: str) -> dict:
+    """The same path build the profile uses, for ONE swing (the AAR): its own measured attack angle, direction, bat
+    speed, tilt and swing length, with the MLB-average path shape through the zone (one game is too few swings to
+    measure his). Lead-in = his swing length, quarter-turn follow-through, bat toward the swing's centre."""
+    cur = league_curve(sc)
+    return apply_path(sc, cur, stand, kind="league") if cur else sc
+
+
+def apply_path(sc: dict, cur: dict, stand: str, kind: str = "measured") -> dict:
+    """Rebuild sc's sweet-spot path from a path_fit curve (+ his swing length), then re-derive the bat direction,
+    VBA at contact and bat parallel from it."""
+    from core import path_fit
     arc = sc["arc"]
-    v = float(pr.get("bat_speed") or sc["read"]["bat_speed"]) * 17.6
+    v = float(sc["read"]["bat_speed"]) * 17.6
     pre_len = max(-arc[0][4] * v, 6.0)
     sl = sc["read"].get("swing_length")
-    sl_in = float(sl) * 12 if sl is not None and np.isfinite(sl) and sl > 0 else None      # Statcast swing length
+    try:
+        sl = float(sl)
+    except (TypeError, ValueError):
+        sl = None
+    sl_in = sl * 12 if sl is not None and np.isfinite(sl) and sl > 0 else None          # Statcast swing length
     r = path_fit.rebuild(sc["contact"], float(sc["read"]["attack_angle"]), float(sc["read"]["attack_direction"]),
                          float(sc["read"]["bat_speed"]), stand, cur, pre_len, 400.0, center=sc.get("O"),
                          swing_len=sl_in)
     pts, hands = r["arc"], r["hands"]
-    for p in pts:                                            # Statcast's measured window keeps its own flag
-        if p[3] == 3 and -0.040 <= p[4] <= 0:
+    for p in pts:                                            # Statcast's measured window: the last 40 ms
+        if -0.040 <= p[4] <= 0:
             p[3] = 1
+        elif kind != "measured" and p[3] == 3:               # league shape: not measured for him -> inferred
+            p[3] = 2
     i0 = min(range(len(pts)), key=lambda i: abs(pts[i][4]))
     sc["arc"], sc["hands"] = pts, hands
     sc["read"]["vba"] = round(-math.degrees(math.asin(max(-1.0, min(1.0, hands[i0][2])))), 1)
@@ -555,7 +590,7 @@ def fit_path(sc: dict, me: pd.DataFrame, stand: str, pz: float, px: float, pr: d
             break
     sc["bp"] = bp
     sc["read"]["bp_in"] = bp["inches_before"] if bp else None
-    sc["path_src"] = {"kind": "measured", "n_eff": cur["n_eff"], "range": r["range"],
+    sc["path_src"] = {"kind": kind, "n_eff": cur.get("n_eff", 0), "range": r["range"],
                       "rates": {k: cur[k]["slope"] for k in ("attack_angle", "attack_direction", "bat_speed")}}
     return sc
 
