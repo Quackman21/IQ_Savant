@@ -94,3 +94,38 @@
 22:58:05  regular data update (league reference + grades)
 23:04:19  wind source: hourly (hourly +0.41 ft/mph, reported +0.32 ft/mph)
 23:04:19  backfill done in 0.2 h
+13:54:18  backfill: seasons [2023, 2024, 2025, 2026]
+13:54:18  ===== 2023 =====
+13:54:18  stance board: already have it
+13:54:20  league contact swings: 263,680 (654 hitters)
+13:54:20  contact-type centres: already have them
+13:54:20  weather: already have it
+13:54:38  bat path rates: attack angle +0.899 deg/in, direction -1.568 deg/in
+13:55:35  collision: q 0.240 on 49,047 balls
+13:55:35  hip-position fallback: already have it
+13:55:35  ===== 2024 =====
+13:55:35  stance board: already have it
+13:55:37  league contact swings: 264,770 (650 hitters)
+13:55:37  contact-type centres: already have them
+13:55:37  weather: already have it
+13:56:28  bat path rates: attack angle +0.896 deg/in, direction -1.557 deg/in
+13:57:38  collision: q 0.240 on 60,000 balls
+13:57:38  hip-position fallback: already have it
+13:57:38  ===== 2025 =====
+13:57:38  stance board: already have it
+13:57:40  league contact swings: 264,652 (670 hitters)
+13:57:40  contact-type centres: already have them
+13:57:40  weather: already have it
+13:57:40  bat path rates: already have them
+13:59:11  collision: q 0.240 on 60,000 balls
+13:59:11  hip-position fallback: already have it
+13:59:11  ===== 2026 =====
+13:59:23  stance board: season, playoff, vs_L, vs_R
+13:59:23  league contact swings: downloading (resumable)
+13:59:48  league contact swings: 265,428 (660 hitters)
+13:59:48  contact-type centres: already have them
+14:00:55  weather: 2,470 games, 33 parks with hourly history
+14:00:55  bat path rates: already have them
+14:00:55  collision: already have it
+14:00:55  hip-position fallback: already have it
+14:00:55  regular data update (league reference + grades)

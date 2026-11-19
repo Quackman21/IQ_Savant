@@ -1,0 +1,38 @@
+{
+ "season": 2024,
+ "balls": 60000,
+ "measured": {
+  "q": 0.24,
+  "solved": 0.957,
+  "D_median": 0.27,
+  "D_iqr": [
+   -0.5,
+   0.95
+  ],
+  "eff_p50": 0.909,
+  "eff_p90": 0.999,
+  "eff_over_105": 0.041,
+  "ev_corr": 0.504,
+  "la_per_0p1in": 2.35,
+  "ev_square_median": 109.7,
+  "spray_mae": 14.33,
+  "spray_corr": 0.714
+ },
+ "circle": {
+  "q": 0.24,
+  "solved": 0.959,
+  "D_median": 0.29,
+  "D_iqr": [
+   -0.49,
+   0.96
+  ],
+  "eff_p50": 0.909,
+  "eff_p90": 0.999,
+  "eff_over_105": 0.042,
+  "ev_corr": 0.506,
+  "la_per_0p1in": 2.36,
+  "ev_square_median": 109.7,
+  "spray_mae": 14.74,
+  "spray_corr": 0.704
+ }
+}

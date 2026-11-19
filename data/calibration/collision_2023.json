@@ -1,0 +1,38 @@
+{
+ "season": 2023,
+ "balls": 49047,
+ "measured": {
+  "q": 0.24,
+  "solved": 0.958,
+  "D_median": 0.26,
+  "D_iqr": [
+   -0.49,
+   0.94
+  ],
+  "eff_p50": 0.91,
+  "eff_p90": 1.0,
+  "eff_over_105": 0.04,
+  "ev_corr": 0.494,
+  "la_per_0p1in": 2.35,
+  "ev_square_median": 109.7,
+  "spray_mae": 14.66,
+  "spray_corr": 0.708
+ },
+ "circle": {
+  "q": 0.24,
+  "solved": 0.959,
+  "D_median": 0.27,
+  "D_iqr": [
+   -0.48,
+   0.96
+  ],
+  "eff_p50": 0.91,
+  "eff_p90": 1.001,
+  "eff_over_105": 0.041,
+  "ev_corr": 0.494,
+  "la_per_0p1in": 2.36,
+  "ev_square_median": 109.7,
+  "spray_mae": 15.02,
+  "spray_corr": 0.7
+ }
+}
